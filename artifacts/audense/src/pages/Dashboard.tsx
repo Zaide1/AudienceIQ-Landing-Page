@@ -783,6 +783,7 @@ export default function Dashboard() {
             padding: "10px 20px 8px",
             flexShrink: 0,
             borderTop: "1px solid #F3F4F6",
+            minWidth: 0,
           }}
         >
           <div
@@ -795,6 +796,8 @@ export default function Dashboard() {
               padding: "7px 7px 7px 14px",
               gap: 8,
               transition: "border-color 0.2s",
+              minWidth: 0,
+              overflow: "hidden",
             }}
             onFocusCapture={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = "#7C3AED";
