@@ -1,0 +1,89 @@
+Create the frontend audience intelligence data contract for Audense.
+
+Important:
+- Do not change UI design.
+- Do not add OpenAI yet.
+- Do not add FastAPI endpoint yet.
+- Do not add Supabase/auth yet.
+- Do not change routing.
+- This step is only to define shared frontend data structures, mock generation, and dashboard data wiring.
+- Keep the current dashboard visually the same.
+
+Goal:
+Create a consistent AudienceMapResult shape that the dashboard can render from, instead of relying on scattered hardcoded values.
+
+AudienceMapResult should include:
+- productSummary: string
+- region: string
+- category: string
+- confidence: "Low" | "Medium" | "High"
+- reachableAudience:
+  - min: number
+  - max: number
+  - label: string
+- coverage:
+  - percent: number
+  - people: number
+- untapped:
+  - percent: number
+  - min: number
+  - max: number
+- segments: array of exactly 5 objects:
+  - id: string
+  - name: string
+  - percent: number
+  - audienceMin: number
+  - audienceMax: number
+  - color: "purple" | "blue" | "green" | "orange" | "pink"
+  - painPoints: string[]
+  - platforms: string[]
+  - whyThisSegment: string
+  - acquisitionAngle: string
+- insights: array of 3 objects:
+  - title: string
+  - description: string
+
+Frontend implementation:
+1. Define the AudienceMapResult type/interface in a sensible frontend file.
+2. Add a mock function `generateMockAudienceMap(onboardingData)` that returns this shape.
+3. Use onboarding data to personalise at least:
+   - productSummary
+   - region
+   - category
+   - dashboard subtitle
+   - segment names if simple
+4. Dashboard should render from AudienceMapResult instead of scattered hardcoded values.
+5. Keep the current UI exactly the same visually.
+
+Storage:
+- When onboarding completes and the user clicks Generate, generate mock AudienceMapResult.
+- Save it to localStorage as `audense-audience-map`.
+- Dashboard should read `audense-audience-map`.
+- If `audense-audience-map` is missing, generate fallback from onboarding data.
+- If onboarding data is also missing, use a polished demo fallback.
+
+Important chat rule:
+- Do not create fake user chat messages from onboarding data.
+- Onboarding data should power the map/result only.
+- Chat messages should be stored separately from the audience map.
+- The only default chat message should be from Audense:
+  “Hi [displayName] 👋 I’m Audense, your audience intelligence agent. I’ll help you discover who your ideal users are, how big your market is, and what matters to them. Let’s start with your product.”
+- If no user name exists, use “Founder”.
+- Suggested chips can remain.
+
+Storage keys:
+- Audience map: `audense-audience-map`
+- Chat messages: `audense-chat-messages`
+- Existing onboarding storage can remain as-is.
+
+Validation:
+- Segment percentages should sum to 100.
+- Always return exactly 5 segments.
+- Segment colours should be exactly:
+  purple, blue, green, orange, pink
+
+After implementing, explain:
+- Where AudienceMapResult is defined
+- Where mock generation happens
+- How dashboard now reads the generated audience map
+- How chat messages are kept separate from onboarding/map data

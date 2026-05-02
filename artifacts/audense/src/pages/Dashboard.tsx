@@ -8,6 +8,10 @@ import {
   FaXTwitter, FaReddit, FaFacebook, FaGoogle,
 } from "react-icons/fa6";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
+import {
+  loadAudienceMap, generateMockAudienceMap, formatK,
+  type AudienceMapResult,
+} from "../lib/audienceMap";
 
 /* ─── Platform icon map ───────────────────────────────────────────── */
 type IconComponent = React.ComponentType<{ size?: number | string }>;
@@ -57,6 +61,67 @@ function loadOnboarding() {
     if (raw) return JSON.parse(raw);
   } catch {}
   return null;
+}
+
+/* ─── Chat message persistence ───────────────────────────────────── */
+const CHAT_KEY = "audense-chat-messages";
+
+function buildGreeting(displayName: string): Message {
+  return {
+    id: 1,
+    role: "ai",
+    text: `Hi ${displayName} 👋 I'm Audense, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them. Let's start with your product.`,
+  };
+}
+
+function loadChatMessages(displayName: string): Message[] {
+  try {
+    const raw = localStorage.getItem(CHAT_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return [buildGreeting(displayName)];
+}
+
+function saveChatMessages(msgs: Message[]): void {
+  try { localStorage.setItem(CHAT_KEY, JSON.stringify(msgs)); } catch {}
+}
+
+/* ─── Segment colour mappings ────────────────────────────────────── */
+const COLOR_ACCENT: Record<string, string> = {
+  purple: "#7C3AED",
+  blue:   "#3B82F6",
+  green:  "#10B981",
+  orange: "#F59E0B",
+  pink:   "#EC4899",
+};
+const COLOR_BG: Record<string, string> = {
+  purple: "#F5F3FF",
+  blue:   "#EFF6FF",
+  green:  "#ECFDF5",
+  orange: "#FFF7ED",
+  pink:   "#FDF2F8",
+};
+const DOT_IDS       = ["gym", "busy", "health", "weight", "nutrition"];
+const TOOLTIP_LEFTS = ["14%", "44%", "57%", "76%", "89%"];
+const SEG_ICONS     = ["🏋️", "💼", "🥗", "⚖️", "📊"];
+
+function buildSegmentsFromMap(map: AudienceMapResult): Segment[] {
+  return map.segments.slice(0, 5).map((s, i) => ({
+    id:          DOT_IDS[i],
+    name:        s.name,
+    pct:         s.percent,
+    range:       `~${formatK(s.audienceMin)} – ${formatK(s.audienceMax)}`,
+    bg:          COLOR_BG[s.color]     ?? "#F5F3FF",
+    accent:      COLOR_ACCENT[s.color] ?? "#7C3AED",
+    icon:        SEG_ICONS[i],
+    pain:        s.painPoints,
+    platforms:   s.platforms,
+    tooltipLeft: TOOLTIP_LEFTS[i],
+    color:       COLOR_ACCENT[s.color] ?? "#7C3AED",
+  }));
 }
 
 /* ─── Dot map logic (reused from DashboardPreview) ──────────────── */
@@ -548,14 +613,14 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const ob = loadOnboarding();
 
-  const productIdea = ob?.productIdea ?? "AI calorie tracking app";
-  const targetUsers = ob?.targetUsers ?? "Busy professionals who want to get healthier";
-  const problem = ob?.problem ?? "Manual tracking is hard and time consuming";
-  const finalRegion = ob?.finalRegion ?? "United Kingdom";
-  const finalCategory = ob?.finalCategory ?? "Health & Fitness";
+  const displayName = ob?.displayName ?? "Founder";
 
-  const shortRegion = finalRegion.length > 20 ? finalRegion.split(",")[0].trim() : finalRegion;
-  const shortIdea = productIdea.length > 40 ? productIdea.slice(0, 38) + "…" : productIdea;
+  /* Load or generate the audience map once */
+  const audienceMap: AudienceMapResult = loadAudienceMap() ?? generateMockAudienceMap(ob);
+
+  const shortRegion = audienceMap.region.length > 20
+    ? audienceMap.region.split(",")[0].trim()
+    : audienceMap.region;
 
   const [splitPct, setSplitPct] = useState<number>(loadSplit);
   const isDragging = useRef(false);
@@ -587,40 +652,18 @@ export default function Dashboard() {
     window.addEventListener("mouseup", onMouseUp);
   }, []);
 
-  const [segments, setSegments] = useState<Segment[]>(BASE_SEGMENTS);
+  const [segments, setSegments] = useState<Segment[]>(() => buildSegmentsFromMap(audienceMap));
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>("gym");
   const [hoveredSegmentId, setHoveredSegmentId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
   const msgId = useRef(100);
 
-  const initMessages: Message[] = [
-    {
-      id: 1,
-      role: "ai",
-      text: `Hi Founder 👋 I'm Audense, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them. Let's start with your product.`,
-    },
-    {
-      id: 2,
-      role: "user",
-      text: `I'm building ${productIdea}. It's for ${targetUsers}. It solves: ${problem}.`,
-    },
-    {
-      id: 3,
-      role: "ai",
-      text: `Got it. I've mapped your likely early audience based on your product and launch region.`,
-    },
-    {
-      id: 4,
-      role: "user",
-      text: `Let's start with ${shortRegion}.`,
-    },
-  ];
-
-  const [messages, setMessages] = useState<Message[]>(initMessages);
+  const [messages, setMessages] = useState<Message[]>(() => loadChatMessages(displayName));
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    saveChatMessages(messages);
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -950,7 +993,7 @@ export default function Dashboard() {
             {[
               {
                 label: "Reachable Audience",
-                value: "850K – 1.4M",
+                value: `${formatK(audienceMap.reachableAudience.min)} – ${formatK(audienceMap.reachableAudience.max)}`,
                 sub: `people in ${shortRegion}`,
                 icon: "👥",
                 accent: false,
@@ -959,8 +1002,8 @@ export default function Dashboard() {
               },
               {
                 label: "Est. Coverage",
-                value: "7%",
-                sub: "~60K people",
+                value: `${audienceMap.coverage.percent}%`,
+                sub: `~${formatK(audienceMap.coverage.people)} people`,
                 icon: "🎯",
                 accent: true,
                 border: "#C4B5FD",
@@ -968,8 +1011,8 @@ export default function Dashboard() {
               },
               {
                 label: "Untapped Opportunity",
-                value: "93%",
-                sub: "~790K – 1.34M people",
+                value: `${audienceMap.untapped.percent}%`,
+                sub: `~${formatK(audienceMap.untapped.min)} – ${formatK(audienceMap.untapped.max)} people`,
                 icon: "💡",
                 accent: false,
                 border: "#FDE68A",
@@ -977,7 +1020,7 @@ export default function Dashboard() {
               },
               {
                 label: "Confidence",
-                value: "Medium",
+                value: audienceMap.confidence,
                 sub: "Based on available data",
                 icon: "📊",
                 accent: false,
