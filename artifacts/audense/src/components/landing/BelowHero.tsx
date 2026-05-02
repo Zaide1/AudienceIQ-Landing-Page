@@ -1,6 +1,38 @@
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { FaXTwitter, FaLinkedin, FaReddit } from "react-icons/fa6";
+
+const WHERE_TO_TEST_PLATFORMS: { name: string; Icon: React.ComponentType<{ size?: number | string }>; color: string }[] = [
+  { name: "X", Icon: FaXTwitter, color: "#000000" },
+  { name: "LinkedIn", Icon: FaLinkedin, color: "#0A66C2" },
+  { name: "Reddit", Icon: FaReddit, color: "#FF4500" },
+];
+
+function PlatformChip({ name, Icon, color }: { name: string; Icon: React.ComponentType<{ size?: number | string }>; color: string }) {
+  return (
+    <span
+      title={name}
+      aria-label={name}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 26,
+        height: 26,
+        borderRadius: "50%",
+        background: "#fff",
+        border: "1px solid #E5E7EB",
+        color,
+        fontSize: 13,
+        flexShrink: 0,
+        boxShadow: "0 1px 2px rgba(15,23,42,0.06)",
+      }}
+    >
+      <Icon />
+    </span>
+  );
+}
 
 const ROWS: { title: string; body: string }[] = [
   {
@@ -248,16 +280,24 @@ function ProductValueSection() {
                     >
                       {r.label}
                     </span>
-                    <span
-                      style={{
-                        fontSize: 14.5,
-                        lineHeight: 1.55,
-                        color: "#111827",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {r.value}
-                    </span>
+                    {r.label === "Where to test" ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        {WHERE_TO_TEST_PLATFORMS.map((p) => (
+                          <PlatformChip key={p.name} name={p.name} Icon={p.Icon} color={p.color} />
+                        ))}
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: 14.5,
+                          lineHeight: 1.55,
+                          color: "#111827",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {r.value}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
