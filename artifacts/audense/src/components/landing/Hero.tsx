@@ -4,66 +4,141 @@ import { DashboardPreview } from "@/components/landing/DashboardPreview";
 export function Hero() {
   return (
     <section
-      className="w-full max-w-[1440px] mx-auto px-8 lg:px-16 py-10 lg:py-16 flex flex-col lg:flex-row gap-10 lg:gap-0 items-center"
-      style={{ minHeight: "calc(100vh - 72px)" }}
+      style={{
+        width: "100%",
+        minHeight: "calc(100vh - 88px)",
+        display: "grid",
+        gridTemplateColumns: "minmax(420px, 0.40fr) minmax(680px, 0.60fr)",
+        gap: "clamp(32px, 4vw, 64px)",
+        alignItems: "center",
+        paddingLeft: "clamp(32px, 5vw, 72px)",
+        paddingRight: "clamp(32px, 4vw, 56px)",
+        paddingTop: 40,
+        paddingBottom: 40,
+        boxSizing: "border-box",
+      }}
     >
-      {/* Left column — 42% */}
-      <div className="flex flex-col items-start gap-8 w-full lg:w-[42%] shrink-0 lg:pr-12">
+      {/* ── Left column ───────────────────────────────────────────────── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
         <h1
-          className="font-extrabold tracking-tight text-foreground leading-[0.98]"
-          style={{ fontSize: "clamp(56px, 5.5vw, 84px)", maxWidth: 560 }}
+          style={{
+            fontSize: "clamp(72px, 5.4vw, 104px)",
+            fontWeight: 900,
+            lineHeight: 0.95,
+            letterSpacing: "-0.04em",
+            color: "#0D0D12",
+            maxWidth: 560,
+            margin: 0,
+          }}
         >
           Your audience,
           <br />
-          <span className="text-primary">found.</span>
+          <span style={{ color: "#7C3AED" }}>found.</span>
         </h1>
 
         <p
-          className="text-muted-foreground leading-relaxed"
-          style={{ fontSize: "clamp(18px, 1.6vw, 24px)", maxWidth: 480 }}
+          style={{
+            fontSize: "clamp(20px, 1.6vw, 28px)",
+            lineHeight: 1.55,
+            color: "#6B7280",
+            maxWidth: 520,
+            margin: 0,
+          }}
         >
           Audense maps who wants your product, where they are, and what they
           need to hear.
         </p>
 
-        <div className="flex flex-col gap-5 mt-2">
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Button
             data-testid="button-map-audience-hero"
-            className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 transition-all hover:scale-105 hover:brightness-110 active:scale-95"
-            style={{ fontSize: 18, height: 64, width: 280 }}
+            style={{
+              width: 420,
+              height: 76,
+              fontSize: 26,
+              fontWeight: 700,
+              borderRadius: 16,
+              background: "#7C3AED",
+              color: "#fff",
+              boxShadow: "0 8px 30px rgba(124,58,237,0.35)",
+              letterSpacing: "-0.01em",
+            }}
+            className="transition-all hover:scale-[1.03] hover:brightness-110 active:scale-[0.98]"
           >
             Map my audience →
           </Button>
 
-          <div className="flex items-center gap-3 pl-1">
-            <div className="flex -space-x-3">
+          {/* Social proof */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, paddingLeft: 4 }}>
+            <div style={{ display: "flex" }}>
               {[
-                { init: "AJ", from: "from-purple-400", to: "to-indigo-500", z: "z-30" },
-                { init: "MS", from: "from-pink-400",   to: "to-rose-500",   z: "z-20" },
-                { init: "TK", from: "from-blue-400",   to: "to-cyan-500",   z: "z-10" },
-              ].map(({ init, from, to, z }) => (
+                { init: "AJ", a: "#9333ea", b: "#6366f1" },
+                { init: "MS", a: "#ec4899", b: "#f43f5e" },
+                { init: "TK", a: "#3b82f6", b: "#06b6d4" },
+              ].map(({ init, a, b }, i) => (
                 <div
                   key={init}
-                  className={`w-9 h-9 rounded-full border-2 border-background bg-gradient-to-br ${from} ${to} flex items-center justify-center text-[10px] font-bold text-white shadow-sm ${z}`}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    border: "2.5px solid #fff",
+                    background: `linear-gradient(135deg, ${a}, ${b})`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#fff",
+                    marginLeft: i === 0 ? 0 : -12,
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+                    zIndex: 3 - i,
+                    position: "relative",
+                  }}
                 >
                   {init}
                 </div>
               ))}
             </div>
-            <span className="text-base font-medium text-muted-foreground">
-              Join <span className="font-bold text-primary">1,200+</span> founders
+            <span style={{ fontSize: 17, fontWeight: 500, color: "#6B7280" }}>
+              Join{" "}
+              <span style={{ fontWeight: 700, color: "#7C3AED" }}>1,200+</span>{" "}
+              founders
             </span>
           </div>
         </div>
       </div>
 
-      {/* Right column — 58% */}
-      <div className="relative w-full lg:w-[58%] flex items-center justify-center">
+      {/* ── Right column — dashboard mockup ───────────────────────────── */}
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          width: "100%",
+        }}
+      >
         {/* Purple glow behind mockup */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10">
-          <div className="w-[70%] h-[60%] bg-primary/10 rounded-full blur-[100px]" />
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "75%",
+            height: "65%",
+            background: "radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%)",
+            borderRadius: "50%",
+            filter: "blur(40px)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
+          <DashboardPreview />
         </div>
-        <DashboardPreview />
       </div>
     </section>
   );

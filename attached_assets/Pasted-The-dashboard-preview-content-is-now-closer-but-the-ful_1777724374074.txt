@@ -1,0 +1,111 @@
+The dashboard preview content is now closer, but the full-size desktop landing page spacing and background styling are wrong.
+
+Current problem:
+- The whole hero is too small and centered in the page.
+- There is too much empty white space around everything.
+- The dashboard mockup is much smaller than the reference.
+- The left purple background wash / dotted pattern is missing or too weak.
+- The content does not fill the viewport like the reference.
+- The right mockup should be large and dominant, not a small screenshot.
+
+Please fix ONLY the landing page desktop layout and background styling.
+
+Do not change routing.
+Do not change onboarding.
+Do not change dashboard functionality.
+Do not add backend/auth/OpenAI.
+Do not add animations.
+Keep the preview static.
+Keep the corrected five vertical segment cards from the previous step.
+Do not turn segment cards back into horizontal list rows.
+
+Desktop target:
+The landing page should match a wide 16:9 reference hero:
+- Header at top with logo left, CTA right.
+- Main hero fills most of the viewport height.
+- Left content starts around 72px from the left edge.
+- Right dashboard mockup starts around the center/right and is very large.
+- The dashboard mockup should occupy roughly 58–62% of page width.
+- The left text block should occupy roughly 35–40% of page width.
+- There should not be a tiny centered composition.
+
+Specific layout fixes:
+
+1. Page and hero sizing
+- Set landing page min-height: 100vh.
+- Header height around 88px.
+- Main hero height should be calc(100vh - header height), or at least 760px on desktop.
+- Use a wide max-width only if necessary, around 1920px, not a small 1100/1200px container.
+- Do not center the whole hero in a narrow container.
+- Hero content should span almost the full viewport width.
+
+2. Desktop hero grid
+- Use CSS grid with columns similar to:
+  grid-template-columns: minmax(480px, 0.42fr) minmax(760px, 0.58fr)
+- Gap around 48px to 72px.
+- Left column should align vertically center.
+- Right column should align vertically center.
+- Padding left/right around 72px on large desktop.
+- On 1440px width, the mockup should still be large and readable.
+
+3. Left hero typography and spacing
+- Headline should be large:
+  font-size: clamp(72px, 5.4vw, 104px)
+  line-height: 0.95
+  letter-spacing: -0.04em
+- Subtitle should be:
+  font-size: clamp(22px, 1.6vw, 30px)
+  line-height: 1.55
+  max-width: 560px
+- CTA should be big:
+  width around 420px
+  height around 76px
+  font-size around 28px
+- Founder proof row should sit below CTA with proper spacing.
+
+4. Dashboard mockup scale
+- Increase the mockup size significantly.
+- On desktop, it should be approximately:
+  width: min(62vw, 1180px)
+- It should visually match the reference where the dashboard is large and reaches near the right side of the viewport.
+- Do not let the mockup become a small centered thumbnail.
+- Keep fixed internal canvas + scale strategy.
+- No internal scrollbars.
+- No clipping at bottom.
+
+5. Background effects
+Add the missing reference-style background:
+- A soft pale purple/lavender gradient wash behind the left lower area.
+- A subtle dotted halftone pattern in the bottom-left corner.
+- A very subtle purple glow behind the dashboard mockup.
+- The page should still mostly be white, but not flat plain white.
+- Background effects should be static and low opacity.
+
+Implementation idea:
+Use pseudo-elements on the landing page root:
+- ::before for the purple/lavender radial gradient in bottom-left.
+- ::after for the dotted pattern, or create a .dot-pattern element.
+Use radial-gradient for the dots, e.g. repeating dot pattern with low opacity.
+
+6. Header
+- Header should be spacious and fixed at top of layout, not visually cramped.
+- Logo should be larger and not squashed:
+  icon 36px x 36px
+  text around 34px
+- Top-right CTA should be around 230px x 56px.
+- Header horizontal padding should match page padding.
+
+7. Match reference composition
+At 1440px+ desktop:
+- Left headline should be near the left side, not centered.
+- Dashboard mockup should be large, starting around mid-page and extending close to the right edge.
+- The whole hero should look like the reference image: big, confident, spacious, and polished.
+
+8. Responsiveness
+- For widths below 1100px, stack columns vertically or reduce mockup scale.
+- But desktop should be prioritized for the hackathon demo.
+
+After changes, explain:
+- What max widths/paddings were changed
+- How the background gradient/dot pattern was implemented
+- How the mockup size is controlled
