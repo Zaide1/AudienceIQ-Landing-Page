@@ -1,0 +1,69 @@
+Refine the landing page below the hero into a premium product explanation section.
+
+Important:
+- Do not change the hero layout.
+- Do not change the main CTA button.
+- Do not change the dashboard mockup in the hero.
+- Remove the fake “Join 1,200+ founders” social proof.
+- Do not add fake testimonials, fake users, fake stats, or fake logos.
+- Stay on-brand with Audense: clean, soft purple, founder-focused, premium SaaS.
+
+Goal:
+Replace the current generic feature cards below the hero with a more polished Cluely-inspired landing section, but do not copy Cluely exactly.
+
+Build these sections:
+
+1. Product value section
+- Full-width soft lavender/grey background block.
+- Large centered heading:
+  “Validate the audience before you build the product.”
+- Subheading:
+  “Audense helps founders turn rough ideas into target segments, objections, competitor angles, and first-channel plans.”
+- Include one large rounded product mockup/card showing the Audense dashboard/chat experience.
+- The mockup can reuse existing dashboard imagery/style/components if available.
+- Keep it minimal and premium, not busy.
+
+2. Three explanation rows/cards
+Use calm cards or rows, not loud AI-looking cards.
+Content:
+- “Map the audience”
+  “See who is most likely to care, where they are, and how big the opportunity looks.”
+- “Test the idea”
+  “Ask what people might object to, what competitors they already use, and what to validate first.”
+- “Turn research into action”
+  “Get messaging angles, channel plans, and next steps based on your audience map.”
+
+3. FAQ section
+Add a clean FAQ accordion or static FAQ list with:
+- “Where do the audience estimates come from?”
+- “Is this official market sizing?”
+- “Can Audense compare competitors?”
+- “Do I need to sign up?”
+- “What happens when I start a new research?”
+
+FAQ answers should be honest:
+- Audience numbers are directional MVP estimates.
+- Live research currently uses available public discussion signals where connected.
+- Audense should not claim official statistics unless verified.
+- Users can start one guest research, but need an account to save history or create more research sessions.
+
+4. Footer
+Add a calm footer with:
+- Audense logo/name
+- Short line: “Audience intelligence for founders before they build.”
+- Links: Help, Privacy, Terms
+- Optional small status pill: “Beta”
+
+Design requirements:
+- Premium, calm, spacious.
+- Avoid generic “AI generated” feature cards.
+- Use large whitespace.
+- Rounded panels, subtle borders, soft shadows.
+- No fake social proof.
+- No new routes required unless links already exist.
+- Keep mobile responsive.
+
+After implementing, explain:
+- What was removed
+- What sections were added
+- Whether the hero CTA and dashboard mockup were untouched
