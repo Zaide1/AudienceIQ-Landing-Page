@@ -9,7 +9,9 @@ interface OnboardingState {
   problem: string;
   goal: string;
   category: string;
+  customCategory: string;
   region: string;
+  customRegion: string;
 }
 
 /* ─── Constants ─────────────────────────────────────────────────────── */
@@ -325,6 +327,9 @@ function Step3({ data, onChange, onNext, onBack }: {
   onNext: () => void;
   onBack: () => void;
 }) {
+  const isOther = data.category === "other";
+  const canNext = data.category && (!isOther || data.customCategory.trim().length > 0);
+
   return (
     <div>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
@@ -367,7 +372,38 @@ function Step3({ data, onChange, onNext, onBack }: {
         })}
       </div>
 
-      <NavButtons onBack={onBack} onNext={onNext} nextDisabled={!data.category} />
+      {isOther && (
+        <div style={{ marginTop: 16 }}>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+            What category is it?
+          </label>
+          <input
+            type="text"
+            autoFocus
+            value={data.customCategory}
+            onChange={(e) => onChange("customCategory", e.target.value)}
+            placeholder="e.g. Productivity, Travel, Gaming, Real estate"
+            style={{
+              width: "100%",
+              borderRadius: 10,
+              border: `1.5px solid ${data.customCategory ? "#7C3AED" : "#E5E7EB"}`,
+              padding: "11px 14px",
+              fontSize: 14,
+              color: "#111827",
+              outline: "none",
+              fontFamily: "inherit",
+              boxSizing: "border-box",
+              background: "#fff",
+              boxShadow: data.customCategory ? "0 0 0 3px rgba(124,58,237,0.08)" : "none",
+              transition: "border-color 0.2s, box-shadow 0.2s",
+            }}
+            onFocus={(e) => { e.target.style.borderColor = "#7C3AED"; e.target.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.1)"; }}
+            onBlur={(e) => { e.target.style.borderColor = data.customCategory ? "#7C3AED" : "#E5E7EB"; e.target.style.boxShadow = data.customCategory ? "0 0 0 3px rgba(124,58,237,0.08)" : "none"; }}
+          />
+        </div>
+      )}
+
+      <NavButtons onBack={onBack} onNext={onNext} nextDisabled={!canNext} />
     </div>
   );
 }
@@ -453,11 +489,42 @@ function Step4({ data, onChange, onNext, onBack }: {
         })}
       </div>
 
+      {data.region === "other" && (
+        <div style={{ marginTop: 16 }}>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+            What region are you targeting?
+          </label>
+          <input
+            type="text"
+            autoFocus
+            value={data.customRegion}
+            onChange={(e) => onChange("customRegion", e.target.value)}
+            placeholder="e.g. Global, Southeast Asia, UAE, Latin America"
+            style={{
+              width: "100%",
+              borderRadius: 10,
+              border: `1.5px solid ${data.customRegion ? "#7C3AED" : "#E5E7EB"}`,
+              padding: "11px 14px",
+              fontSize: 14,
+              color: "#111827",
+              outline: "none",
+              fontFamily: "inherit",
+              boxSizing: "border-box",
+              background: "#fff",
+              boxShadow: data.customRegion ? "0 0 0 3px rgba(124,58,237,0.08)" : "none",
+              transition: "border-color 0.2s, box-shadow 0.2s",
+            }}
+            onFocus={(e) => { e.target.style.borderColor = "#7C3AED"; e.target.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.1)"; }}
+            onBlur={(e) => { e.target.style.borderColor = data.customRegion ? "#7C3AED" : "#E5E7EB"; e.target.style.boxShadow = data.customRegion ? "0 0 0 3px rgba(124,58,237,0.08)" : "none"; }}
+          />
+        </div>
+      )}
+
       <NavButtons
         onBack={onBack}
         onNext={onNext}
         nextLabel="Generate my audience map ✨"
-        nextDisabled={!data.region}
+        nextDisabled={!data.region || (data.region === "other" && !data.customRegion.trim())}
       />
     </div>
   );
@@ -473,7 +540,9 @@ export default function Onboarding() {
     problem: "",
     goal: "",
     category: "",
+    customCategory: "",
     region: "",
+    customRegion: "",
   });
 
   const onChange = (key: keyof OnboardingState, value: string) => {
@@ -484,7 +553,13 @@ export default function Onboarding() {
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleGenerate = () => {
-    localStorage.setItem("audense_onboarding", JSON.stringify(data));
+    const finalCategory = data.category === "other" ? data.customCategory.trim() : data.category;
+    const finalRegion = data.region === "other" ? data.customRegion.trim() : data.region;
+    localStorage.setItem("audense_onboarding", JSON.stringify({
+      ...data,
+      finalCategory,
+      finalRegion,
+    }));
     navigate("/");
   };
 
