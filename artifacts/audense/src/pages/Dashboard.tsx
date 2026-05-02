@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
   Settings, HelpCircle, Send, Plus, Paperclip, X as XIcon, FileText, Image,
-  Home, Layers, Database,
+  Home, Layers, Database, User,
 } from "lucide-react";
 import {
   FaInstagram, FaTiktok, FaYoutube, FaLinkedin,
@@ -18,9 +18,12 @@ import {
 } from "../lib/audienceMap";
 import {
   loadSessions, getActiveSession, getActiveSessionId, setActiveSessionId,
-  updateActiveSession,
+  updateActiveSession, upsertSession,
   type ResearchSession, type StoredMessage,
 } from "../lib/researchSessions";
+import { AuthModal } from "../components/AuthModal";
+import { onAuthChange, signOut, type AuthUser } from "../lib/auth";
+import { sbAppendMessage, sbUpdateMap, sbLoadSessionList, sbLoadFullSession } from "../lib/sbSessions";
 
 /* ─── Platform icon map ───────────────────────────────────────────── */
 type IconComponent = React.ComponentType<{ size?: number | string }>;
@@ -877,12 +880,16 @@ function HistoryPanel({
   onClose,
   onSelect,
   activeSessionId,
+  sessions: sessionsProp,
+  loading,
 }: {
   onClose: () => void;
   onSelect: (session: ResearchSession) => void;
   activeSessionId: string;
+  sessions?: ResearchSession[];
+  loading?: boolean;
 }) {
-  const sessions = loadSessions();
+  const sessions = sessionsProp ?? loadSessions();
 
   function fmtDate(iso: string) {
     try {
@@ -942,9 +949,11 @@ function HistoryPanel({
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Research history</div>
             <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
-              {sessions.length === 0
-                ? "No sessions yet"
-                : `${sessions.length} session${sessions.length !== 1 ? "s" : ""}`}
+              {loading
+                ? "Loading…"
+                : sessions.length === 0
+                  ? "No sessions yet"
+                  : `${sessions.length} session${sessions.length !== 1 ? "s" : ""}`}
             </div>
           </div>
           <button
@@ -962,7 +971,12 @@ function HistoryPanel({
 
         {/* Session list */}
         <div style={{ flex: 1, overflowY: "auto", padding: "12px 12px 24px" }}>
-          {sessions.length === 0 ? (
+          {loading ? (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              paddingTop: 60, color: "#9CA3AF", fontSize: 14,
+            }}>Loading sessions…</div>
+          ) : sessions.length === 0 ? (
             <div
               style={{
                 display: "flex", flexDirection: "column", alignItems: "center",
@@ -1114,6 +1128,12 @@ export default function Dashboard() {
     ? audienceMap.region.split(",")[0].trim()
     : audienceMap.region;
 
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const authUserRef = useRef<AuthUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [sbSessionItems, setSbSessionItems] = useState<ResearchSession[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpPopoverOpen, setIsHelpPopoverOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -1207,6 +1227,8 @@ export default function Dashboard() {
         setSegments(buildSegmentsFromMap(updatedMap));
         saveAudienceMap(updatedMap);
         updateActiveSession({ audienceMap: updatedMap });
+        const sid1 = getActiveSessionId();
+        if (authUserRef.current && sid1) sbUpdateMap(sid1, updatedMap).catch(() => {});
       } else {
         /* Still update just the evidenceSummary so sourceMode/limitations stay honest */
         if (data.evidenceSummary) {
@@ -1214,6 +1236,8 @@ export default function Dashboard() {
           setAudienceMap(updatedMap);
           saveAudienceMap(updatedMap);
           updateActiveSession({ audienceMap: updatedMap });
+          const sid2 = getActiveSessionId();
+          if (authUserRef.current && sid2) sbUpdateMap(sid2, updatedMap).catch(() => {});
         }
       }
 
@@ -1242,6 +1266,7 @@ export default function Dashboard() {
   /* The proposed AudienceMapResult waiting for confirm/dismiss */
   const pendingMapRef = useRef<AudienceMapResult | null>(null);
   const msgId = useRef(100);
+  const prevMsgCountRef = useRef(0);
 
   const [messages, setMessages] = useState<Message[]>(() => {
     const session = getActiveSession();
@@ -1252,9 +1277,39 @@ export default function Dashboard() {
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  /* ── Auth subscription ──────────────────────────────────────────── */
+  useEffect(() => {
+    return onAuthChange((user) => {
+      authUserRef.current = user;
+      setAuthUser(user);
+    });
+  }, []);
+
+  /* ── Load Supabase session list when history opens ──────────────── */
+  useEffect(() => {
+    if (!isHistoryOpen || !authUserRef.current) return;
+    setLoadingHistory(true);
+    sbLoadSessionList()
+      .then((list) => { if (list) setSbSessionItems(list); })
+      .finally(() => setLoadingHistory(false));
+  }, [isHistoryOpen]);
+
   useEffect(() => {
     saveChatMessages(messages);
     updateActiveSession({ chatMessages: messages as StoredMessage[] });
+
+    /* Supabase: append only newly added messages (fire-and-forget) */
+    const sid = getActiveSessionId();
+    if (authUserRef.current && sid) {
+      const newMsgs = messages.slice(prevMsgCountRef.current);
+      for (const msg of newMsgs) {
+        if (msg.role === "user" || msg.role === "ai") {
+          sbAppendMessage(sid, msg as StoredMessage).catch(() => {});
+        }
+      }
+    }
+    prevMsgCountRef.current = messages.length;
+
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -1430,6 +1485,9 @@ export default function Dashboard() {
       setSegments(buildSegmentsFromMap(map));
       saveAudienceMap(map);
       updateActiveSession({ audienceMap: map });
+      /* Supabase: persist confirmed map */
+      const sid = getActiveSessionId();
+      if (authUserRef.current && sid) sbUpdateMap(sid, map).catch(() => {});
     }
 
     const successMsg: Message = {
@@ -1456,18 +1514,30 @@ export default function Dashboard() {
   };
 
   /* ── Session switching ──────────────────────────────────────────── */
-  const switchSession = useCallback((session: ResearchSession) => {
+  const switchSession = useCallback(async (session: ResearchSession) => {
     setActiveSessionId(session.id);
     setActiveSessionIdState(session.id);
-    /* Write compat keys so single-session helpers (settings, chat init) stay in sync */
-    try { localStorage.setItem("audense_onboarding", JSON.stringify(session.onboardingData)); } catch {}
-    saveAudienceMap(session.audienceMap);
-    saveChatMessages(session.chatMessages as Message[]);
+
+    /* If signed in, try to load the full session from Supabase */
+    let fullSession = session;
+    if (authUserRef.current) {
+      const sb = await sbLoadFullSession(session.id);
+      if (sb) {
+        fullSession = sb;
+        upsertSession(fullSession); /* keep localStorage cache fresh */
+      }
+    }
+
+    /* Write compat keys so single-session helpers stay in sync */
+    try { localStorage.setItem("audense_onboarding", JSON.stringify(fullSession.onboardingData)); } catch {}
+    saveAudienceMap(fullSession.audienceMap);
+    saveChatMessages(fullSession.chatMessages as Message[]);
     /* Hydrate React state */
-    setOb(session.onboardingData);
-    setAudienceMap(session.audienceMap);
-    setSegments(buildSegmentsFromMap(session.audienceMap));
-    setMessages(session.chatMessages as Message[]);
+    setOb(fullSession.onboardingData);
+    setAudienceMap(fullSession.audienceMap);
+    setSegments(buildSegmentsFromMap(fullSession.audienceMap));
+    setMessages(fullSession.chatMessages as Message[]);
+    prevMsgCountRef.current = fullSession.chatMessages.length;
     /* Clear any pending AI updates so they don't bleed across sessions */
     pendingUpdateRef.current = null;
     pendingMapRef.current = null;
@@ -1541,6 +1611,8 @@ export default function Dashboard() {
         onClose={() => setIsHistoryOpen(false)}
         onSelect={switchSession}
         activeSessionId={activeSessionId}
+        sessions={authUser ? sbSessionItems : undefined}
+        loading={loadingHistory}
       />
     )}
     <div
@@ -1594,6 +1666,21 @@ export default function Dashboard() {
           <RailIcon icon={<Database size={18} />} label="Sources (coming soon)" />
           {/* Spacer */}
           <div style={{ flex: 1 }} />
+          {/* Auth: Sign in / Sign out */}
+          <RailIcon
+            icon={<User size={18} />}
+            label={authUser ? `Signed in as ${authUser.email} — click to sign out` : "Sign in to save research"}
+            active={!!authUser}
+            onClick={() => {
+              if (authUser) {
+                signOut().then(() => {
+                  setSbSessionItems([]);
+                });
+              } else {
+                setIsAuthModalOpen(true);
+              }
+            }}
+          />
           {/* Settings */}
           <RailIcon
             icon={<Settings size={18} />}
@@ -2367,6 +2454,15 @@ export default function Dashboard() {
     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
     <SupportModal isOpen={isSupportModalOpen} onClose={() => setIsSupportModalOpen(false)} />
+    {isAuthModalOpen && (
+      <AuthModal
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuth={(user) => {
+          authUserRef.current = user;
+          setAuthUser(user);
+        }}
+      />
+    )}
     {showCompetitorDrawer && audienceMap.competitors && (
       <CompetitorDrawer
         competitors={audienceMap.competitors}

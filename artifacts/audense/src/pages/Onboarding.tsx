@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { generateMockAudienceMap, saveAudienceMap } from "../lib/audienceMap";
 import { upsertSession, setActiveSessionId, makeSessionTitle, newSessionId } from "../lib/researchSessions";
+import { sbSaveSession } from "../lib/sbSessions";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 interface OnboardingState {
@@ -653,7 +654,7 @@ export default function Onboarding() {
       /* ── Create a new research session ─────────────────────────── */
       const sessionId = newSessionId();
       const now = new Date().toISOString();
-      upsertSession({
+      const session1 = {
         id: sessionId,
         title: makeSessionTitle(onboardingData),
         createdAt: now,
@@ -661,14 +662,16 @@ export default function Onboarding() {
         onboardingData,
         audienceMap: finalMap,
         chatMessages: [],
-      });
+      };
+      upsertSession(session1);
       setActiveSessionId(sessionId);
+      sbSaveSession(session1).catch(() => {});
     } catch {
       const fallback = generateMockAudienceMap(onboardingData);
       saveAudienceMap(fallback);
       const sessionId = newSessionId();
       const now = new Date().toISOString();
-      upsertSession({
+      const session2 = {
         id: sessionId,
         title: makeSessionTitle(onboardingData),
         createdAt: now,
@@ -676,8 +679,10 @@ export default function Onboarding() {
         onboardingData,
         audienceMap: fallback,
         chatMessages: [],
-      });
+      };
+      upsertSession(session2);
       setActiveSessionId(sessionId);
+      sbSaveSession(session2).catch(() => {});
     } finally {
       setGenerating(false);
     }
