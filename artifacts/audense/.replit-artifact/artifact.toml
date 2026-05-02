@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Audense"
+version = "1.0.0"
+id = "artifacts/audense"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22754
+
+[services.development]
+run = "pnpm --filter @workspace/audense run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/audense", "run", "build" ]
+publicDir = "artifacts/audense/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22754"
+BASE_PATH = "/"
