@@ -7,36 +7,51 @@ const DESIGN_WIDTH  = 980;
 const DESIGN_HEIGHT = 730;
 
 /* ─── Dot-grid ─────────────────────────────────────────────────────── */
-const COLS = 28;
-const ROWS = 14;
+const COLS = 52;
+const ROWS = 12;
 
 type DotColor = string;
 
 function buildDots(): DotColor[] {
-  // All dots start as uniform grey (untapped)
+  // All dots start as uniform grey (untapped universe)
   const dots: DotColor[] = new Array(ROWS * COLS).fill("#E5E7EB");
 
-  // Paint a rectangular block of dots with a solid segment colour.
-  // Proportions match segment percentages (25 : 30 : 20 : 15 : 10 = 80 covered dots total).
-  // Clusters step upward left→right, matching the reference layout.
-  const paint = (rStart: number, rEnd: number, cStart: number, cEnd: number, color: string) => {
-    for (let r = rStart; r <= rEnd && r < ROWS; r++) {
-      for (let c = cStart; c <= cEnd && c < COLS; c++) {
-        dots[r * COLS + c] = color;
-      }
-    }
+  const set = (r: number, c: number, color: string) => {
+    if (r >= 0 && r < ROWS && c >= 0 && c < COLS) dots[r * COLS + c] = color;
   };
 
-  // Gym Goers        25% → 20 dots  → rows 9–13 (5 rows) × cols 0–3  (4 cols)
-  paint(9,  13, 0,  3,  "#7C3AED");
-  // Busy Professionals 30% → 24 dots → rows 8–13 (6 rows) × cols 4–7  (4 cols)
-  paint(8,  13, 4,  7,  "#3B82F6");
-  // Health Conscious  20% → 16 dots  → rows 10–13 (4 rows) × cols 8–11 (4 cols)
-  paint(10, 13, 8,  11, "#10B981");
-  // Weight Loss       15% → 12 dots  → rows 11–13 (3 rows) × cols 12–15 (4 cols)
-  paint(11, 13, 12, 15, "#F59E0B");
-  // Nutrition         10% →  8 dots  → rows 12–13 (2 rows) × cols 16–19 (4 cols)
-  paint(12, 13, 16, 19, "#EC4899");
+  // Paint a solid rectangle
+  const rect = (rA: number, rB: number, cA: number, cB: number, color: string) => {
+    for (let r = rA; r <= rB; r++) for (let c = cA; c <= cB; c++) set(r, c, color);
+  };
+
+  // ── PURPLE — Gym Goers — large stepped left island ──────────────────
+  // Stepped top edge: tallest in the middle columns, slopes down on sides
+  rect(8, 11, 1,  3,  "#7C3AED"); // left foot
+  rect(6, 11, 4,  7,  "#7C3AED"); // left shoulder (taller)
+  rect(5, 11, 8,  11, "#7C3AED"); // peak columns
+  rect(6, 11, 12, 14, "#7C3AED"); // right shoulder
+  rect(7, 11, 15, 16, "#7C3AED"); // right foot taper
+
+  // ── BLUE — Busy Professionals — centre, elevated island ─────────────
+  rect(3, 7,  23, 25, "#3B82F6"); // left taper
+  rect(2, 7,  26, 30, "#3B82F6"); // main body (tallest)
+  rect(3, 7,  31, 33, "#3B82F6"); // right taper
+
+  // ── GREEN — Health Conscious — lower centre, overlapping blue area ───
+  rect(7, 11, 26, 28, "#10B981"); // left overlap with blue base
+  rect(6, 11, 29, 33, "#10B981"); // main body
+  rect(7, 11, 34, 36, "#10B981"); // right taper
+
+  // ── ORANGE — Weight Loss Beginners — right island ───────────────────
+  rect(4, 8,  39, 41, "#F59E0B"); // left taper
+  rect(3, 8,  42, 45, "#F59E0B"); // main body
+  rect(5, 8,  46, 47, "#F59E0B"); // right taper
+
+  // ── PINK — Nutrition Optimisers — far-right lower island ────────────
+  rect(7, 11, 44, 46, "#EC4899"); // left taper
+  rect(6, 11, 47, 50, "#EC4899"); // main body
+  rect(8, 11, 51, 51, "#EC4899"); // right stub
 
   return dots;
 }

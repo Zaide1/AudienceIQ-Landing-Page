@@ -1,0 +1,56 @@
+Clarification for the Audience Universe dot map:
+
+This is not meant to be a mathematically exact dot chart.
+
+It should be a beautiful visual audience landscape.
+
+Meaning:
+- Grey dots represent the whole reachable audience universe.
+- Coloured dot clusters represent audience segments.
+- The clusters should look like attractive grouped islands inside the grey dot field.
+- The tooltip is just a static example of what hovering/clicking a segment would show.
+- No actual hover interaction is needed for the landing page preview.
+
+Please update ONLY the Audience Universe dot map.
+
+Do not change the landing layout.
+Do not change stat cards.
+Do not change segment cards.
+Do not change chat.
+Do not add animations or hover behaviour.
+
+Visual requirements:
+- Keep an evenly spaced grid of grey dots across the whole map.
+- Create large, attractive coloured clusters with clear shapes.
+- Purple cluster on the left should be large and block-like with a stepped/sloped top edge.
+- Blue cluster should sit centre-right and slightly higher.
+- Green cluster should sit below/overlap visually near the blue cluster.
+- Orange cluster should sit to the right.
+- Pink cluster should sit far-right/lower.
+- The clusters should feel like “islands” in the grey universe.
+- They should have height and area, not just short strips along the bottom.
+- Do not use exact proportional counts like 20/24/16/12/8 dots.
+- Do not make it a bar chart.
+- Do not make the coloured clusters tiny.
+- It is okay if the coloured areas are visually exaggerated for clarity.
+
+Tooltip:
+- Keep one static tooltip over the purple cluster:
+  Gym Goers
+  25% of audience
+  ~210K – 350K people
+
+Legend:
+- Keep the legend:
+  Covered 7%
+  Untapped 93%
+
+Implementation suggestion:
+Use a fixed coordinate grid and define coloured cluster areas by row/column ranges or shape masks. For example:
+- Purple: left cluster with rows 6–11 and columns 2–14, stepped top
+- Blue: centre cluster with rows 4–8 and columns 24–34
+- Green: lower centre cluster with rows 8–11 and columns 29–38
+- Orange: right cluster with rows 6–9 and columns 39–47
+- Pink: far-right cluster with rows 8–11 and columns 45–52
+
+Adjust coordinates to fit the current grid, but preserve the visual feeling of large grouped clusters.
