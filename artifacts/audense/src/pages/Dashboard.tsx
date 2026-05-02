@@ -1578,15 +1578,10 @@ export default function Dashboard() {
           }}
         >
           {/* Logo */}
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 9,
-              background: `#EDE9FE url(${logoImg}) center/cover no-repeat`,
-              flexShrink: 0,
-              marginBottom: 20,
-            }}
+          <img
+            src={logoImg}
+            alt="Audense"
+            style={{ width: 36, height: 36, objectFit: "contain", flexShrink: 0, marginBottom: 20 }}
           />
           {/* Top nav icons */}
           <RailIcon icon={<Home size={18} />} label="Home" active onClick={() => {}} />
