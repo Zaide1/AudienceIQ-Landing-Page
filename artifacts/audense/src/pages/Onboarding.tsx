@@ -178,7 +178,7 @@ function NavButtons({
             display: "inline-block", animation: "spin 0.7s linear infinite",
           }} />
         )}
-        {nextLoading ? "Generating…" : nextLabel}
+        {nextLoading ? "Mapping your audience…" : nextLabel}
       </button>
     </div>
   );
@@ -542,6 +542,11 @@ function Step4({ data, onChange, onNext, onBack, generating }: {
         nextLoading={generating}
         nextDisabled={!data.region || (data.region === "other" && !data.customRegion.trim())}
       />
+      {generating && (
+        <p style={{ textAlign: "center", fontSize: 13, color: "#9CA3AF", marginTop: 12 }}>
+          Finding your best segments, pain points, and first channels.
+        </p>
+      )}
     </div>
   );
 }
@@ -580,24 +585,41 @@ export default function Onboarding() {
     try { localStorage.removeItem("audense-chat-messages"); } catch {}
 
     setGenerating(true);
+
+    const TIMEOUT_MS = 15_000;
+
     try {
-      const res = await fetch("/api/audience/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productIdea:   onboardingData.productIdea,
-          targetUsers:   onboardingData.targetUsers,
-          problem:       onboardingData.problem,
-          goal:          onboardingData.goal,
-          finalCategory: onboardingData.finalCategory,
-          finalRegion:   onboardingData.finalRegion,
-        }),
-      });
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      const map = await res.json();
-      saveAudienceMap(map);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+      let map: unknown = null;
+      try {
+        const res = await fetch("/api/audience/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            productIdea:   onboardingData.productIdea,
+            targetUsers:   onboardingData.targetUsers,
+            problem:       onboardingData.problem,
+            goal:          onboardingData.goal,
+            finalCategory: onboardingData.finalCategory,
+            finalRegion:   onboardingData.finalRegion,
+          }),
+        });
+        clearTimeout(timer);
+        if (res.ok) map = await res.json();
+      } catch {
+        clearTimeout(timer);
+      }
+
+      if (map) {
+        saveAudienceMap(map as Parameters<typeof saveAudienceMap>[0]);
+      } else {
+        /* Timed out, network error, or bad response — fall back to local mock */
+        generateMockAudienceMap(onboardingData);
+      }
     } catch {
-      /* Backend unavailable — fall back to local mock so demo never breaks */
       generateMockAudienceMap(onboardingData);
     } finally {
       setGenerating(false);

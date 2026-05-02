@@ -268,15 +268,18 @@ Rules:
 
   try {
     const client = new OpenAI({ apiKey, baseURL });
-    const response = await client.chat.completions.create({
-      model: "gpt-5.4",
-      max_completion_tokens: 8192,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: { type: "json_object" },
-    });
+    const response = await client.chat.completions.create(
+      {
+        model: "gpt-5.4",
+        max_completion_tokens: 8192,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: { type: "json_object" },
+      },
+      { signal: AbortSignal.timeout(15_000) },
+    );
 
     const content = response.choices[0]?.message?.content;
     if (!content) return null;
