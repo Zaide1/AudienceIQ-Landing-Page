@@ -60,30 +60,6 @@ function DotGrid() {
         overflow: "hidden",
       }}
     >
-      {/* Legend */}
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 12,
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          fontSize: 9.5,
-          fontWeight: 600,
-          color: "#6B7280",
-        }}
-      >
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#7C3AED", display: "inline-block" }} />
-          Covered 7%
-        </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#E5E7EB", display: "inline-block" }} />
-          Untapped 93%
-        </span>
-      </div>
-
       {/* Dot grid */}
       <div
         style={{
@@ -360,14 +336,9 @@ function DashboardPanel() {
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#FAFAFA", overflow: "hidden" }}>
       {/* Header */}
-      <div style={{ padding: "10px 18px", borderBottom: "1px solid #F3F4F6", background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>Your Audience</div>
-          <div style={{ fontSize: 10.5, color: "#6B7280", marginTop: 2 }}>Market insights for AI Calorie Tracker · UK</div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 5, border: "1px solid #E5E7EB", borderRadius: 7, padding: "4px 9px", fontSize: 10.5, fontWeight: 600, color: "#374151", background: "#fff" }}>
-          + Export Data
-        </div>
+      <div style={{ padding: "10px 18px", borderBottom: "1px solid #F3F4F6", background: "#fff", flexShrink: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>Your Audience</div>
+        <div style={{ fontSize: 10.5, color: "#6B7280", marginTop: 2 }}>Market insights for AI Calorie Tracker · UK</div>
       </div>
 
       {/* Content — no scroll */}
@@ -376,9 +347,26 @@ function DashboardPanel() {
 
         {/* Audience Universe */}
         <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-            <span style={{ fontWeight: 700, fontSize: 12, color: "#111827" }}>Audience Universe</span>
-            <span style={{ fontSize: 9.5, color: "#9CA3AF" }}>Each dot ≈ 2,000 people in your reachable audience</span>
+          {/* Row 1: title + ℹ on left, legend on right */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ fontWeight: 700, fontSize: 12, color: "#111827" }}>Audience Universe</span>
+              <span style={{ fontSize: 10, color: "#9CA3AF", cursor: "default", lineHeight: 1 }} title="Visual map of your reachable audience">ⓘ</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 9.5, fontWeight: 600, color: "#6B7280" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#7C3AED", display: "inline-block", flexShrink: 0 }} />
+                Covered 7%
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#E5E7EB", border: "1px solid #D1D5DB", display: "inline-block", flexShrink: 0 }} />
+                Untapped 93%
+              </span>
+            </div>
+          </div>
+          {/* Row 2: subtitle */}
+          <div style={{ fontSize: 9.5, color: "#9CA3AF", marginBottom: 6 }}>
+            Each dot represents ~2,000 people in your reachable audience
           </div>
           <DotGrid />
         </div>
