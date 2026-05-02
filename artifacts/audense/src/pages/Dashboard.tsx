@@ -766,6 +766,12 @@ export default function Dashboard() {
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
 
+  /* ── Dynamic chips ──────────────────────────────────────────────── */
+  /* Chips from the last AI response (suggestedActions) */
+  const [suggestedChips, setSuggestedChips] = useState<string[]>([]);
+  /* True once the user has explicitly clicked a segment card/dot */
+  const [hasSelectedSegment, setHasSelectedSegment] = useState(false);
+
   const [researchRunning, setResearchRunning] = useState(false);
   const [researchToast, setResearchToast] = useState<{ kind: "success" | "error" | "info"; text: string } | null>(null);
 
@@ -900,6 +906,8 @@ export default function Dashboard() {
           proposedMap: data.proposedAudienceMap,
         };
         setMessages((prev) => [...prev, confirmMsg]);
+        /* Chips switch to pending mode — clear any previous suggestedActions */
+        setSuggestedChips([]);
       } else {
         const aiMsg: Message = {
           id: ++msgId.current,
@@ -907,6 +915,10 @@ export default function Dashboard() {
           text: data.message,
         };
         setMessages((prev) => [...prev, aiMsg]);
+        /* Replace chips with suggestedActions from this response if provided */
+        const actions = data.suggestedActions ?? [];
+        const unique = [...new Set(actions.map((a: string) => a.trim()).filter(Boolean))].slice(0, 3);
+        setSuggestedChips(unique);
       }
     } catch {
       /* Network/parse error — show generic fallback */
@@ -938,6 +950,7 @@ export default function Dashboard() {
     pendingUpdateRef.current = null;
     pendingMapRef.current = null;
     setPendingUpdateId(null);
+    setSuggestedChips([]);
 
     if (map) {
       setAudienceMap(map);
@@ -958,6 +971,7 @@ export default function Dashboard() {
     pendingUpdateRef.current = null;
     pendingMapRef.current = null;
     setPendingUpdateId(null);
+    setSuggestedChips([]);
 
     const dismissMsg: Message = {
       id: ++msgId.current,
@@ -967,14 +981,50 @@ export default function Dashboard() {
     setMessages((prev) => [...prev, dismissMsg]);
   };
 
-  const CHIPS = [
-    "Who should I target first?",
-    "Where do I find them?",
-    "What message works?",
-  ];
+  /* ── Active chips derivation ────────────────────────────────────── */
+  const activeChips = useMemo(() => {
+    /* Priority 1: pending update overrides everything */
+    if (pendingUpdateId !== null) {
+      return ["Confirm update", "Dismiss update", "What changed?"];
+    }
+    /* Priority 2: suggestedActions returned by the last AI response */
+    if (suggestedChips.length > 0) {
+      return suggestedChips;
+    }
+    /* Priority 3: user has explicitly clicked a segment */
+    if (hasSelectedSegment && selectedSegmentId) {
+      const seg = segments.find((s) => s.id === selectedSegmentId);
+      if (seg) {
+        return [
+          `Why ${seg.name}?`,
+          `Where do I find ${seg.name}?`,
+          `What objections will ${seg.name} have?`,
+        ];
+      }
+    }
+    /* Priority 4: default — reference top segment by name */
+    const topSeg = segments[0];
+    if (topSeg) {
+      return [
+        "Who should I target first?",
+        `Where do I find ${topSeg.name}?`,
+        `What message works for ${topSeg.name}?`,
+      ];
+    }
+    return ["Who should I target first?", "Where do I find them?", "What message works?"];
+  }, [pendingUpdateId, suggestedChips, hasSelectedSegment, selectedSegmentId, segments]);
 
   const sendChip = async (chip: string) => {
-    if (isSending || pendingUpdateRef.current !== null) return;
+    if (isSending) return;
+    /* Pending update special chips */
+    if (chip === "Confirm update") { handleConfirm(); return; }
+    if (chip === "Dismiss update") { handleDismiss(); return; }
+    /* "What changed?" is only meaningful while a pending update still exists */
+    if (chip === "What changed?" && pendingUpdateRef.current === null) return;
+    /* Regular chips cannot be sent while a pending update is unresolved
+       (except the three above which are handled above) */
+    if (pendingUpdateRef.current !== null && chip !== "What changed?") return;
+    setSuggestedChips([]);
     setIsSending(true);
     try {
       await callRefineAPI(chip);
@@ -1073,26 +1123,41 @@ export default function Dashboard() {
             flexShrink: 0,
           }}
         >
-          {CHIPS.map((chip) => (
-            <button
-              key={chip}
-              onClick={() => sendChip(chip)}
-              disabled={isSending || pendingUpdateId !== null}
-              style={{
-                background: (isSending || pendingUpdateId !== null) ? "#F9FAFB" : "#F5F3FF",
-                border: "1px solid #DDD6FE",
-                borderRadius: 20,
-                padding: "5px 11px",
-                fontSize: 11.5,
-                fontWeight: 500,
-                color: (isSending || pendingUpdateId !== null) ? "#9CA3AF" : "#6D28D9",
-                cursor: (isSending || pendingUpdateId !== null) ? "not-allowed" : "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {chip}
-            </button>
-          ))}
+          {activeChips.map((chip) => {
+            const isPending = pendingUpdateId !== null;
+            const isConfirm = chip === "Confirm update";
+            const isDismiss = chip === "Dismiss update";
+            const disabled  = isSending;
+            const accentBg  = isConfirm ? "#F0FDF4" : isDismiss ? "#FEF2F2" : isPending ? "#FFFBEB" : "#F5F3FF";
+            const accentBorder = isConfirm ? "#BBF7D0" : isDismiss ? "#FECACA" : isPending ? "#FDE68A" : "#DDD6FE";
+            const accentColor  = isConfirm ? "#15803D" : isDismiss ? "#B91C1C" : isPending ? "#92400E" : "#6D28D9";
+            return (
+              <button
+                key={chip}
+                onClick={() => sendChip(chip)}
+                disabled={disabled}
+                title={chip}
+                style={{
+                  background: disabled ? "#F9FAFB" : accentBg,
+                  border: `1px solid ${disabled ? "#E5E7EB" : accentBorder}`,
+                  borderRadius: 20,
+                  padding: "5px 11px",
+                  fontSize: 11.5,
+                  fontWeight: isConfirm || isDismiss ? 600 : 500,
+                  color: disabled ? "#9CA3AF" : accentColor,
+                  cursor: disabled ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
+                  maxWidth: 200,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  opacity: disabled ? 0.6 : 1,
+                  transition: "opacity 0.15s",
+                }}
+              >
+                {chip}
+              </button>
+            );
+          })}
         </div>
 
         {/* Chat input */}
@@ -1482,7 +1547,11 @@ export default function Dashboard() {
               segments={segments}
               selectedId={selectedSegmentId}
               hoveredId={hoveredSegmentId}
-              onSelect={setSelectedSegmentId}
+              onSelect={(id) => {
+                setSelectedSegmentId(id);
+                setHasSelectedSegment(true);
+                setSuggestedChips([]);
+              }}
               onHover={setHoveredSegmentId}
             />
           </div>
@@ -1512,7 +1581,11 @@ export default function Dashboard() {
                 return (
                   <button
                     key={seg.id}
-                    onClick={() => setSelectedSegmentId(isActive ? null : seg.id)}
+                    onClick={() => {
+                      setSelectedSegmentId(isActive ? null : seg.id);
+                      setHasSelectedSegment(true);
+                      setSuggestedChips([]);
+                    }}
                     onMouseEnter={() => setHoveredSegmentId(seg.id)}
                     onMouseLeave={() => setHoveredSegmentId(null)}
                     style={{

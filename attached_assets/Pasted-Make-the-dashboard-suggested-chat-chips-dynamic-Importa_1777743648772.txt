@@ -1,0 +1,84 @@
+Make the dashboard suggested chat chips dynamic.
+
+Important:
+- Do not change dashboard layout.
+- Do not change AudienceUniverseMap visuals.
+- Do not change onboarding.
+- Do not change routing.
+- Do not change backend data contracts unless necessary.
+- Keep the existing chat/refinement endpoint working.
+- Keep out-of-scope guardrails working.
+
+Current issue:
+The chips above the chat input are static:
+- “Who should I target first?”
+- “Where do I find them?”
+- “What message works?”
+
+They should change based on:
+- the current audience map
+- selected segment
+- latest Audense response
+- suggestedActions returned by the chat endpoint
+- whether a pending map update exists
+
+Goal:
+Make the chips feel contextual and agent-like.
+
+Behaviour:
+1. Default chips
+When the dashboard first loads, show useful chips based on the current AudienceMapResult:
+- “Who should I target first?”
+- “Where do I find {topSegmentName}?”
+- “What message works for {topSegmentName}?”
+
+Use the highest-percent segment as topSegmentName.
+
+2. Selected segment chips
+When a user selects/clicks a segment card or map cluster, update chips to that segment:
+- “Why {segmentName}?”
+- “Where do I find {segmentName}?”
+- “What objections will {segmentName} have?”
+
+3. After AI response
+If the chat/refinement endpoint returns suggestedActions, replace the chips with those suggestedActions.
+- Limit to 3 chips.
+- Trim long chips visually if needed.
+- Clicking a chip sends it as a user message immediately.
+- Do not duplicate the same chip text.
+
+4. Pending update state
+If pendingUpdate exists, chips should change to:
+- “Confirm update”
+- “Dismiss update”
+- “What changed?”
+
+Clicking Confirm update should apply the pending update.
+Clicking Dismiss update should dismiss it.
+Clicking What changed? should send that as a normal chat message only if pending update remains.
+
+5. After confirm/dismiss
+After confirm or dismiss, regenerate chips from the new current map or selected segment.
+
+6. Loading state
+While Audense is responding, disable chips or show them muted so users cannot spam multiple requests.
+
+7. Persistence
+Do not store chips in localStorage.
+They should be derived from current state each time.
+
+Validation:
+- On fresh dashboard load, chips reference the top segment.
+- Selecting a different segment updates the chips.
+- Asking “Give me a TikTok plan for {segment}” replaces chips with backend suggestedActions.
+- Pending update shows Confirm/Dismiss/What changed chips.
+- Confirm applies the update once.
+- Dismiss clears pending update.
+- Chips are disabled while chat is loading.
+- Out-of-scope guardrail still works.
+
+After implementing, explain:
+- Where chips are derived
+- How selected segment affects chips
+- How suggestedActions override default chips
+- How pending update chips work
