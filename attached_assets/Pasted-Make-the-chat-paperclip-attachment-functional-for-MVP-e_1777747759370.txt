@@ -1,0 +1,109 @@
+Make the chat paperclip attachment functional for MVP evidence uploads.
+
+Important:
+- Do not change dashboard layout.
+- Do not change onboarding.
+- Do not add Supabase/auth yet.
+- Do not add permanent cloud storage yet.
+- Do not change AudienceMapResult shape unless absolutely necessary.
+- Keep existing chat/refinement endpoint working.
+- Keep existing fallback behaviour.
+
+Goal:
+Allow a founder to attach a screenshot or short evidence file to the current Audense chat/research session, so Audense can use it as context.
+
+Supported MVP file types:
+- image/png
+- image/jpeg
+- image/webp
+- text/plain
+Optional:
+- application/pdf only if easy, otherwise skip for now.
+
+Limits:
+- max file size: 5MB
+- max 3 attachments per chat message
+- if invalid type or too large, show a friendly error in the chat UI.
+
+Frontend:
+1. Make the paperclip icon open a hidden file input.
+2. Allow selecting supported files.
+3. Show selected attachments above the chat input as small chips/cards:
+   - file name
+   - file type icon/thumbnail for images if easy
+   - remove button
+4. When the user sends a message with attachments, include them in the request to the backend.
+5. If the user sends only attachments with no text, use a default userMessage:
+   "Use this as evidence for my audience research."
+6. Append the attachment message to the chat visually.
+7. Keep chat messages stored separately in audense-chat-messages.
+
+Backend:
+Create endpoint:
+POST /api/chat/refine-with-attachments
+
+Request:
+- multipart/form-data
+- onboardingData as JSON string
+- currentAudienceMap as JSON string
+- messages as JSON string
+- userMessage as string
+- files[] attachments
+
+Behaviour:
+1. Validate file type and size.
+2. For text/plain:
+   - read text content
+   - truncate to safe length
+3. For images:
+   - if the existing OpenAI/Replit AI integration supports vision, send the image to the model.
+   - ask the model to extract relevant audience/market evidence from the screenshot.
+   - if vision is unavailable or fails, return a safe fallback saying the attachment was received but could not be analysed yet.
+4. Then call the same Audense chat/refinement logic using:
+   - onboardingData
+   - currentAudienceMap
+   - recent messages
+   - userMessage
+   - extracted attachment evidence
+
+Response shape should match existing chat response:
+{
+  "type": "answer" | "proposed_update",
+  "message": string,
+  "proposedAudienceMap": AudienceMapResult | null,
+  "suggestedActions": string[]
+}
+
+AI behaviour:
+- Treat attachments as evidence for the current research session only.
+- Do not claim the attachment proves the entire market.
+- If the attachment is a screenshot of comments/reviews, summarise the visible signal:
+  - pain point
+  - objection
+  - desired outcome
+  - competitor mention if visible
+  - possible segment affected
+- If useful, suggest whether the map should change.
+- Only return proposed_update if the attachment clearly supports a map refinement or the user asks for one.
+
+Fallback:
+- If attachment parsing fails, return:
+  "I received the attachment, but I couldn't analyse it reliably yet. Tell me what part you want me to focus on, and I’ll use it as context."
+- Never crash the dashboard.
+
+Validation:
+- Upload a PNG screenshot with a message: should return an answer.
+- Upload a text file with user feedback: should use it in the response.
+- Unsupported file type shows friendly error.
+- File over 5MB shows friendly error.
+- Sending without attachment still uses existing /api/chat/refine flow.
+- Existing map/chat/onboarding localStorage keys still work.
+
+After implementing, explain:
+- Files changed
+- Supported file types
+- Size limits
+- How attachments are passed to backend
+- How image/text evidence is analysed
+- Fallback behaviour
+- What is not persisted yet

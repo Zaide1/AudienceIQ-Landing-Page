@@ -1,8 +1,18 @@
 import { Router, type IRouter } from "express";
 import OpenAI from "openai";
+import multer from "multer";
 import { type AudienceMapResult, calculateCoverageEstimate, recalculateCoverageFields } from "../lib/audienceAI";
 
 const router: IRouter = Router();
+
+/* ─── Multer (in-memory, 5 MB per file, up to 3 files) ──────────── */
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 3 },
+});
+
+const ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "text/plain"]);
+const MAX_TEXT_CHARS = 3000;
 
 /* ─── Constants ──────────────────────────────────────────────────── */
 const AI_TIMEOUT_MS  = 13_000;
@@ -38,28 +48,13 @@ interface ChatRefineResponse {
 }
 
 /* ─── Out-of-scope classifier ────────────────────────────────────── */
-/*
- * These patterns match clearly out-of-scope requests.
- * Each regex is checked against the full userMessage (case-insensitive).
- * A separate audience-framing override lets through messages that are
- * obviously about product/audience research even if they touch a
- * sensitive domain (e.g. "My app helps GLP-1 users — who should I target?").
- */
-
 const OOS_MEDICAL = /\b(should i prescribe|prescrib(e|ing|ed) (?:this|it|them)|glp.?1 safety|ozempic safety|semaglutide safety|is (?:this|it) safe to (take|use)|dosage (?:of|for) \w+|drug interaction|contraindication|clinical trial result|medical advice|treatment plan|diagnos[ei]s? (?:of|for)|my patient (asked|needs|has)|as a (doctor|physician|nurse|clinician))\b/i;
-
 const OOS_LEGAL = /\b(legal advice|should i sue|am i liable|can they sue me|statute of limitations|habeas corpus|attorney advice|lawyer advice)\b/i;
-
 const OOS_FINANCIAL = /\b(should i invest in|which stocks? (to|should)|stock pick|crypto advice|financial advice|investment advice|tax advice for me)\b/i;
-
 const OOS_GENERAL = /\b(write my essay|do my homework|explain (?:photosynthesis|evolution|quantum mechanics|general relativity) (?:to me|for me)|what is the capital of|history of (?:world war|the roman|ancient))\b/i;
 
 type OOSCategory = "medical" | "legal" | "financial" | "general";
 
-/*
- * If a message contains out-of-scope patterns BUT is clearly framed as
- * product/audience research, the audience framing takes priority → allowed.
- */
 const AUDIENCE_FRAMING = [
   /\b(my product|our product|my app|our app|my startup|my business|my service|my platform|my tool)\b/i,
   /\b(who should i target|who (is|are) (the |my )?(audience|users?|customers?)|target audience|ideal user)\b/i,
@@ -70,14 +65,11 @@ const AUDIENCE_FRAMING = [
 
 function classifyOOS(msg: string): OOSCategory | null {
   let category: OOSCategory | null = null;
-  if (OOS_MEDICAL.test(msg))   category = "medical";
+  if (OOS_MEDICAL.test(msg))        category = "medical";
   else if (OOS_LEGAL.test(msg))     category = "legal";
   else if (OOS_FINANCIAL.test(msg)) category = "financial";
   else if (OOS_GENERAL.test(msg))   category = "general";
-
   if (!category) return null;
-
-  /* Audience research framing overrides the block */
   const hasAudienceFraming = AUDIENCE_FRAMING.some((p) => p.test(msg));
   return hasAudienceFraming ? null : category;
 }
@@ -96,7 +88,6 @@ function buildOOSResponse(ctx: string, category: OOSCategory): ChatRefineRespons
     category === "legal"     ? "legal" :
     category === "financial" ? "finance" :
     "general-purpose";
-
   return {
     type: "answer",
     message: `Not my lane — I'm an audience coach, not a ${domain} advisor. I'm here to help map who wants ${ctx}, where they are, and how to reach them. What do you want to know about your audience?`,
@@ -138,7 +129,7 @@ function validateProposedMap(raw: unknown): AudienceMapResult | null {
   if (!Array.isArray(r.insights) || r.insights.length < 1) return null;
 
   let pctSum = 0;
-  const segments = [];
+  const segments: Array<Record<string, unknown> & { percent: number; color: typeof COLORS[number] }> = [];
   for (let i = 0; i < 5; i++) {
     const s = r.segments[i] as Record<string, unknown>;
     if (!s || typeof s.id !== "string" || typeof s.name !== "string") return null;
@@ -146,7 +137,7 @@ function validateProposedMap(raw: unknown): AudienceMapResult | null {
     if (!Array.isArray(s.painPoints) || !Array.isArray(s.platforms)) return null;
     if (typeof s.whyThisSegment !== "string" || typeof s.acquisitionAngle !== "string") return null;
     pctSum += s.percent;
-    segments.push({ ...s, color: COLORS[i]! });
+    segments.push({ ...s, percent: s.percent as number, color: COLORS[i]! });
   }
 
   if (Math.abs(pctSum - 100) > 5) return null;
@@ -166,7 +157,6 @@ function validateProposedMap(raw: unknown): AudienceMapResult | null {
     description: String(ins.description ?? ""),
   }));
 
-  /* Validate coverage range and always recalculate derived fields */
   const rawCovPct = cov.percent as number;
   const validCovPct = rawCovPct >= 3 && rawCovPct <= 28
     ? rawCovPct
@@ -185,7 +175,7 @@ function validateProposedMap(raw: unknown): AudienceMapResult | null {
     reachableAudience: { min: ra.min as number, max: ra.max as number, label: ra.label as string },
     coverage: covField,
     untapped: untField,
-    segments: segments as AudienceMapResult["segments"],
+    segments: segments as unknown as AudienceMapResult["segments"],
     insights,
   };
 }
@@ -245,76 +235,48 @@ function buildFallbackUpdate(map: AudienceMapResult): ChatRefineResponse {
   };
 }
 
-/* ─── Main route ─────────────────────────────────────────────────── */
-router.post("/chat/refine", async (req, res) => {
-  const body = req.body as ChatRefineRequest;
-  const { onboardingData, currentAudienceMap, messages, userMessage } = body;
+/* ─── Shared system prompt builder ──────────────────────────────── */
+function buildSystemPrompt(body: ChatRefineRequest, attachmentEvidence?: string): string {
+  const { onboardingData, currentAudienceMap, messages } = body;
 
-  if (!userMessage?.trim()) {
-    res.status(400).json({ error: "userMessage is required" });
-    return;
-  }
+  const recentContext = (messages ?? [])
+    .filter((m) => m.role === "user" || m.role === "ai")
+    .slice(-6)
+    .map((m) => `${m.role === "user" ? "Founder" : "Audense"}: ${m.text}`)
+    .join("\n");
 
-  /* ── Out-of-scope guard (no AI call needed) ───────────────────── */
-  const oosCategory = classifyOOS(userMessage);
-  if (oosCategory) {
-    req.log.info({ blocked: oosCategory }, "chat/refine OOS blocked");
-    res.json(buildOOSResponse(productContext(body), oosCategory));
-    return;
-  }
+  const segmentSummary = currentAudienceMap.segments
+    .map((s) => `- ${s.name} (${s.percent}%): ${s.painPoints.slice(0, 2).join(", ")}. Platforms: ${s.platforms.slice(0, 2).join(", ")}. Angle: ${s.acquisitionAngle}`)
+    .join("\n");
 
-  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
-  const apiKey  = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const productCtx = productContext(body);
 
-  if (!baseURL || !apiKey) {
-    const fallback = isRefinementRequest(userMessage)
-      ? buildFallbackUpdate(currentAudienceMap)
-      : buildFallbackAnswer(currentAudienceMap);
-    res.json(fallback);
-    return;
-  }
+  const sourceMode  = currentAudienceMap.evidenceSummary?.sourceMode ?? "mock";
+  const sourcesUsed = currentAudienceMap.evidenceSummary?.sourcesUsed ?? [];
+  const usedHN      = sourcesUsed.includes("hacker_news");
+  const category    = currentAudienceMap.category ?? "";
+  const isTechCat   = ["developer", "saas", "ai", "b2b", "software", "fintech", "edtech", "productivity", "analytics"]
+    .some((t) => category.toLowerCase().includes(t));
 
-  /* ── Abort controller for 13s timeout ────────────────────────── */
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  const evidenceNote = sourceMode === "live_research"
+    ? usedHN
+      ? `This map is backed by live public Hacker News discussion signals (${currentAudienceMap.evidenceSummary?.totalSignals ?? 0} signals). ${isTechCat ? "HN is well-suited for this technical category." : "Note: HN skews toward tech/startup audiences — treat these as partial evidence for a mainstream consumer product."}`
+      : "This map is backed by live research signals."
+    : `This map is based on ${sourceMode === "ai_hypothesis" ? "AI-generated hypotheses" : "directional mock estimates"} — no live Reddit, X/Twitter, TikTok, YouTube, or competitor data has been read yet.`;
 
-  try {
-    const client = new OpenAI({ apiKey, baseURL });
+  const evidenceContext = currentAudienceMap.segments
+    .filter((s) => s.evidence)
+    .map((s) => {
+      const ev = s.evidence!;
+      return `${s.name}: needs="${ev.unmetNeeds.slice(0, 2).join("; ")}" | objections="${ev.objections.slice(0, 2).join("; ")}"`;
+    })
+    .join("\n");
 
-    const recentContext = (messages ?? [])
-      .filter((m) => m.role === "user" || m.role === "ai")
-      .slice(-6)
-      .map((m) => `${m.role === "user" ? "Founder" : "Audense"}: ${m.text}`)
-      .join("\n");
+  const attachmentSection = attachmentEvidence
+    ? `\n═══ ATTACHMENT EVIDENCE ═══\nThe founder has attached real-world evidence. Use it to sharpen your response and suggest map updates only if the evidence clearly supports one.\nDo not claim attachments prove the entire market. If it's a screenshot of comments/reviews, summarise visible signals: pain points, objections, desired outcomes, competitor mentions, and which segment it likely affects.\n\n${attachmentEvidence}\n`
+    : "";
 
-    const segmentSummary = currentAudienceMap.segments
-      .map((s) => `- ${s.name} (${s.percent}%): ${s.painPoints.slice(0, 2).join(", ")}. Platforms: ${s.platforms.slice(0, 2).join(", ")}. Angle: ${s.acquisitionAngle}`)
-      .join("\n");
-
-    const productCtx = productContext(body);
-
-    const sourceMode   = currentAudienceMap.evidenceSummary?.sourceMode ?? "mock";
-    const sourcesUsed  = currentAudienceMap.evidenceSummary?.sourcesUsed ?? [];
-    const usedHN       = sourcesUsed.includes("hacker_news");
-    const category     = currentAudienceMap.category ?? "";
-    const isTechCat    = ["developer", "saas", "ai", "b2b", "software", "fintech", "edtech", "productivity", "analytics"]
-      .some((t) => category.toLowerCase().includes(t));
-
-    const evidenceNote = sourceMode === "live_research"
-      ? usedHN
-        ? `This map is backed by live public Hacker News discussion signals (${currentAudienceMap.evidenceSummary?.totalSignals ?? 0} signals). ${isTechCat ? "HN is well-suited for this technical category." : "Note: HN skews toward tech/startup audiences — treat these as partial evidence for a mainstream consumer product."}`
-        : "This map is backed by live research signals."
-      : `This map is based on ${sourceMode === "ai_hypothesis" ? "AI-generated hypotheses" : "directional mock estimates"} — no live Reddit, X/Twitter, TikTok, YouTube, or competitor data has been read yet.`;
-
-    const evidenceContext = currentAudienceMap.segments
-      .filter((s) => s.evidence)
-      .map((s) => {
-        const ev = s.evidence!;
-        return `${s.name}: needs="${ev.unmetNeeds.slice(0, 2).join("; ")}" | objections="${ev.objections.slice(0, 2).join("; ")}"`;
-      })
-      .join("\n");
-
-    const systemPrompt = `You are Audense, a sharp audience intelligence coach for early-stage founders.
+  return `You are Audense, a sharp audience intelligence coach for early-stage founders.
 Be concise, specific, and practical. Ground every answer in the founder's current audience map.
 Never invent statistics. Treat audience numbers as directional MVP estimates.
 No emojis. No robotic filler. Short, punchy, founder-friendly.
@@ -332,7 +294,7 @@ ${evidenceContext ? `\nEvidence signals (hypotheses):\n${evidenceContext}` : ""}
 
 Recent conversation:
 ${recentContext || "(none)"}
-
+${attachmentSection}
 ═══ EVIDENCE HONESTY ═══
 ${evidenceNote}
 If the user asks what people are saying on Reddit, X, TikTok, YouTube, or competitor pages — be honest:
@@ -396,6 +358,42 @@ If out-of-scope: return suggestedActions as [].
 
 Return ONLY valid JSON (no markdown, no text outside JSON):
 {"type":"answer|proposed_update","message":"…","proposedAudienceMap":null,"suggestedActions":["…"]}`;
+}
+
+/* ─── Main chat/refine route ─────────────────────────────────────── */
+router.post("/chat/refine", async (req, res) => {
+  const body = req.body as ChatRefineRequest;
+  const { onboardingData, currentAudienceMap, messages, userMessage } = body;
+
+  if (!userMessage?.trim()) {
+    res.status(400).json({ error: "userMessage is required" });
+    return;
+  }
+
+  const oosCategory = classifyOOS(userMessage);
+  if (oosCategory) {
+    req.log.info({ blocked: oosCategory }, "chat/refine OOS blocked");
+    res.json(buildOOSResponse(productContext(body), oosCategory));
+    return;
+  }
+
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  const apiKey  = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+
+  if (!baseURL || !apiKey) {
+    const fallback = isRefinementRequest(userMessage)
+      ? buildFallbackUpdate(currentAudienceMap)
+      : buildFallbackAnswer(currentAudienceMap);
+    res.json(fallback);
+    return;
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+  try {
+    const client = new OpenAI({ apiKey, baseURL });
+    const systemPrompt = buildSystemPrompt({ onboardingData, currentAudienceMap, messages, userMessage });
 
     const response = await client.chat.completions.create(
       {
@@ -416,7 +414,6 @@ Return ONLY valid JSON (no markdown, no text outside JSON):
     if (!content) throw new Error("Empty AI response");
 
     const parsed = JSON.parse(content) as Record<string, unknown>;
-
     const type = parsed.type === "proposed_update" ? "proposed_update" : "answer";
     const message = typeof parsed.message === "string"
       ? parsed.message
@@ -448,5 +445,168 @@ Return ONLY valid JSON (no markdown, no text outside JSON):
     res.json(fallback);
   }
 });
+
+/* ─── Attachment upload route ────────────────────────────────────── */
+router.post(
+  "/chat/refine-with-attachments",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (upload.array as any)("files", 3),
+  async (req, res) => {
+    /* ── Parse form fields ────────────────────────────────────────── */
+    let onboardingData: ChatRefineRequest["onboardingData"] = {};
+    let currentAudienceMap: AudienceMapResult;
+    let messages: ChatMessage[] = [];
+    let userMessage: string;
+
+    try {
+      onboardingData = JSON.parse((req.body.onboardingData as string) || "{}");
+      currentAudienceMap = JSON.parse(req.body.currentAudienceMap as string);
+      messages = JSON.parse((req.body.messages as string) || "[]");
+      userMessage = ((req.body.userMessage as string) || "").trim()
+        || "Use this as evidence for my audience research.";
+    } catch {
+      res.status(400).json({ error: "Invalid JSON in form fields." });
+      return;
+    }
+
+    if (!currentAudienceMap) {
+      res.status(400).json({ error: "currentAudienceMap is required." });
+      return;
+    }
+
+    /* ── Validate files ───────────────────────────────────────────── */
+    const files = (req.files ?? []) as Express.Multer.File[];
+
+    for (const file of files) {
+      if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+        res.status(400).json({
+          error: `File type not supported: ${file.mimetype}. Allowed: PNG, JPEG, WebP, plain text.`,
+        });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        res.status(400).json({
+          error: `"${file.originalname}" exceeds the 5 MB limit.`,
+        });
+        return;
+      }
+    }
+
+    /* ── Extract evidence from files ─────────────────────────────── */
+    const textSnippets: string[] = [];
+    const imageFiles: Express.Multer.File[] = [];
+
+    for (const file of files) {
+      if (file.mimetype === "text/plain") {
+        const content = file.buffer.toString("utf-8").slice(0, MAX_TEXT_CHARS);
+        textSnippets.push(`[Text file: ${file.originalname}]\n${content}`);
+      } else {
+        imageFiles.push(file);
+      }
+    }
+
+    const attachmentEvidence = textSnippets.length > 0
+      ? textSnippets.join("\n\n")
+      : undefined;
+
+    /* ── Build a request-shaped object for helpers ────────────────── */
+    const body: ChatRefineRequest = { onboardingData, currentAudienceMap, messages, userMessage };
+
+    /* ── AI or fallback ───────────────────────────────────────────── */
+    const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+    const apiKey  = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+
+    if (!baseURL || !apiKey) {
+      const fallback = isRefinementRequest(userMessage)
+        ? buildFallbackUpdate(currentAudienceMap)
+        : buildFallbackAnswer(currentAudienceMap);
+      res.json(fallback);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+    try {
+      const client = new OpenAI({ apiKey, baseURL });
+      const systemPrompt = buildSystemPrompt(body, attachmentEvidence);
+
+      /* Build user message content — include images for vision if present */
+      type TextPart = { type: "text"; text: string };
+      type ImagePart = { type: "image_url"; image_url: { url: string } };
+      type ContentPart = TextPart | ImagePart;
+
+      let userContent: string | ContentPart[];
+
+      if (imageFiles.length > 0) {
+        const parts: ContentPart[] = [{ type: "text", text: userMessage }];
+        for (const img of imageFiles) {
+          const b64 = img.buffer.toString("base64");
+          parts.push({
+            type: "image_url",
+            image_url: { url: `data:${img.mimetype};base64,${b64}` },
+          });
+        }
+        userContent = parts;
+      } else {
+        userContent = userMessage;
+      }
+
+      const response = await client.chat.completions.create(
+        {
+          model: "gpt-5.4",
+          max_completion_tokens: MAX_TOKENS,
+          messages: [
+            { role: "system", content: systemPrompt },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { role: "user", content: userContent as any },
+          ],
+          response_format: { type: "json_object" },
+        },
+        { signal: controller.signal },
+      );
+
+      clearTimeout(timer);
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) throw new Error("Empty AI response");
+
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      const type = parsed.type === "proposed_update" ? "proposed_update" : "answer";
+      const message = typeof parsed.message === "string"
+        ? parsed.message
+        : "I received your attachment. Tell me what part you want me to focus on, and I'll use it as context.";
+      const suggestedActions = Array.isArray(parsed.suggestedActions)
+        ? cleanActions(parsed.suggestedActions as unknown[])
+        : [];
+
+      let proposedAudienceMap: AudienceMapResult | null = null;
+      if (type === "proposed_update" && parsed.proposedAudienceMap) {
+        proposedAudienceMap = validateProposedMap(parsed.proposedAudienceMap);
+        if (!proposedAudienceMap) {
+          req.log.warn("Attachment route: proposed map failed validation — degrading to answer");
+          res.json({ type: "answer", message, proposedAudienceMap: null, suggestedActions } satisfies ChatRefineResponse);
+          return;
+        }
+      }
+
+      req.log.info({ type, files: files.length, aiUsed: true }, "chat/refine-with-attachments OK");
+      res.json({ type, message, proposedAudienceMap, suggestedActions } satisfies ChatRefineResponse);
+
+    } catch (err: unknown) {
+      clearTimeout(timer);
+      const isTimeout = err instanceof Error && err.name === "AbortError";
+      req.log.warn({ timeout: isTimeout, err }, "chat/refine-with-attachments fallback");
+
+      /* Graceful fallback — acknowledge the attachment */
+      res.json({
+        type: "answer",
+        message: "I received the attachment, but I couldn't analyse it reliably yet. Tell me what part you want me to focus on, and I'll use it as context.",
+        proposedAudienceMap: null,
+        suggestedActions: ["What's in this screenshot?", "How does this affect my map?"],
+      } satisfies ChatRefineResponse);
+    }
+  },
+);
 
 export default router;

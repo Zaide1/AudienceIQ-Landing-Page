@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
-  Settings, HelpCircle, Send, Plus, Paperclip,
+  Settings, HelpCircle, Send, Plus, Paperclip, X as XIcon, FileText, Image,
 } from "lucide-react";
 import {
   FaInstagram, FaTiktok, FaYoutube, FaLinkedin,
@@ -738,6 +738,9 @@ export default function Dashboard() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpPopoverOpen, setIsHelpPopoverOpen] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [splitPct, setSplitPct] = useState<number>(loadSplit);
@@ -867,6 +870,39 @@ export default function Dashboard() {
     if (isSending) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [isSending]);
 
+  /* ── Shared helper: handle the API response shape ─────────────── */
+  const handleRefineResponse = useCallback((data: {
+    type: "answer" | "proposed_update";
+    message: string;
+    proposedAudienceMap: AudienceMapResult | null;
+    suggestedActions: string[];
+  }) => {
+    if (data.type === "proposed_update" && data.proposedAudienceMap) {
+      if (pendingUpdateRef.current !== null) {
+        setMessages((prev) => [...prev, {
+          id: ++msgId.current, role: "ai",
+          text: "Please confirm or dismiss the current proposed update before requesting another change.",
+        }]);
+        return;
+      }
+      const confirmId = ++msgId.current;
+      pendingMapRef.current = data.proposedAudienceMap;
+      pendingUpdateRef.current = confirmId;
+      setPendingUpdateId(confirmId);
+      setMessages((prev) => [...prev, {
+        id: confirmId, role: "confirm",
+        text: data.message, proposedMap: data.proposedAudienceMap ?? undefined,
+      }]);
+      setSuggestedChips([]);
+    } else {
+      setMessages((prev) => [...prev, { id: ++msgId.current, role: "ai", text: data.message }]);
+      const actions = data.suggestedActions ?? [];
+      const unique = [...new Set(actions.map((a: string) => a.trim()).filter(Boolean))].slice(0, 3);
+      setSuggestedChips(unique);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const callRefineAPI = async (text: string) => {
     const userMsg: Message = { id: ++msgId.current, role: "user", text };
     setMessages((prev) => [...prev, userMsg]);
@@ -892,62 +928,97 @@ export default function Dashboard() {
         suggestedActions: string[];
       };
 
-      if (data.type === "proposed_update" && data.proposedAudienceMap) {
-        /* Guard: if another update is pending, tell user to resolve it first */
-        if (pendingUpdateRef.current !== null) {
-          const guardMsg: Message = {
-            id: ++msgId.current,
-            role: "ai",
-            text: "Please confirm or dismiss the current proposed update before requesting another change.",
-          };
-          setMessages((prev) => [...prev, guardMsg]);
-          return;
-        }
-
-        const confirmId = ++msgId.current;
-        pendingMapRef.current = data.proposedAudienceMap;
-        pendingUpdateRef.current = confirmId;
-        setPendingUpdateId(confirmId);
-
-        const confirmMsg: Message = {
-          id: confirmId,
-          role: "confirm",
-          text: data.message,
-          proposedMap: data.proposedAudienceMap,
-        };
-        setMessages((prev) => [...prev, confirmMsg]);
-        /* Chips switch to pending mode — clear any previous suggestedActions */
-        setSuggestedChips([]);
-      } else {
-        const aiMsg: Message = {
-          id: ++msgId.current,
-          role: "ai",
-          text: data.message,
-        };
-        setMessages((prev) => [...prev, aiMsg]);
-        /* Replace chips with suggestedActions from this response if provided */
-        const actions = data.suggestedActions ?? [];
-        const unique = [...new Set(actions.map((a: string) => a.trim()).filter(Boolean))].slice(0, 3);
-        setSuggestedChips(unique);
-      }
+      handleRefineResponse(data);
     } catch {
-      /* Network/parse error — show generic fallback */
-      const errMsg: Message = {
-        id: ++msgId.current,
-        role: "ai",
+      setMessages((prev) => [...prev, {
+        id: ++msgId.current, role: "ai",
         text: "I'm having trouble reaching the server. Your audience map is safe — try again in a moment.",
-      };
-      setMessages((prev) => [...prev, errMsg]);
+      }]);
     }
+  };
+
+  /* ── Attachment upload API ─────────────────────────────────────── */
+  const callRefineWithAttachmentsAPI = async (text: string, files: File[]) => {
+    const displayText = text || "Use this as evidence for my audience research.";
+    const suffix = files.length === 1 ? " [1 attachment]" : ` [${files.length} attachments]`;
+    setMessages((prev) => [...prev, {
+      id: ++msgId.current, role: "user",
+      text: displayText + suffix,
+    }]);
+
+    try {
+      const fd = new FormData();
+      fd.append("onboardingData", JSON.stringify(ob ?? {}));
+      fd.append("currentAudienceMap", JSON.stringify(audienceMap));
+      fd.append("messages", JSON.stringify(messages.slice(-10).map((m) => ({ role: m.role, text: m.text }))));
+      fd.append("userMessage", displayText);
+      for (const f of files) fd.append("files", f);
+
+      const res = await fetch("/api/chat/refine-with-attachments", { method: "POST", body: fd });
+      const data = await res.json() as {
+        type: "answer" | "proposed_update";
+        message: string;
+        proposedAudienceMap: AudienceMapResult | null;
+        suggestedActions: string[];
+        error?: string;
+      };
+      if (!res.ok) throw new Error(data.error ?? `API ${res.status}`);
+      handleRefineResponse(data);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Upload failed.";
+      setMessages((prev) => [...prev, {
+        id: ++msgId.current, role: "ai",
+        text: errMsg.startsWith("File") || errMsg.startsWith('"')
+          ? errMsg
+          : "I received the attachment but couldn't analyse it. Tell me what to focus on and I'll use it as context.",
+      }]);
+    }
+  };
+
+  /* ── File input handler ────────────────────────────────────────── */
+  const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "text/plain"];
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (selected.length === 0) return;
+
+    const invalid = selected.find((f) => !ALLOWED_TYPES.includes(f.type));
+    if (invalid) {
+      setAttachmentError(`"${invalid.name}" is not supported. Use PNG, JPEG, WebP, or plain text.`);
+      return;
+    }
+    const tooBig = selected.find((f) => f.size > MAX_FILE_SIZE);
+    if (tooBig) {
+      setAttachmentError(`"${tooBig.name}" exceeds the 5 MB limit.`);
+      return;
+    }
+    const next = [...pendingAttachments, ...selected].slice(0, 3);
+    if (pendingAttachments.length + selected.length > 3) {
+      setAttachmentError("Max 3 attachments per message.");
+    } else {
+      setAttachmentError(null);
+    }
+    setPendingAttachments(next);
   };
 
   const sendMessage = async () => {
     const text = chatInput.trim();
-    if (!text || isSending) return;
+    const hasAttachments = pendingAttachments.length > 0;
+    if (!text && !hasAttachments) return;
+    if (isSending) return;
     setChatInput("");
+    const filesToSend = [...pendingAttachments];
+    setPendingAttachments([]);
+    setAttachmentError(null);
     setIsSending(true);
     try {
-      await callRefineAPI(text);
+      if (hasAttachments) {
+        await callRefineWithAttachmentsAPI(text, filesToSend);
+      } else {
+        await callRefineAPI(text);
+      }
     } finally {
       setIsSending(false);
     }
@@ -1180,6 +1251,84 @@ export default function Dashboard() {
             minWidth: 0,
           }}
         >
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".png,.jpg,.jpeg,.webp,.txt"
+            style={{ display: "none" }}
+            onChange={handleFileSelect}
+          />
+
+          {/* Attachment chips */}
+          {pendingAttachments.length > 0 && (
+            <div style={{
+              display: "flex", flexWrap: "wrap", gap: 6,
+              marginBottom: 8, minWidth: 0,
+            }}>
+              {pendingAttachments.map((f, i) => {
+                const isImage = f.type.startsWith("image/");
+                return (
+                  <div
+                    key={`${f.name}-${i}`}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 5,
+                      padding: "4px 8px 4px 7px",
+                      background: "#F5F3FF", border: "1px solid #DDD6FE",
+                      borderRadius: 20, maxWidth: 180,
+                    }}
+                  >
+                    {isImage
+                      ? <Image size={11} style={{ color: "#7C3AED", flexShrink: 0 }} />
+                      : <FileText size={11} style={{ color: "#7C3AED", flexShrink: 0 }} />
+                    }
+                    <span style={{
+                      fontSize: 11.5, color: "#5B21B6", fontWeight: 500,
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      maxWidth: 120,
+                    }}>
+                      {f.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPendingAttachments((prev) => prev.filter((_, j) => j !== i));
+                        setAttachmentError(null);
+                      }}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        background: "none", border: "none", cursor: "pointer",
+                        padding: 0, flexShrink: 0, color: "#9CA3AF",
+                      }}
+                    >
+                      <XIcon size={11} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Attachment error */}
+          {attachmentError && (
+            <div style={{
+              fontSize: 11.5, color: "#B91C1C", background: "#FEF2F2",
+              border: "1px solid #FECACA", borderRadius: 8,
+              padding: "5px 10px", marginBottom: 8,
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+            }}>
+              <span>{attachmentError}</span>
+              <button
+                type="button"
+                onClick={() => setAttachmentError(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#9CA3AF", padding: 0 }}
+              >
+                <XIcon size={11} />
+              </button>
+            </div>
+          )}
+
           <div
             style={{
               display: "flex",
@@ -1187,7 +1336,7 @@ export default function Dashboard() {
               background: "#F9FAFB",
               border: "1.5px solid #E5E7EB",
               borderRadius: 999,
-              padding: "7px 7px 7px 14px",
+              padding: "7px 7px 7px 8px",
               gap: 8,
               transition: "border-color 0.2s",
               minWidth: 0,
@@ -1200,7 +1349,22 @@ export default function Dashboard() {
               (e.currentTarget as HTMLElement).style.borderColor = "#E5E7EB";
             }}
           >
-            <Paperclip size={14} style={{ color: "#9CA3AF", flexShrink: 0 }} />
+            <button
+              type="button"
+              title="Attach file"
+              disabled={isSending || pendingAttachments.length >= 3}
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "none", border: "none", padding: "2px",
+                cursor: isSending || pendingAttachments.length >= 3 ? "not-allowed" : "pointer",
+                flexShrink: 0, borderRadius: 4,
+                color: pendingAttachments.length > 0 ? "#7C3AED" : "#9CA3AF",
+                opacity: pendingAttachments.length >= 3 ? 0.4 : 1,
+              }}
+            >
+              <Paperclip size={14} />
+            </button>
             <input
               type="text"
               placeholder={isSending ? "Thinking…" : "Ask your audience anything..."}
@@ -1220,17 +1384,17 @@ export default function Dashboard() {
             />
             <button
               onClick={sendMessage}
-              disabled={!chatInput.trim() || isSending || pendingUpdateId !== null}
+              disabled={(!chatInput.trim() && pendingAttachments.length === 0) || isSending || pendingUpdateId !== null}
               style={{
                 width: 30,
                 height: 30,
                 borderRadius: "50%",
-                background: !chatInput.trim() || isSending || pendingUpdateId !== null ? "#C4B5FD" : "#7C3AED",
+                background: ((!chatInput.trim() && pendingAttachments.length === 0) || isSending || pendingUpdateId !== null) ? "#C4B5FD" : "#7C3AED",
                 border: "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                cursor: !chatInput.trim() || isSending || pendingUpdateId !== null ? "not-allowed" : "pointer",
+                cursor: ((!chatInput.trim() && pendingAttachments.length === 0) || isSending || pendingUpdateId !== null) ? "not-allowed" : "pointer",
                 flexShrink: 0,
                 transition: "background 0.2s",
               }}
