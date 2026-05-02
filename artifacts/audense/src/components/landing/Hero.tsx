@@ -57,43 +57,42 @@ export function Hero() {
             Map my audience →
           </Button>
 
-          {/* Social proof */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, paddingLeft: 2 }}>
-            <div style={{ display: "flex" }}>
-              {[
-                { init: "AJ", a: "#9333ea", b: "#6366f1" },
-                { init: "MS", a: "#ec4899", b: "#f43f5e" },
-                { init: "TK", a: "#3b82f6", b: "#06b6d4" },
-              ].map(({ init, a, b }, i) => (
-                <div
-                  key={init}
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: "50%",
-                    border: "2.5px solid #fff",
-                    background: `linear-gradient(135deg, ${a}, ${b})`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#fff",
-                    marginLeft: i === 0 ? 0 : -12,
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
-                    zIndex: 3 - i,
-                    position: "relative",
-                  }}
-                >
-                  {init}
-                </div>
-              ))}
-            </div>
-            <span style={{ fontSize: 16, fontWeight: 500, color: "#6B7280" }}>
-              Join{" "}
-              <span style={{ fontWeight: 700, color: "#7C3AED" }}>1,200+</span>{" "}
-              founders
-            </span>
+          {/* Value chips */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 8,
+              paddingLeft: 2,
+              maxWidth: 520,
+            }}
+          >
+            {[
+              "Validate the idea",
+              "Find your first audience",
+              "Plan where to reach them",
+            ].map((label) => (
+              <span
+                key={label}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  height: 30,
+                  padding: "0 12px",
+                  borderRadius: 999,
+                  background: "#F5F3FF",
+                  border: "1px solid #E9E3FB",
+                  color: "#6D28D9",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  letterSpacing: "-0.01em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {label}
+              </span>
+            ))}
           </div>
         </div>
       </div>

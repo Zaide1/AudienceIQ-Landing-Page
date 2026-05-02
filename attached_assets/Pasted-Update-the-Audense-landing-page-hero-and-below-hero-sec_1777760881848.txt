@@ -1,0 +1,72 @@
+Update the Audense landing page hero and below-hero section.
+
+Important:
+- Do not change routing.
+- Do not change onboarding.
+- Do not change dashboard.
+- Do not add auth, Supabase, billing, or pricing.
+- Keep the current Audense brand: clean, soft, purple, premium, founder-focused.
+
+Very important:
+Do not change the hero CTA styling, size, text, position, hover state, shadow, border radius, icon, spacing, or behaviour.
+
+The main CTA button must remain exactly as it is:
+“Map my audience →”
+
+Only remove the fake social proof row beneath it and replace that row with honest value chips. Do not touch the CTA itself.
+
+Changes:
+1. Remove the fake social proof row:
+- Remove the overlapping avatars.
+- Remove “Join 1,200+ founders”.
+- Do not replace it with any fake user count, testimonial, logo wall, or review.
+
+2. Replace that exact row area with three small rounded value chips:
+- Validate the idea
+- Find your first audience
+- Plan where to reach them
+
+Style:
+- Soft purple/white pills.
+- Small text.
+- Premium and subtle.
+- They should sit beneath the CTA where the social proof row currently is.
+- Do not move the CTA to fit them.
+
+3. Add a below-hero product proof section.
+Headline:
+“Stop building before you know who wants it.”
+
+Subtext:
+“Audense helps founders turn a rough idea into an audience map, validation plan, and go-to-market starting point.”
+
+Add 3 cards:
+Card 1:
+Title: “Map the audience”
+Body: “See who is most likely to care, where they are, and how big the opportunity looks.”
+
+Card 2:
+Title: “Validate the idea”
+Body: “Ask what people might object to, what competitors they already use, and what to test first.”
+
+Card 3:
+Title: “Turn research into action”
+Body: “Get messaging angles, channel plans, and next steps based on your audience map.”
+
+4. Add a compact chat example preview below or beside the cards:
+Founder:
+“Who should I target first?”
+
+Audense:
+“Start with the segment that has the clearest pain, easiest message, and most reachable channels.”
+
+Keep it styled like the existing Audense chat bubbles.
+
+5. Keep the page honest:
+- Do not claim real users.
+- Do not claim live Reddit/TikTok/X research.
+- Do not mention fake metrics.
+- Do not add “trusted by” or “used by” sections.
+
+Goal:
+Make the landing page feel more complete and premium without touching the main CTA.
