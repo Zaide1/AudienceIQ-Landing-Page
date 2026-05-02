@@ -73,26 +73,43 @@ function buildDots(): DotColor[] {
   rect(8, 11, 51, 51, "#EC4899"); // right stub
 
   // ── Feathering pass ─────────────────────────────────────────────────
-  // For each coloured dot, count how many of its 4 neighbours are grey.
-  // 1–2 grey neighbours → medium tint  (soft edge)
-  // 3–4 grey neighbours → very faint   (corner / isolated boundary dot)
+  // Checks whether a cell is outside the cluster (grey or out-of-bounds).
   const isGrey = (r: number, c: number) =>
     r < 0 || r >= ROWS || c < 0 || c >= COLS || dots[r * COLS + c] === GREY;
 
   const feathered = [...dots];
+
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const base = dots[r * COLS + c];
       if (base === GREY) continue;
-      const greyCount = [
-        isGrey(r - 1, c), isGrey(r + 1, c),
-        isGrey(r, c - 1), isGrey(r, c + 1),
-      ].filter(Boolean).length;
 
-      if (greyCount >= 3 && TINT2[base]) {
-        feathered[r * COLS + c] = TINT2[base];
-      } else if (greyCount >= 1 && TINT1[base]) {
-        feathered[r * COLS + c] = TINT1[base];
+      const above = isGrey(r - 1, c);
+      const below = isGrey(r + 1, c);
+      const left  = isGrey(r, c - 1);
+      const right = isGrey(r, c + 1);
+      const greyCount = [above, below, left, right].filter(Boolean).length;
+
+      if (greyCount === 0) continue; // deep interior — keep full colour
+
+      const t1 = TINT1[base] ?? base;
+      const t2 = TINT2[base] ?? t1;
+
+      if (greyCount === 1) {
+        // Single open side → directional gradient: full colour on cluster
+        // side fading to light tint on the open (grey) side.
+        let dir = "to right";
+        if      (above) dir = "to top";
+        else if (below) dir = "to bottom";
+        else if (left)  dir = "to left";
+        else if (right) dir = "to right";
+        feathered[r * COLS + c] = `linear-gradient(${dir}, ${base} 35%, ${t1} 100%)`;
+      } else if (greyCount === 2) {
+        // Two open sides → softer solid tint
+        feathered[r * COLS + c] = t1;
+      } else {
+        // 3–4 open sides → very faint (corner / isolated boundary dot)
+        feathered[r * COLS + c] = t2;
       }
     }
   }
@@ -131,7 +148,7 @@ function DotGrid() {
               width: 6,
               height: 6,
               borderRadius: "50%",
-              backgroundColor: color,
+              background: color,
               flexShrink: 0,
             }}
           />
