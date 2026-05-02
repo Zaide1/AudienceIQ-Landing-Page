@@ -740,11 +740,6 @@ export default function Dashboard() {
               <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: 0, letterSpacing: -0.4 }}>
                 Your Audience
               </h1>
-              <div style={{ fontSize: 13, color: "#6B7280", marginTop: 3 }}>
-                Market insights for{" "}
-                <strong style={{ color: "#374151" }}>{shortIdea}</strong> in{" "}
-                <strong style={{ color: "#374151" }}>{shortRegion}</strong>
-              </div>
             </div>
             <button
               onClick={() => navigate("/onboarding")}
