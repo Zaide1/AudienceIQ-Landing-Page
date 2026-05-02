@@ -278,7 +278,7 @@ Rules:
         ],
         response_format: { type: "json_object" },
       },
-      { signal: AbortSignal.timeout(15_000) },
+      { signal: AbortSignal.timeout(9_000) },
     );
 
     const content = response.choices[0]?.message?.content;

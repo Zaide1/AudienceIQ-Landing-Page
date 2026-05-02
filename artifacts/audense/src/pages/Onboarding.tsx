@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { generateMockAudienceMap, saveAudienceMap } from "../lib/audienceMap";
@@ -422,13 +422,21 @@ function Step3({ data, onChange, onNext, onBack }: {
   );
 }
 
+const LOADING_STEPS = [
+  "Understanding your product…",
+  "Finding likely audience segments…",
+  "Mapping pain points and channels…",
+  "Building your audience map…",
+];
+
 /* ─── Step 4 ─────────────────────────────────────────────────────────── */
-function Step4({ data, onChange, onNext, onBack, generating }: {
+function Step4({ data, onChange, onNext, onBack, generating, loadingStep }: {
   data: OnboardingState;
   onChange: (k: keyof OnboardingState, v: string) => void;
   onNext: () => void;
   onBack: () => void;
   generating?: boolean;
+  loadingStep?: string;
 }) {
   const [search, setSearch] = useState("");
 
@@ -543,8 +551,8 @@ function Step4({ data, onChange, onNext, onBack, generating }: {
         nextDisabled={!data.region || (data.region === "other" && !data.customRegion.trim())}
       />
       {generating && (
-        <p style={{ textAlign: "center", fontSize: 13, color: "#9CA3AF", marginTop: 12 }}>
-          Finding your best segments, pain points, and first channels.
+        <p style={{ textAlign: "center", fontSize: 13, color: "#9CA3AF", marginTop: 12, transition: "opacity 0.3s" }}>
+          {loadingStep ?? LOADING_STEPS[0]}
         </p>
       )}
     </div>
@@ -574,6 +582,28 @@ export default function Onboarding() {
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
   const [generating, setGenerating] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(LOADING_STEPS[0]);
+  const stepIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (generating) {
+      let idx = 0;
+      setLoadingStep(LOADING_STEPS[0]);
+      stepIntervalRef.current = setInterval(() => {
+        idx = (idx + 1) % LOADING_STEPS.length;
+        setLoadingStep(LOADING_STEPS[idx]);
+      }, 2_200);
+    } else {
+      if (stepIntervalRef.current) {
+        clearInterval(stepIntervalRef.current);
+        stepIntervalRef.current = null;
+      }
+      setLoadingStep(LOADING_STEPS[0]);
+    }
+    return () => {
+      if (stepIntervalRef.current) clearInterval(stepIntervalRef.current);
+    };
+  }, [generating]);
 
   const handleGenerate = async () => {
     if (generating) return;
@@ -586,7 +616,7 @@ export default function Onboarding() {
 
     setGenerating(true);
 
-    const TIMEOUT_MS = 15_000;
+    const TIMEOUT_MS = 9_000;
 
     try {
       const controller = new AbortController();
@@ -678,7 +708,7 @@ export default function Onboarding() {
           {step === 1 && <Step1 data={data} onChange={onChange} onNext={nextStep} />}
           {step === 2 && <Step2 data={data} onChange={onChange} onNext={nextStep} onBack={prevStep} />}
           {step === 3 && <Step3 data={data} onChange={onChange} onNext={nextStep} onBack={prevStep} />}
-          {step === 4 && <Step4 data={data} onChange={onChange} onNext={handleGenerate} onBack={prevStep} generating={generating} />}
+          {step === 4 && <Step4 data={data} onChange={onChange} onNext={handleGenerate} onBack={prevStep} generating={generating} loadingStep={loadingStep} />}
         </div>
       </div>
 
