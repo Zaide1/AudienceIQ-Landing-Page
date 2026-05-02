@@ -10,20 +10,23 @@ import {
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 
 /* ─── Platform icon map ───────────────────────────────────────────── */
-const PLATFORM_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
-  Instagram: { icon: <FaInstagram />, color: "#E1306C" },
-  TikTok:    { icon: <FaTiktok />,    color: "#010101" },
-  YouTube:   { icon: <FaYoutube />,   color: "#FF0000" },
-  LinkedIn:  { icon: <FaLinkedin />,  color: "#0A66C2" },
-  X:         { icon: <FaXTwitter />,  color: "#000000" },
-  Reddit:    { icon: <FaReddit />,    color: "#FF4500" },
-  Facebook:  { icon: <FaFacebook />,  color: "#1877F2" },
-  Google:    { icon: <FaGoogle />,    color: "#4285F4" },
+type IconComponent = React.ComponentType<{ size?: number | string }>;
+
+const PLATFORM_ICONS: Record<string, { Icon: IconComponent; color: string }> = {
+  Instagram: { Icon: FaInstagram, color: "#E1306C" },
+  TikTok:    { Icon: FaTiktok,    color: "#010101" },
+  YouTube:   { Icon: FaYoutube,   color: "#FF0000" },
+  LinkedIn:  { Icon: FaLinkedin,  color: "#0A66C2" },
+  X:         { Icon: FaXTwitter,  color: "#000000" },
+  Reddit:    { Icon: FaReddit,    color: "#FF4500" },
+  Facebook:  { Icon: FaFacebook,  color: "#1877F2" },
+  Google:    { Icon: FaGoogle,    color: "#4285F4" },
 };
 
 function PlatformIcon({ name }: { name: string }) {
   const entry = PLATFORM_ICONS[name];
   if (!entry) return null;
+  const { Icon, color } = entry;
   return (
     <span
       title={name}
@@ -37,12 +40,12 @@ function PlatformIcon({ name }: { name: string }) {
         borderRadius: "50%",
         background: "#fff",
         border: "1px solid #E5E7EB",
-        color: entry.color,
+        color,
         fontSize: 14,
         flexShrink: 0,
       }}
     >
-      {entry.icon}
+      <Icon />
     </span>
   );
 }
