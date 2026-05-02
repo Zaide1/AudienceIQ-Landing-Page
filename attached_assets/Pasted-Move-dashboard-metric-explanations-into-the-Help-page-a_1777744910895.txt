@@ -1,0 +1,93 @@
+Move dashboard metric explanations into the Help page and remove the new info tooltips.
+
+Important:
+- Do not change routing unless a Help page already exists and needs linking.
+- Do not change onboarding.
+- Do not change chat behaviour.
+- Do not change AudienceMapResult shape.
+- Do not change dashboard layout except removing the newly-added info tooltip icons.
+- Do not add backend/auth/Supabase.
+- Keep the UI clean and premium.
+
+Goal:
+Remove the information tooltip system from the dashboard and create a clear Help / “How Audense works” explanation page instead.
+
+1. Remove dashboard info tooltips
+- Remove the reusable InfoTooltip component if it was only added for this.
+- Remove info icons/tooltips from:
+  - Reachable Audience
+  - Est. Coverage
+  - Untapped Opportunity
+  - Confidence
+  - Audience Universe
+  - Top Audience Segments
+  - Run live research
+- Preserve any original static info icon that existed before if it was already part of the design, but do not show hover tooltip text on the dashboard.
+- Dashboard should look visually clean again.
+
+2. Help page content
+Create or update the Help page with a section titled:
+
+“How Audense estimates your audience”
+
+Include concise explanations for:
+
+Reachable Audience:
+“Directional estimate of people Audense thinks are reachable for this product, category, and region.”
+
+Estimated Coverage:
+“The share of your reachable audience your current positioning is likely to address first. This is an MVP estimate, not an official statistic.”
+
+Untapped Opportunity:
+“The remaining audience potential outside your current early focus. Calculated from reachable audience minus estimated coverage.”
+
+Confidence:
+“How reliable this map is based on onboarding detail, source quality, live research availability, and signal strength.”
+
+Audience Universe:
+“Each dot represents a slice of your estimated reachable market. Coloured clusters show priority audience segments.”
+
+Top Audience Segments:
+“Your strongest audience groups ranked by fit, urgency, reachability, and likely response to your positioning.”
+
+Live Research:
+“Searches connected public sources for evidence-backed audience signals. Source coverage may be limited.”
+
+3. Add honesty / source caveat section
+Add another section titled:
+
+“What the numbers mean”
+
+Copy:
+“These are directional audience estimates designed to help you choose where to test first. They are not official market-size statistics. When live research is enabled, Audense can use connected public sources as supporting signals, but source coverage may be limited and skewed depending on the product category.”
+
+4. Add guidance section
+Add a section titled:
+
+“How to use the map”
+
+Include:
+- “Start with the largest high-fit segment, not necessarily the biggest theoretical market.”
+- “Use the chat to ask where to find a segment, what message to test, and what objections to expect.”
+- “Use live research when you want supporting public signals.”
+- “Treat the first map as a starting hypothesis, then refine it as you learn.”
+
+5. Navigation
+- If the sidebar already has “Need help? Chat with us” or a Help item, link it to this Help page or open this Help content.
+- Do not build a full support chat.
+- Keep it static for now.
+
+6. Styling
+- Match the existing Audense style:
+  - white cards
+  - soft borders
+  - subtle purple accents
+  - readable spacing
+  - calm/helpful tone
+- Keep the page simple and polished.
+
+After implementing, explain:
+- What tooltip code was removed
+- Where the Help page lives
+- How users reach it
+- What explanations were moved there

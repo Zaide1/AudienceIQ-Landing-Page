@@ -8,7 +8,6 @@ import {
   FaXTwitter, FaReddit, FaFacebook, FaGoogle,
 } from "react-icons/fa6";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
-import { InfoTooltip } from "../components/InfoTooltip";
 import {
   loadAudienceMap, generateMockAudienceMap, saveAudienceMap, formatK,
   type AudienceMapResult, type ResearchSignal,
@@ -450,13 +449,16 @@ function NavItem({
   icon,
   label,
   active,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   active?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <div
+      onClick={onClick}
       style={{
         display: "flex",
         alignItems: "center",
@@ -1244,7 +1246,7 @@ export default function Dashboard() {
         {/* Bottom nav */}
         <div style={{ padding: "6px 12px 14px", borderTop: "1px solid #F3F4F6", flexShrink: 0 }}>
           <NavItem icon={<Settings size={15} />} label="Settings" />
-          <NavItem icon={<HelpCircle size={15} />} label="Need help? Chat with us" />
+          <NavItem icon={<HelpCircle size={15} />} label="Need help? Chat with us" onClick={() => navigate("/help")} />
         </div>
       </div>
 
@@ -1290,7 +1292,6 @@ export default function Dashboard() {
               </h1>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <button
                 onClick={runLiveResearch}
                 disabled={researchRunning}
@@ -1333,12 +1334,6 @@ export default function Dashboard() {
                   </>
                 )}
               </button>
-              <InfoTooltip
-                title="Run live research"
-                body="Searches connected public sources for evidence-backed audience signals. Source coverage may be limited."
-                size={12}
-              />
-              </div>
               <button
                 onClick={() => navigate("/onboarding")}
                 style={{
@@ -1421,7 +1416,6 @@ export default function Dashboard() {
                 accent: false,
                 border: "#E5E7EB",
                 valColor: "#111827",
-                tooltip: "Directional estimate of people Audense thinks are reachable for this product, category, and region.",
               },
               {
                 label: "Est. Coverage",
@@ -1431,7 +1425,6 @@ export default function Dashboard() {
                 accent: true,
                 border: "#C4B5FD",
                 valColor: "#7C3AED",
-                tooltip: "The share of your reachable audience your current positioning is likely to address first. This is an MVP estimate, not an official statistic.",
               },
               {
                 label: "Untapped Opportunity",
@@ -1441,7 +1434,6 @@ export default function Dashboard() {
                 accent: false,
                 border: "#FDE68A",
                 valColor: "#111827",
-                tooltip: "The remaining audience potential outside your current early focus. Calculated from reachable audience minus estimated coverage.",
               },
               {
                 label: "Confidence",
@@ -1451,7 +1443,6 @@ export default function Dashboard() {
                 accent: false,
                 border: "#E5E7EB",
                 valColor: "#111827",
-                tooltip: "How reliable this map is based on onboarding detail, source quality, live research availability, and signal strength.",
               },
             ].map((card) => (
               <div
@@ -1479,7 +1470,6 @@ export default function Dashboard() {
                   >
                     {card.label}
                   </span>
-                  <InfoTooltip title={card.label} body={card.tooltip} size={11} />
                 </div>
                 <div
                   style={{
@@ -1523,10 +1513,6 @@ export default function Dashboard() {
                 <span style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
                   Audience Universe
                 </span>
-                <InfoTooltip
-                  title="Audience Universe"
-                  body="Each dot represents a slice of your estimated reachable market. Coloured clusters show priority audience segments."
-                />
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, fontWeight: 600, color: "#6B7280", flexWrap: "wrap" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -1586,10 +1572,6 @@ export default function Dashboard() {
               <span style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
                 Top Audience Segments
               </span>
-              <InfoTooltip
-                title="Top Audience Segments"
-                body="Your strongest audience groups ranked by fit, urgency, reachability, and likely response to your positioning."
-              />
             </div>
             <div style={{ fontSize: 11.5, color: "#9CA3AF", marginBottom: 14 }}>
               Click a segment to explore deeper insights
