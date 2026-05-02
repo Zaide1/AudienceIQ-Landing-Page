@@ -1,0 +1,58 @@
+Improve AudienceUniverseMap interaction on the dashboard.
+
+Important:
+- Only update dashboard/AudienceUniverseMap interaction.
+- Do not change landing.
+- Do not change onboarding.
+- Do not change the visual cluster style.
+- Do not change backend/auth/OpenAI.
+- Do not redesign layout.
+
+Current behaviour:
+Clicking a segment card selects it and shows the tooltip, but one segment is always selected and there is no way to deselect. Hover interaction is also missing or incomplete.
+
+Required behaviour:
+Use two separate states:
+- selectedSegmentId: persistent selected segment from click
+- hoveredSegmentId: temporary segment from hover
+
+Tooltip logic:
+- activeSegmentId should be hoveredSegmentId || selectedSegmentId.
+- If activeSegmentId is null, hide the tooltip.
+
+Initial state:
+- On dashboard load, selectedSegmentId can default to the first segment.
+- But the user must be able to deselect it.
+
+Segment card click:
+- Clicking an unselected segment selects it.
+- Clicking the currently selected segment again deselects it and hides the tooltip, unless another segment is hovered.
+- Active/selected card styling should only apply to selectedSegmentId, not hoveredSegmentId.
+
+Map hover:
+- Hovering a coloured cluster/dot should set hoveredSegmentId for that segment.
+- Tooltip should show that hovered segment while hovering.
+- When hover leaves, clear hoveredSegmentId.
+- If selectedSegmentId exists, tooltip returns to selected segment.
+- If selectedSegmentId is null, tooltip hides.
+
+Map click:
+- Clicking a coloured cluster should select that segment.
+- Clicking the currently selected coloured cluster again should deselect it.
+- Clicking grey/empty map area should deselect selectedSegmentId.
+
+Segment card hover:
+- Optional but nice: hovering a segment card can set hoveredSegmentId so the map tooltip previews that segment.
+- On mouse leave, clear hoveredSegmentId.
+
+Implementation notes:
+- Do not make every dot visually change on hover unless already easy.
+- It is enough for coloured cluster/dot hover to update the tooltip.
+- Keep the tooltip inside the map card and prevent overflow.
+- Use pointer cursor on clickable coloured dots/segments.
+- Grey dots should not be selectable.
+
+After implementing, explain:
+- How selectedSegmentId and hoveredSegmentId work
+- How clicking the same segment deselects it
+- How grey map area deselects

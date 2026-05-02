@@ -79,7 +79,7 @@ const TINT2: Record<string, string> = {
 };
 const GREY = "#E5E7EB";
 
-function buildDots(): string[] {
+function buildDots(): { feathered: string[]; raw: string[] } {
   const dots: string[] = new Array(ROWS * COLS).fill(GREY);
   const set = (r: number, c: number, color: string) => {
     if (r >= 0 && r < ROWS && c >= 0 && c < COLS) dots[r * COLS + c] = color;
@@ -104,6 +104,8 @@ function buildDots(): string[] {
   rect(7, 11, 44, 46, "#EC4899");
   rect(6, 11, 47, 50, "#EC4899");
   rect(8, 11, 51, 51, "#EC4899");
+
+  const raw = [...dots];
 
   const isGrey = (r: number, c: number) =>
     r < 0 || r >= ROWS || c < 0 || c >= COLS || dots[r * COLS + c] === GREY;
@@ -134,10 +136,19 @@ function buildDots(): string[] {
       }
     }
   }
-  return feathered;
+  return { feathered, raw };
 }
 
-const BASE_DOTS = buildDots();
+const { feathered: BASE_DOTS, raw: RAW_DOTS } = buildDots();
+
+/* accent color → segment id, used for dot hit-testing */
+const COLOR_TO_SEG: Record<string, string> = {
+  "#7C3AED": "gym",
+  "#3B82F6": "busy",
+  "#10B981": "health",
+  "#F59E0B": "weight",
+  "#EC4899": "nutrition",
+};
 
 /* ─── Segment data ────────────────────────────────────────────────── */
 interface Segment {
@@ -233,13 +244,18 @@ interface Message {
 function AudienceMap({
   segments,
   selectedId,
+  hoveredId,
   onSelect,
+  onHover,
 }: {
   segments: Segment[];
-  selectedId: string;
-  onSelect: (id: string) => void;
+  selectedId: string | null;
+  hoveredId: string | null;
+  onSelect: (id: string | null) => void;
+  onHover: (id: string | null) => void;
 }) {
-  const selected = segments.find((s) => s.id === selectedId) ?? segments[0];
+  const activeId = hoveredId ?? selectedId;
+  const active = activeId ? segments.find((s) => s.id === activeId) ?? null : null;
 
   return (
     <div
@@ -252,7 +268,10 @@ function AudienceMap({
       }}
     >
       {/* Dot grid — width: 100% + overflow: hidden prevents any spill */}
-      <div style={{ width: "100%", overflow: "hidden" }}>
+      <div
+        style={{ width: "100%", overflow: "hidden" }}
+        onMouseLeave={() => onHover(null)}
+      >
         <div
           style={{
             display: "grid",
@@ -260,48 +279,61 @@ function AudienceMap({
             gap: 4,
           }}
         >
-          {BASE_DOTS.map((color, i) => (
-            <div
-              key={i}
-              style={{
-                aspectRatio: "1",
-                borderRadius: "50%",
-                background: color,
-                minWidth: 0,
-              }}
-            />
-          ))}
+          {BASE_DOTS.map((color, i) => {
+            const segId = COLOR_TO_SEG[RAW_DOTS[i]] ?? null;
+            const isClickable = segId !== null;
+            return (
+              <div
+                key={i}
+                onClick={() => {
+                  if (!isClickable) { onSelect(null); return; }
+                  onSelect(segId === selectedId ? null : segId);
+                }}
+                onMouseEnter={() => isClickable && onHover(segId)}
+                style={{
+                  aspectRatio: "1",
+                  borderRadius: "50%",
+                  background: color,
+                  minWidth: 0,
+                  cursor: isClickable ? "pointer" : "default",
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
       {/* Dynamic tooltip — rendered below the grid, not absolute */}
       <div style={{ position: "relative", height: 52 }}>
-        <div
-          style={{
-            position: "absolute",
-            top: 8,
-            left: selected.tooltipLeft,
-            transform: "translateX(-10%)",
-            background: "#fff",
-            border: `1px solid ${selected.accent}44`,
-            borderRadius: 10,
-            padding: "8px 12px",
-            boxShadow: `0 4px 16px ${selected.accent}22`,
-            minWidth: 160,
-            pointerEvents: "none",
-            transition: "left 0.3s ease",
-            zIndex: 2,
-            whiteSpace: "nowrap",
-          }}
-        >
-          <div style={{ fontWeight: 700, fontSize: 12, color: "#111827" }}>{selected.name}</div>
-          <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
-            {selected.pct}% of audience
+        {active && (
+          <div
+            style={{
+              position: "absolute",
+              top: 8,
+              left: active.tooltipLeft,
+              transform: "translateX(-10%)",
+              background: "#fff",
+              border: `1px solid ${active.accent}44`,
+              borderRadius: 10,
+              padding: "8px 12px",
+              boxShadow: `0 4px 16px ${active.accent}22`,
+              minWidth: 160,
+              maxWidth: "calc(100% - 24px)",
+              pointerEvents: "none",
+              zIndex: 2,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: 12, color: "#111827" }}>{active.name}</div>
+            <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
+              {active.pct}% of audience
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: active.accent, marginTop: 2 }}>
+              {active.range} people
+            </div>
           </div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: selected.accent, marginTop: 2 }}>
-            {selected.range} people
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -537,7 +569,8 @@ export default function Dashboard() {
   }, []);
 
   const [segments, setSegments] = useState<Segment[]>(BASE_SEGMENTS);
-  const [selectedId, setSelectedId] = useState("gym");
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>("gym");
+  const [hoveredSegmentId, setHoveredSegmentId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
   const msgId = useRef(100);
@@ -1029,8 +1062,10 @@ export default function Dashboard() {
             </div>
             <AudienceMap
               segments={segments}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
+              selectedId={selectedSegmentId}
+              hoveredId={hoveredSegmentId}
+              onSelect={setSelectedSegmentId}
+              onHover={setHoveredSegmentId}
             />
           </div>
 
@@ -1055,11 +1090,13 @@ export default function Dashboard() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
               {segments.map((seg) => {
-                const isActive = selectedId === seg.id;
+                const isActive = selectedSegmentId === seg.id;
                 return (
                   <button
                     key={seg.id}
-                    onClick={() => setSelectedId(seg.id)}
+                    onClick={() => setSelectedSegmentId(isActive ? null : seg.id)}
+                    onMouseEnter={() => setHoveredSegmentId(seg.id)}
+                    onMouseLeave={() => setHoveredSegmentId(null)}
                     style={{
                       background: seg.bg,
                       border: `1.5px solid ${isActive ? seg.accent : seg.accent + "33"}`,
