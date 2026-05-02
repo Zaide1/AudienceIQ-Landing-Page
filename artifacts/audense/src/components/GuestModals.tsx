@@ -99,16 +99,3 @@ export function NewResearchAuthWall({ onPrimary, onSecondary }: BaseProps) {
   );
 }
 
-/* ── 3. History auth wall ────────────────────────────────────────── */
-export function HistoryAuthWall({ onPrimary, onSecondary }: BaseProps) {
-  return (
-    <GuestModal
-      title="Sign in to view research history"
-      body="History is available once your research is saved to an account."
-      primaryLabel="Create free account"
-      secondaryLabel="Cancel"
-      onPrimary={onPrimary}
-      onSecondary={onSecondary}
-    />
-  );
-}

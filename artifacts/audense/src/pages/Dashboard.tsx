@@ -22,7 +22,7 @@ import {
   type ResearchSession, type StoredMessage,
 } from "../lib/researchSessions";
 import { AuthModal } from "../components/AuthModal";
-import { SoftPromptModal, NewResearchAuthWall, HistoryAuthWall } from "../components/GuestModals";
+import { SoftPromptModal, NewResearchAuthWall } from "../components/GuestModals";
 import { onAuthChange, signOut, type AuthUser } from "../lib/auth";
 import { sbAppendMessage, sbUpdateMap, sbLoadSessionList, sbLoadFullSession, sbSaveSession } from "../lib/sbSessions";
 import {
@@ -1142,9 +1142,7 @@ export default function Dashboard() {
   /* ── Guest-mode modal state ─────────────────────────────────────── */
   const [isSoftPromptOpen, setIsSoftPromptOpen] = useState(false);
   const [isNewResearchAuthWall, setIsNewResearchAuthWall] = useState(false);
-  const [isHistoryAuthWall, setIsHistoryAuthWall] = useState(false);
-  const postAuthActionRef = useRef<"new-research" | "history" | null>(null);
-  const softPromptThresholdRef = useRef<number>(3);
+  const postAuthActionRef = useRef<"new-research" | null>(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpPopoverOpen, setIsHelpPopoverOpen] = useState(false);
@@ -1318,7 +1316,6 @@ export default function Dashboard() {
     const action = postAuthActionRef.current;
     postAuthActionRef.current = null;
     if (action === "new-research") navigate("/onboarding");
-    else if (action === "history") setIsHistoryOpen(true);
   }, [migrateGuestSession, navigate]);
 
   /* ── Load Supabase session list when history opens ──────────────── */
@@ -1387,11 +1384,10 @@ export default function Dashboard() {
   }, []);
 
   const callRefineAPI = async (text: string) => {
-    /* Guest-mode: track message count + trigger soft prompt */
+    /* Guest-mode: track message count + trigger soft prompt once at 3 */
     if (!authUserRef.current) {
       const count = incGuestChatCount();
-      if ((count === 3 && !getSoftPromptSeenAt(3)) || (count === 6 && !getSoftPromptSeenAt(6))) {
-        softPromptThresholdRef.current = count;
+      if (count === 3 && !getSoftPromptSeenAt(3)) {
         setIsSoftPromptOpen(true);
       }
     }
@@ -1434,8 +1430,7 @@ export default function Dashboard() {
     /* Guest-mode: also track attachment messages */
     if (!authUserRef.current) {
       const count = incGuestChatCount();
-      if ((count === 3 && !getSoftPromptSeenAt(3)) || (count === 6 && !getSoftPromptSeenAt(6))) {
-        softPromptThresholdRef.current = count;
+      if (count === 3 && !getSoftPromptSeenAt(3)) {
         setIsSoftPromptOpen(true);
       }
     }
@@ -1715,13 +1710,7 @@ export default function Dashboard() {
             icon={<Layers size={18} />}
             label="Research history"
             active={isHistoryOpen}
-            onClick={() => {
-              if (!authUserRef.current) {
-                setIsHistoryAuthWall(true);
-              } else {
-                setIsHistoryOpen((v) => !v);
-              }
-            }}
+            onClick={() => setIsHistoryOpen((v) => !v)}
           />
           <RailIcon icon={<Database size={18} />} label="Sources (coming soon)" />
           {/* Spacer */}
@@ -2533,7 +2522,7 @@ export default function Dashboard() {
           setIsAuthModalOpen(true);
         }}
         onSecondary={() => {
-          setSoftPromptSeenAt(softPromptThresholdRef.current);
+          setSoftPromptSeenAt(3);
           setIsSoftPromptOpen(false);
         }}
       />
@@ -2546,16 +2535,6 @@ export default function Dashboard() {
           setIsAuthModalOpen(true);
         }}
         onSecondary={() => setIsNewResearchAuthWall(false)}
-      />
-    )}
-    {isHistoryAuthWall && (
-      <HistoryAuthWall
-        onPrimary={() => {
-          postAuthActionRef.current = "history";
-          setIsHistoryAuthWall(false);
-          setIsAuthModalOpen(true);
-        }}
-        onSecondary={() => setIsHistoryAuthWall(false)}
       />
     )}
     {showCompetitorDrawer && audienceMap.competitors && (
