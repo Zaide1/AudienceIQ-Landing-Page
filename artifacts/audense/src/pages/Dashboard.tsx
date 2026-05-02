@@ -10,7 +10,7 @@ import {
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import {
   loadAudienceMap, generateMockAudienceMap, saveAudienceMap, formatK,
-  type AudienceMapResult,
+  type AudienceMapResult, type ResearchSignal,
 } from "../lib/audienceMap";
 
 /* ─── Platform icon map ───────────────────────────────────────────── */
@@ -766,6 +766,50 @@ export default function Dashboard() {
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
 
+  const [researchRunning, setResearchRunning] = useState(false);
+  const [researchToast, setResearchToast] = useState<{ kind: "success" | "error" | "info"; text: string } | null>(null);
+
+  const showToast = (kind: "success" | "error" | "info", text: string) => {
+    setResearchToast({ kind, text });
+    setTimeout(() => setResearchToast(null), 5000);
+  };
+
+  const runLiveResearch = async () => {
+    if (researchRunning) return;
+    setResearchRunning(true);
+    showToast("info", "Scanning public signals…");
+    try {
+      const res = await fetch("/api/research/collect-signals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ onboardingData: ob ?? {}, currentAudienceMap: audienceMap }),
+      });
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json() as {
+        sourceMode: "live_research" | "ai_hypothesis";
+        signals: ResearchSignal[];
+        evidenceSummary: AudienceMapResult["evidenceSummary"];
+        updatedSegments: AudienceMapResult["segments"];
+      };
+      const updatedMap: AudienceMapResult = {
+        ...audienceMap,
+        evidenceSummary: data.evidenceSummary,
+        segments: data.updatedSegments,
+      };
+      setAudienceMap(updatedMap);
+      setSegments(buildSegmentsFromMap(updatedMap));
+      saveAudienceMap(updatedMap);
+      const label = data.sourceMode === "live_research"
+        ? `${data.signals.filter((s) => s.url).length} live signals collected`
+        : `${data.signals.length} hypothesis signals generated`;
+      showToast("success", label);
+    } catch {
+      showToast("error", "Research scan failed — your map is unchanged");
+    } finally {
+      setResearchRunning(false);
+    }
+  };
+
   /* pendingUpdateId: the msg.id of the one active confirm bubble, or null */
   const [pendingUpdateId, setPendingUpdateId] = useState<number | null>(null);
   /* Synchronous ref guard — prevents stale-closure double-fires before re-render */
@@ -1158,27 +1202,101 @@ export default function Dashboard() {
                 Your Audience
               </h1>
             </div>
-            <button
-              onClick={() => navigate("/onboarding")}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                onClick={runLiveResearch}
+                disabled={researchRunning}
+                title={researchRunning ? "Scanning…" : "Run live research signals"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: researchRunning ? "#F5F3FF" : "#fff",
+                  border: "1.5px solid #DDD6FE",
+                  borderRadius: 10,
+                  padding: "8px 14px",
+                  fontSize: 12.5,
+                  fontWeight: 500,
+                  color: researchRunning ? "#9CA3AF" : "#6D28D9",
+                  cursor: researchRunning ? "not-allowed" : "pointer",
+                  flexShrink: 0,
+                  transition: "all 0.15s",
+                }}
+              >
+                {researchRunning ? (
+                  <>
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: 10,
+                        height: 10,
+                        border: "1.5px solid #DDD6FE",
+                        borderTopColor: "#7C3AED",
+                        borderRadius: "50%",
+                        animation: "audense-spin 0.7s linear infinite",
+                      }}
+                    />
+                    Scanning…
+                  </>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 13 }}>⚡</span>
+                    Run live research
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => navigate("/onboarding")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "#7C3AED",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "9px 18px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#fff",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                <Plus size={14} />
+                New Research
+              </button>
+            </div>
+          </div>
+
+          {/* Research toast */}
+          {researchToast && (
+            <div
               style={{
+                margin: "0 20px 10px",
+                padding: "9px 14px",
+                borderRadius: 8,
+                fontSize: 12.5,
+                fontWeight: 500,
                 display: "flex",
                 alignItems: "center",
-                gap: 6,
-                background: "#7C3AED",
-                border: "none",
-                borderRadius: 10,
-                padding: "9px 18px",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#fff",
-                cursor: "pointer",
-                flexShrink: 0,
+                gap: 8,
+                background: researchToast.kind === "success" ? "#ECFDF5"
+                  : researchToast.kind === "error" ? "#FEF2F2"
+                  : "#EFF6FF",
+                color: researchToast.kind === "success" ? "#065F46"
+                  : researchToast.kind === "error" ? "#991B1B"
+                  : "#1D4ED8",
+                border: `1px solid ${researchToast.kind === "success" ? "#A7F3D0"
+                  : researchToast.kind === "error" ? "#FECACA"
+                  : "#BFDBFE"}`,
               }}
             >
-              <Plus size={14} />
-              New Research
-            </button>
-          </div>
+              <span>
+                {researchToast.kind === "success" ? "✓" : researchToast.kind === "error" ? "✗" : "↻"}
+              </span>
+              {researchToast.text}
+            </div>
+          )}
         </div>
 
         {/* Main scrollable content */}

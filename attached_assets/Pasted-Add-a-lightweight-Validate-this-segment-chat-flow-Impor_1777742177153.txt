@@ -1,0 +1,63 @@
+Add a lightweight “Validate this segment” chat flow.
+
+Important:
+- Do not change dashboard layout.
+- Do not add scraping/live research yet.
+- Do not claim live Reddit/X/TikTok data.
+- Do not add auth/Supabase.
+- Keep existing AudienceMapResult and evidence fields.
+
+Goal:
+When a user asks how to validate a segment, Audense should provide practical validation steps based on the current segment evidence/hypotheses.
+
+Behaviour:
+If the user asks things like:
+- “Validate Gym Goers”
+- “How do I validate Busy Professionals?”
+- “Is this segment real?”
+- “What should I ask them?”
+- “Where should I look for proof?”
+
+Return an answer, not a map update.
+
+The answer should include:
+1. Where to look
+   - 3–5 specific places/platforms based on the segment platforms and category.
+   - Example: Reddit communities, TikTok search terms, X search terms, LinkedIn groups, competitor reviews, app store reviews, Discords, forums.
+
+2. What to search
+   - 3–5 search queries based on:
+     - segment pain points
+     - unmet needs
+     - likelySearchQueries if available
+     - competitorMentions if available
+
+3. What to ask users
+   - 5 interview questions.
+   - Questions should reveal pain, current workaround, willingness to switch, urgency, and willingness to pay.
+
+4. Validation signal checklist
+   - Strong signal examples:
+     - repeated complaints
+     - people asking for alternatives
+     - manual workaround behaviour
+     - willingness to pay
+     - frustration with existing tools
+   - Weak signal examples:
+     - vague interest
+     - compliments only
+     - no current workaround
+     - no urgent problem
+
+Tone:
+- Practical, founder-friendly, concise.
+- Do not say we already found this live unless evidenceSummary.sourceMode is "live_research".
+- If sourceMode is mock or ai_hypothesis, say:
+  “Treat this as a validation checklist, not confirmed market evidence yet.”
+
+Validation:
+- Asking “Validate Gym Goers” returns an answer, not proposed_update.
+- Answer references the current segment.
+- Answer uses available evidence fields if present.
+- Answer does not claim live research.
+- Works if evidence fields are missing.

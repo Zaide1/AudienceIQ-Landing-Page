@@ -18,16 +18,16 @@ export interface EvidenceSummary {
 }
 
 export interface ResearchSignal {
-  source: "reddit" | "twitter" | "tiktok" | "youtube" | "app_store" | "competitor_site" | "forum" | "manual" | "mock";
+  id: string;
+  source: "web" | "competitor_site" | "youtube" | "review_site" | "manual";
+  query: string;
   title: string;
   snippet: string;
   url?: string;
-  author?: string;
-  date?: string;
   sentiment: "positive" | "negative" | "neutral" | "mixed";
-  topics: string[];
-  segmentHint?: string;
-  painPointHint?: string;
+  signalType: "pain_point" | "competitor" | "objection" | "unmet_need" | "language" | "channel";
+  segmentId?: string;
+  createdAt: string;
 }
 
 export interface AudienceSegment {

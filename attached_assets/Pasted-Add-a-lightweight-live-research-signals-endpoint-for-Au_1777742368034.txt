@@ -1,0 +1,114 @@
+Add a lightweight live research signals endpoint for Audense.
+
+Important:
+- Do not scrape TikTok, X, or Reddit directly.
+- Do not bypass platform terms.
+- Do not add auth/Supabase yet.
+- Do not change dashboard layout.
+- Do not change onboarding layout.
+- Do not change chat UI.
+- Keep /api/audience/generate and /api/chat/refine working.
+- Use the existing optional evidence fields already added to AudienceMapResult and AudienceSegment.
+
+Goal:
+Add a first live-research layer that collects source-backed public signals from safe web/search results or competitor pages, then feeds those signals into Audense’s existing evidence fields.
+
+Endpoint:
+POST /api/research/collect-signals
+
+Request body:
+{
+  onboardingData,
+  currentAudienceMap
+}
+
+Response body:
+{
+  sourceMode: "live_research" | "ai_hypothesis",
+  signals: ResearchSignal[],
+  evidenceSummary,
+  updatedSegments
+}
+
+ResearchSignal:
+{
+  id: string,
+  source: "web" | "competitor_site" | "youtube" | "review_site" | "manual",
+  query: string,
+  title: string,
+  snippet: string,
+  url?: string,
+  sentiment: "positive" | "negative" | "neutral" | "mixed",
+  signalType: "pain_point" | "competitor" | "objection" | "unmet_need" | "language" | "channel",
+  segmentId?: string,
+  createdAt: string
+}
+
+Implementation:
+1. Generate 5–8 research queries from:
+   - product idea
+   - target users
+   - problem
+   - category
+   - region
+   - current segment names
+   - competitor mentions if available
+
+2. Use a safe search/source method available in the Replit environment.
+   - If no live search method is available, create the endpoint with a clean fallback and clearly report that live fetching is not connected yet.
+   - Do not fake URLs.
+   - Do not pretend mock signals are live.
+
+3. Collect only public source-backed metadata:
+   - title
+   - snippet
+   - URL
+   - query used
+   - source type
+
+4. Use OpenAI/Replit AI only to classify and summarise collected signals, not to invent live evidence.
+
+5. Summarise signals into:
+   - strongestSignals
+   - unmetNeeds
+   - objections
+   - competitorMentions
+   - exampleUserLanguage
+   - likelySearchQueries
+
+6. Set evidenceSummary.sourceMode = "live_research" only if at least 3 real source-backed signals with URLs were collected.
+
+7. If fewer than 3 real source-backed signals are found:
+   - keep sourceMode = "ai_hypothesis"
+   - return limitations explaining that live research was not strong enough yet
+   - do not claim live research happened
+
+Frontend:
+- Add a subtle “Run live research” action in the dashboard.
+- While running, show loading text: “Scanning public signals…”
+- On success, update audense-audience-map with returned evidenceSummary and segment evidence.
+- Do not change the dashboard layout broadly.
+- If research fails, show a small non-blocking message and keep the existing map.
+
+Chat:
+- If evidenceSummary.sourceMode is "live_research", Audense may say “based on live source signals”.
+- If sourceMode is "ai_hypothesis" or "mock", Audense must say it is hypothesis-led.
+- Do not let chat claim Reddit/X/TikTok evidence unless those sources are actually connected and returned as real source-backed signals.
+
+Validation:
+- Endpoint exists and returns the documented shape.
+- It never fakes live URLs.
+- sourceMode only becomes live_research when real URLs exist.
+- Dashboard still works if research fails.
+- Chat stays honest about live vs hypothesis-led evidence.
+- /api/audience/generate still works.
+- /api/chat/refine still works.
+
+After implementing, explain:
+- Files changed
+- Whether a real live search/source method was available
+- How queries are generated
+- How signals are collected
+- How sourceMode is decided
+- How evidence fields are updated
+- How chat remains honest about evidence
