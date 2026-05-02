@@ -254,8 +254,20 @@ function AudienceMap({
   onSelect: (id: string | null) => void;
   onHover: (id: string | null) => void;
 }) {
+  /* Debounce hover so rapid dot-to-dot moves don't cause jitter */
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleHover = (id: string | null) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => onHover(id), 45);
+  };
+
   const activeId = hoveredId ?? selectedId;
   const active = activeId ? segments.find((s) => s.id === activeId) ?? null : null;
+
+  /* Keep last non-null segment so tooltip content stays stable during fade-out */
+  const lastActive = useRef<Segment | null>(active);
+  if (active) lastActive.current = active;
+  const display = lastActive.current;
 
   return (
     <div
@@ -270,7 +282,7 @@ function AudienceMap({
       {/* Dot grid — width: 100% + overflow: hidden prevents any spill */}
       <div
         style={{ width: "100%", overflow: "hidden" }}
-        onMouseLeave={() => onHover(null)}
+        onMouseLeave={() => scheduleHover(null)}
       >
         <div
           style={{
@@ -289,7 +301,7 @@ function AudienceMap({
                   if (!isClickable) { onSelect(null); return; }
                   onSelect(segId === selectedId ? null : segId);
                 }}
-                onMouseEnter={() => isClickable && onHover(segId)}
+                onMouseEnter={() => isClickable && scheduleHover(segId)}
                 style={{
                   aspectRatio: "1",
                   borderRadius: "50%",
@@ -303,37 +315,37 @@ function AudienceMap({
         </div>
       </div>
 
-      {/* Dynamic tooltip — rendered below the grid, not absolute */}
+      {/* Tooltip — always mounted, fades and slides smoothly */}
       <div style={{ position: "relative", height: 52 }}>
-        {active && (
-          <div
-            style={{
-              position: "absolute",
-              top: 8,
-              left: active.tooltipLeft,
-              transform: "translateX(-10%)",
-              background: "#fff",
-              border: `1px solid ${active.accent}44`,
-              borderRadius: 10,
-              padding: "8px 12px",
-              boxShadow: `0 4px 16px ${active.accent}22`,
-              minWidth: 160,
-              maxWidth: "calc(100% - 24px)",
-              pointerEvents: "none",
-              zIndex: 2,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ fontWeight: 700, fontSize: 12, color: "#111827" }}>{active.name}</div>
-            <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
-              {active.pct}% of audience
-            </div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: active.accent, marginTop: 2 }}>
-              {active.range} people
-            </div>
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            left: display?.tooltipLeft ?? "14%",
+            transform: "translateX(-10%)",
+            background: "#fff",
+            border: `1px solid ${display?.accent ?? "#7C3AED"}44`,
+            borderRadius: 10,
+            padding: "8px 12px",
+            boxShadow: `0 4px 16px ${display?.accent ?? "#7C3AED"}22`,
+            minWidth: 160,
+            maxWidth: "calc(100% - 24px)",
+            pointerEvents: "none",
+            zIndex: 2,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            opacity: active ? 1 : 0,
+            transition: "left 0.22s ease, opacity 0.18s ease",
+          }}
+        >
+          <div style={{ fontWeight: 700, fontSize: 12, color: "#111827" }}>{display?.name}</div>
+          <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
+            {display?.pct}% of audience
           </div>
-        )}
+          <div style={{ fontSize: 12, fontWeight: 700, color: display?.accent, marginTop: 2 }}>
+            {display?.range} people
+          </div>
+        </div>
       </div>
     </div>
   );
