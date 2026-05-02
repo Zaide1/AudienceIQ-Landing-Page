@@ -1,0 +1,54 @@
+Validate and improve the Run Live Research behaviour.
+
+Important:
+- Do not change dashboard layout.
+- Do not change onboarding.
+- Do not change chat behaviour.
+- Do not fake live research.
+- Do not invent URLs.
+- Do not scrape TikTok, X, or Reddit directly.
+- Keep the existing fallback behaviour.
+
+Current issue:
+When I click “Run live research”, it appears to return 0 signals / hypothesis mode, but the UI does not clearly explain what happened.
+
+Please inspect and report first, then fix only if needed.
+
+Check:
+1. Does POST /api/research/collect-signals actually attempt a real live/public source fetch?
+2. What source/search method is it using?
+3. Does it return real URLs?
+4. How many ResearchSignal objects are returned?
+5. What value is evidenceSummary.sourceMode set to?
+6. Does sourceMode only become "live_research" when at least 3 real URL-backed signals exist?
+7. If 0 signals are found, does the frontend explain this clearly to the user?
+
+Required behaviour:
+- If 3+ real URL-backed signals are found:
+  - set sourceMode: "live_research"
+  - update evidenceSummary.totalSignals
+  - show a small success message: “Live research added X source-backed signals.”
+- If fewer than 3 real URL-backed signals are found:
+  - keep sourceMode: "ai_hypothesis"
+  - set evidenceSummary.totalSignals to the actual number found
+  - show a small non-blocking message:
+    “Not enough live signals found yet — this map is still hypothesis-led.”
+- If 0 signals are found:
+  - show:
+    “No live source-backed signals found yet. Audense is still using hypothesis-led audience estimates.”
+- Never claim Reddit/X/TikTok/live research unless real source-backed data was collected.
+- Do not overwrite good existing map data with empty research results.
+- If research returns no useful signals, keep the current map and only update evidenceSummary/limitations if appropriate.
+
+Add console/server logging for:
+- query count
+- signal count
+- URL-backed signal count
+- final sourceMode
+
+After implementing, explain:
+- Whether live fetching is actually connected
+- Which source method is being used
+- Why it returned 0 signals
+- What the user sees when no signals are found
+- Whether the existing audience map is preserved

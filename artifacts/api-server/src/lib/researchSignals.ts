@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { logger } from "./logger";
 import type {
   AudienceMapResult,
   AudienceSegment,
@@ -22,21 +23,18 @@ export interface ResearchSignal {
 export interface CollectSignalsResult {
   sourceMode: "live_research" | "ai_hypothesis";
   signals: ResearchSignal[];
+  urlBackedSignalCount: number;
   evidenceSummary: EvidenceSummary;
   updatedSegments: AudienceSegment[];
 }
 
-/* ─── DDG Instant Answer types ──────────────────────────────────── */
-interface DdgRelatedTopic {
-  Text?: string;
-  FirstURL?: string;
-  Topics?: DdgRelatedTopic[];
-}
-
-interface DdgResult {
-  AbstractText?: string;
-  AbstractURL?: string;
-  RelatedTopics?: DdgRelatedTopic[];
+/* ─── HN Algolia hit type ───────────────────────────────────────── */
+interface HnHit {
+  objectID: string;
+  title?: string;
+  url?: string;
+  story_text?: string;
+  points?: number;
 }
 
 /* ─── Step 1: Generate research queries via OpenAI ──────────────── */
@@ -54,30 +52,29 @@ async function generateQueries(
 ): Promise<string[]> {
   const { productIdea, targetUsers, problem, category, region, segmentNames, competitorMentions } = params;
 
-  const prompt = `You are a market research strategist. Generate 6 short, targeted research queries to understand the audience for this product.
+  const prompt = `You are a market research strategist. Generate 6 short search queries to find Hacker News stories about this product's audience.
 
 Product: ${productIdea || "Not specified"}
 Target users: ${targetUsers || "Not specified"}
 Problem solved: ${problem || "Not specified"}
 Category: ${category}
 Region: ${region}
-Audience segments: ${segmentNames.join(", ")}
-${competitorMentions.length > 0 ? `Known competitors: ${competitorMentions.join(", ")}` : ""}
+Segments: ${segmentNames.join(", ")}
+${competitorMentions.length > 0 ? `Competitors: ${competitorMentions.join(", ")}` : ""}
 
-Return ONLY a JSON array of 6 strings — plain search queries a researcher would type:
-["query 1", "query 2", ...]
+Return ONLY a JSON object with key "queries" containing an array of 6 strings:
+{"queries": ["query 1", "query 2", ...]}
 
 Rules:
-- Each query: 3–7 words
-- Cover: pain points, alternatives people use, frustrations, communities, and category terms
-- Make queries specific to the product context
-- No quotes within queries`;
+- Each query: 3–6 words
+- Mix: category tools, user frustrations, alternatives, product launches in this space
+- Queries should be likely to match real HN story titles`;
 
   try {
     const resp = await client.chat.completions.create(
       {
-        model: "gpt-5-nano",
-        max_completion_tokens: 512,
+        model: "gpt-5-mini",
+        max_completion_tokens: 256,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       },
@@ -85,62 +82,58 @@ Rules:
     );
     const content = resp.choices[0]?.message?.content ?? "{}";
     const parsed = JSON.parse(content) as Record<string, unknown>;
-    const arr = Array.isArray(parsed.queries)
-      ? parsed.queries
-      : Object.values(parsed).find(Array.isArray) ?? [];
+    const arr = Array.isArray(parsed.queries) ? parsed.queries : [];
     return (arr as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 8);
-  } catch {
+  } catch (err) {
+    logger.warn({ err }, "research: query generation failed, using fallback");
     return [
-      `${category} alternatives frustrations`,
-      `best ${category} tools ${region}`,
-      `${productIdea || category} user problems`,
-      `${targetUsers || "users"} pain points ${category}`,
-      `${category} community discussions`,
-      `${problem || category} solutions comparison`,
+      `${category} app alternatives`,
+      `${productIdea || category} Show HN`,
+      `${targetUsers || "users"} ${category} frustrations`,
+      `${problem || category} tools`,
+      `${category} market trends`,
+      `${productIdea || category} launch`,
     ];
   }
 }
 
-/* ─── Step 2: Fetch DuckDuckGo Instant Answer API ───────────────── */
-async function fetchDdgSignal(query: string): Promise<{ title: string; snippet: string; url: string } | null> {
-  try {
-    const encoded = encodeURIComponent(query);
-    const res = await fetch(
-      `https://api.duckduckgo.com/?q=${encoded}&format=json&no_html=1&skip_disambig=1`,
-      { signal: AbortSignal.timeout(5_000) },
-    );
-    if (!res.ok) return null;
-    const data = await res.json() as DdgResult;
+/* ─── Step 2: Fetch Hacker News Algolia API ─────────────────────── */
+/* Public API, no key required. Each hit has objectID so every result
+   gets a real verifiable URL at https://news.ycombinator.com/item?id= */
+async function fetchHnSignals(
+  queries: string[],
+): Promise<Array<{ title: string; snippet: string; url: string; query: string }>> {
+  const results: Array<{ title: string; snippet: string; url: string; query: string }> = [];
 
-    if (data.AbstractText && data.AbstractURL && data.AbstractText.length > 40) {
-      return {
-        title: query,
-        snippet: data.AbstractText.slice(0, 280),
-        url: data.AbstractURL,
-      };
-    }
+  await Promise.all(
+    queries.map(async (query) => {
+      try {
+        const encoded = encodeURIComponent(query);
+        const res = await fetch(
+          `https://hn.algolia.com/api/v1/search?query=${encoded}&tags=story&hitsPerPage=3`,
+          { signal: AbortSignal.timeout(6_000) },
+        );
+        if (!res.ok) return;
+        const data = await res.json() as { hits: HnHit[] };
 
-    const topics: DdgRelatedTopic[] = [];
-    for (const t of data.RelatedTopics ?? []) {
-      if (t.Topics) topics.push(...t.Topics);
-      else topics.push(t);
-    }
-    for (const t of topics) {
-      if (t.Text && t.FirstURL && t.Text.length > 30) {
-        return {
-          title: t.Text.slice(0, 80),
-          snippet: t.Text.slice(0, 280),
-          url: t.FirstURL,
-        };
+        for (const hit of data.hits ?? []) {
+          if (!hit.title) continue;
+          /* Every story has an objectID → guaranteed real URL */
+          const url = hit.url ?? `https://news.ycombinator.com/item?id=${hit.objectID}`;
+          const rawText = hit.story_text ?? "";
+          const snippet = rawText.replace(/<[^>]+>/g, "").trim().slice(0, 280) || hit.title;
+          results.push({ title: hit.title, snippet, url, query });
+        }
+      } catch (err) {
+        logger.warn({ err, query }, "research: HN fetch failed for query");
       }
-    }
-    return null;
-  } catch {
-    return null;
-  }
+    }),
+  );
+
+  return results;
 }
 
-/* ─── Step 3: Classify raw snippets into typed signals ─────────── */
+/* ─── Step 3: Classify raw signals via OpenAI ───────────────────── */
 async function classifySignals(
   client: OpenAI,
   rawSignals: Array<{ title: string; snippet: string; url: string; query: string }>,
@@ -149,33 +142,38 @@ async function classifySignals(
   if (rawSignals.length === 0) return [];
 
   const segmentList = segments.map((s) => `${s.id}: ${s.name}`).join(", ");
-  const prompt = `You are a market research analyst. Classify these research snippets for an audience intelligence tool.
+  const prompt = `You are a market research analyst. Classify these HN stories as audience research signals.
 
 Audience segments: ${segmentList}
 
-Snippets to classify:
-${rawSignals.map((s, i) => `${i + 1}. Query: "${s.query}" | Title: "${s.title}" | Snippet: "${s.snippet}"`).join("\n")}
+Stories to classify (JSON):
+${JSON.stringify(rawSignals.map((s, i) => ({ index: i + 1, query: s.query, title: s.title, snippet: s.snippet.slice(0, 120) })))}
 
-Return a JSON object with key "signals" containing an array where each item has:
-{
-  "index": <original 1-based index>,
-  "sentiment": "positive"|"negative"|"neutral"|"mixed",
-  "signalType": "pain_point"|"competitor"|"objection"|"unmet_need"|"language"|"channel",
-  "segmentId": <matching segment id from the list, or null>
-}
+Return a JSON object with key "signals" — one item per story:
+{"signals": [
+  {
+    "index": 1,
+    "sentiment": "positive"|"negative"|"neutral"|"mixed",
+    "signalType": "pain_point"|"competitor"|"objection"|"unmet_need"|"language"|"channel",
+    "segmentId": "<one of the segment ids above, or null>"
+  }
+]}
 
 signalType guide:
-- pain_point: describes a frustration or problem
-- competitor: mentions an alternative product or tool
-- objection: reason someone would NOT buy
-- unmet_need: something people want but can't get
-- language: natural phrasing people use to describe their situation
-- channel: where/how people find or discuss solutions`;
+- pain_point: a problem or frustration users have
+- competitor: mentions an alternative product
+- objection: reason someone would not buy
+- unmet_need: something users want but can't get
+- language: natural user phrasing about the topic
+- channel: where/how people find solutions`;
+
+  const VALID_SENTIMENT = ["positive", "negative", "neutral", "mixed"] as const;
+  const VALID_TYPE     = ["pain_point", "competitor", "objection", "unmet_need", "language", "channel"] as const;
 
   try {
     const resp = await client.chat.completions.create(
       {
-        model: "gpt-5-nano",
+        model: "gpt-5-mini",
         max_completion_tokens: 1024,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
@@ -183,53 +181,49 @@ signalType guide:
       { signal: AbortSignal.timeout(8_000) },
     );
     const content = resp.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as { signals?: unknown[] };
-    const classifications = parsed.signals ?? [];
-
-    const VALID_SENTIMENT = ["positive", "negative", "neutral", "mixed"] as const;
-    const VALID_TYPE = ["pain_point", "competitor", "objection", "unmet_need", "language", "channel"] as const;
+    const parsed  = JSON.parse(content) as { signals?: unknown[] };
+    const cls     = (parsed.signals ?? []) as Array<Record<string, unknown>>;
 
     return rawSignals.map((raw, i) => {
-      const cls = (classifications as Array<Record<string, unknown>>).find(
-        (c) => c.index === i + 1,
-      ) ?? {};
-      const sentiment = VALID_SENTIMENT.includes(cls.sentiment as typeof VALID_SENTIMENT[number])
-        ? cls.sentiment as typeof VALID_SENTIMENT[number]
+      const c         = cls.find((x) => x.index === i + 1) ?? {};
+      const sentiment = VALID_SENTIMENT.includes(c.sentiment as typeof VALID_SENTIMENT[number])
+        ? c.sentiment as typeof VALID_SENTIMENT[number]
         : "neutral";
-      const signalType = VALID_TYPE.includes(cls.signalType as typeof VALID_TYPE[number])
-        ? cls.signalType as typeof VALID_TYPE[number]
+      const signalType = VALID_TYPE.includes(c.signalType as typeof VALID_TYPE[number])
+        ? c.signalType as typeof VALID_TYPE[number]
         : "pain_point";
-      const segmentId = segments.find((s) => s.id === cls.segmentId)?.id;
+      const segmentId = segments.find((s) => s.id === c.segmentId)?.id;
 
       return {
-        id: `signal-${Date.now()}-${i}`,
-        source: "web" as const,
-        query: raw.query,
-        title: raw.title,
-        snippet: raw.snippet,
-        url: raw.url,
+        id:          `signal-hn-${Date.now()}-${i}`,
+        source:      "web" as const,
+        query:       raw.query,
+        title:       raw.title,
+        snippet:     raw.snippet,
+        url:         raw.url,
         sentiment,
         signalType,
         ...(segmentId ? { segmentId } : {}),
-        createdAt: new Date().toISOString(),
+        createdAt:   new Date().toISOString(),
       };
     });
-  } catch {
+  } catch (err) {
+    logger.warn({ err }, "research: signal classification failed, using defaults");
     return rawSignals.map((raw, i) => ({
-      id: `signal-${Date.now()}-${i}`,
-      source: "web" as const,
-      query: raw.query,
-      title: raw.title,
-      snippet: raw.snippet,
-      url: raw.url,
+      id:        `signal-hn-${Date.now()}-${i}`,
+      source:    "web" as const,
+      query:     raw.query,
+      title:     raw.title,
+      snippet:   raw.snippet,
+      url:       raw.url,
       sentiment: "neutral" as const,
       signalType: "pain_point" as const,
-      createdAt: new Date().toISOString(),
+      createdAt:  new Date().toISOString(),
     }));
   }
 }
 
-/* ─── Step 4: Build AI-hypothesis fallback signals ──────────────── */
+/* ─── Step 4: AI-hypothesis fallback signals ────────────────────── */
 async function buildHypothesisSignals(
   client: OpenAI,
   params: {
@@ -242,30 +236,31 @@ async function buildHypothesisSignals(
 ): Promise<ResearchSignal[]> {
   const { productIdea, targetUsers, problem, category, segments } = params;
 
-  const prompt = `You are a market research analyst. Generate 6 realistic audience research signals for this product.
-These are educated hypotheses — clearly label them as such.
+  const prompt = `You are a market research analyst. Generate 6 realistic audience research hypotheses for this product.
 
 Product: ${productIdea || "Not specified"}
 Target users: ${targetUsers || "Not specified"}
 Problem solved: ${problem || "Not specified"}
 Category: ${category}
-Segments: ${segments.map((s) => s.name).join(", ")}
+Segments: ${segments.map((s) => `${s.id}: ${s.name}`).join(", ")}
 
-Return a JSON object with key "signals" containing an array of 6 items:
-{
-  "title": "Short descriptive title",
-  "snippet": "2-3 sentence realistic user language or insight for this category",
-  "sentiment": "positive"|"negative"|"neutral"|"mixed",
-  "signalType": "pain_point"|"competitor"|"objection"|"unmet_need"|"language"|"channel",
-  "segmentId": <one of: ${segments.map((s) => s.id).join(", ")}>
-}
+Return a JSON object with key "signals" containing exactly 6 items:
+{"signals": [
+  {
+    "title": "Short descriptive title (max 80 chars)",
+    "snippet": "2-3 sentences in realistic user voice describing a pain, need, or objection",
+    "sentiment": "positive"|"negative"|"neutral"|"mixed",
+    "signalType": "pain_point"|"competitor"|"objection"|"unmet_need"|"language"|"channel",
+    "segmentId": "<one of: ${segments.map((s) => s.id).join(", ")}>"
+  }
+]}
 
-Make signals specific to the product context and realistic — written in actual user voice.`;
+Make signals specific to this product's context and realistic. No URLs — these are AI hypotheses.`;
 
   try {
     const resp = await client.chat.completions.create(
       {
-        model: "gpt-5-nano",
+        model: "gpt-5-mini",
         max_completion_tokens: 1024,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
@@ -273,34 +268,35 @@ Make signals specific to the product context and realistic — written in actual
       { signal: AbortSignal.timeout(8_000) },
     );
     const content = resp.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as { signals?: unknown[] };
-    const raw = parsed.signals ?? [];
+    const parsed  = JSON.parse(content) as { signals?: unknown[] };
+    const raw     = (parsed.signals ?? []) as Array<Record<string, unknown>>;
 
     const VALID_SENTIMENT = ["positive", "negative", "neutral", "mixed"] as const;
-    const VALID_TYPE = ["pain_point", "competitor", "objection", "unmet_need", "language", "channel"] as const;
+    const VALID_TYPE      = ["pain_point", "competitor", "objection", "unmet_need", "language", "channel"] as const;
 
-    return (raw as Array<Record<string, unknown>>).map((item, i) => {
-      const sentiment = VALID_SENTIMENT.includes(item.sentiment as typeof VALID_SENTIMENT[number])
+    return raw.map((item, i) => {
+      const sentiment  = VALID_SENTIMENT.includes(item.sentiment as typeof VALID_SENTIMENT[number])
         ? item.sentiment as typeof VALID_SENTIMENT[number]
         : "neutral";
       const signalType = VALID_TYPE.includes(item.signalType as typeof VALID_TYPE[number])
         ? item.signalType as typeof VALID_TYPE[number]
         : "pain_point";
-      const segmentId = segments.find((s) => s.id === item.segmentId)?.id;
+      const segmentId  = segments.find((s) => s.id === item.segmentId)?.id;
 
       return {
-        id: `signal-hyp-${Date.now()}-${i}`,
-        source: "manual" as const,
-        query: `${category} hypothesis`,
-        title: typeof item.title === "string" ? item.title : "Research hypothesis",
-        snippet: typeof item.snippet === "string" ? item.snippet : "",
+        id:        `signal-hyp-${Date.now()}-${i}`,
+        source:    "manual" as const,
+        query:     `${category} hypothesis`,
+        title:     typeof item.title === "string" ? item.title.slice(0, 100) : "Research hypothesis",
+        snippet:   typeof item.snippet === "string" ? item.snippet.slice(0, 280) : "",
         sentiment,
         signalType,
         ...(segmentId ? { segmentId } : {}),
         createdAt: new Date().toISOString(),
       };
     });
-  } catch {
+  } catch (err) {
+    logger.warn({ err }, "research: hypothesis signal generation failed");
     return [];
   }
 }
@@ -308,10 +304,10 @@ Make signals specific to the product context and realistic — written in actual
 /* ─── Step 5: Build evidenceSummary + updatedSegments ───────────── */
 function buildResults(
   signals: ResearchSignal[],
+  urlBackedCount: number,
   sourceMode: "live_research" | "ai_hypothesis",
   segments: AudienceSegment[],
 ): { evidenceSummary: EvidenceSummary; updatedSegments: AudienceSegment[] } {
-  const urlSignals = signals.filter((s) => s.url);
   const strongestSignals = signals
     .filter((s) => s.signalType === "pain_point" || s.signalType === "unmet_need")
     .slice(0, 5)
@@ -320,13 +316,15 @@ function buildResults(
   const evidenceSummary: EvidenceSummary = {
     sourceMode,
     confidenceReason: sourceMode === "live_research"
-      ? `${urlSignals.length} source-backed signals collected from public search results.`
-      : "No live search results with verifiable URLs were collected. Signals below are AI-generated hypotheses based on product context.",
+      ? `${urlBackedCount} source-backed signals collected from public HN search results.`
+      : urlBackedCount > 0
+        ? `Only ${urlBackedCount} source-backed signal(s) found — minimum 3 required for live_research. Supplemented with AI hypotheses.`
+        : "No live source-backed signals were collected. All signals are AI-generated hypotheses based on product context.",
     totalSignals: signals.length,
     strongestSignals,
     limitations: sourceMode === "live_research"
       ? [
-          "Signals are from public search index snippets only — not scraped from Reddit, X, or TikTok.",
+          "Signals are from HN public search results — not scraped from Reddit, X, or TikTok.",
           "Validate insights with direct user conversations before making decisions.",
         ]
       : [
@@ -336,33 +334,36 @@ function buildResults(
         ],
   };
 
+  /* Only update segment evidence when there are signals for that segment.
+     If no signals match a segment, preserve its existing evidence untouched. */
   const updatedSegments: AudienceSegment[] = segments.map((seg) => {
     const segSignals = signals.filter((s) => s.segmentId === seg.id);
-    if (segSignals.length === 0) return seg;
+    if (segSignals.length === 0) return seg; /* preserve existing */
 
-    const existingEvidence = seg.evidence;
     const painSignals = segSignals.filter((s) => s.signalType === "pain_point" || s.signalType === "unmet_need");
     const objSignals  = segSignals.filter((s) => s.signalType === "objection");
     const langSignals = segSignals.filter((s) => s.signalType === "language");
     const compSignals = segSignals.filter((s) => s.signalType === "competitor");
 
+    const existing = seg.evidence;
+
     return {
       ...seg,
       evidence: {
-        signalStrength: segSignals.length >= 3 ? "High" : segSignals.length >= 1 ? "Medium" : "Low",
+        signalStrength: segSignals.length >= 3 ? "High" : "Medium",
         exampleUserLanguage: langSignals.length > 0
           ? langSignals.map((s) => s.snippet.slice(0, 120))
-          : (existingEvidence?.exampleUserLanguage ?? []),
-        likelySearchQueries: segSignals.map((s) => s.query).filter((q, i, a) => a.indexOf(q) === i).slice(0, 4),
+          : (existing?.exampleUserLanguage ?? []),
+        likelySearchQueries: [...new Set(segSignals.map((s) => s.query))].slice(0, 4),
         competitorMentions: compSignals.length > 0
           ? compSignals.map((s) => s.title)
-          : (existingEvidence?.competitorMentions ?? []),
+          : (existing?.competitorMentions ?? []),
         unmetNeeds: painSignals.length > 0
           ? painSignals.map((s) => s.snippet.slice(0, 120))
-          : (existingEvidence?.unmetNeeds ?? []),
+          : (existing?.unmetNeeds ?? []),
         objections: objSignals.length > 0
           ? objSignals.map((s) => s.snippet.slice(0, 120))
-          : (existingEvidence?.objections ?? []),
+          : (existing?.objections ?? []),
       },
     };
   });
@@ -384,62 +385,58 @@ export async function collectSignals(
   const category    = currentAudienceMap.category;
   const region      = currentAudienceMap.region;
   const segments    = currentAudienceMap.segments;
-
   const competitorMentions = segments.flatMap((s) => s.evidence?.competitorMentions ?? []);
 
-  /* No AI configured — return honest empty fallback */
+  /* No AI configured — return honest empty state, preserve map */
   if (!baseURL || !apiKey) {
-    const fallback = buildResults([], "ai_hypothesis", segments);
-    return {
-      sourceMode: "ai_hypothesis",
-      signals: [],
-      ...fallback,
-    };
+    logger.warn("research: AI not configured, returning empty result");
+    const { evidenceSummary, updatedSegments } = buildResults([], 0, "ai_hypothesis", segments);
+    return { sourceMode: "ai_hypothesis", signals: [], urlBackedSignalCount: 0, evidenceSummary, updatedSegments };
   }
 
   const client = new OpenAI({ apiKey, baseURL });
 
   /* ── Step 1: Generate queries ── */
   const queries = await generateQueries(client, {
-    productIdea,
-    targetUsers,
-    problem,
-    category,
-    region,
+    productIdea, targetUsers, problem, category, region,
     segmentNames: segments.map((s) => s.name),
     competitorMentions,
   });
+  logger.info({ queryCount: queries.length, queries }, "research: queries generated");
 
-  /* ── Step 2: Fetch DuckDuckGo Instant Answer API ── */
-  const ddgResults = await Promise.all(queries.map((q) => fetchDdgSignal(q)));
-  const rawSignals = queries
-    .map((q, i) => ({ query: q, hit: ddgResults[i] }))
-    .filter((x): x is { query: string; hit: NonNullable<typeof ddgResults[0]> } => x.hit !== null)
-    .map(({ query, hit }) => ({ ...hit, query }));
+  /* ── Step 2: Fetch HN Algolia (real public source, no key needed) ── */
+  const rawHnSignals = await fetchHnSignals(queries);
+  const urlBackedCount = rawHnSignals.length; /* every HN result has a real URL */
+  logger.info(
+    { queryCount: queries.length, rawSignalCount: rawHnSignals.length, urlBackedCount },
+    "research: HN fetch complete",
+  );
 
-  const liveSignalCount = rawSignals.length;
-
-  /* ── Step 3: Classify live signals or build hypothesis signals ── */
+  /* ── Step 3: Classify or generate hypotheses ── */
   let signals: ResearchSignal[];
   let sourceMode: "live_research" | "ai_hypothesis";
 
-  if (liveSignalCount >= 3) {
-    signals = await classifySignals(client, rawSignals, segments);
+  if (urlBackedCount >= 3) {
+    signals    = await classifySignals(client, rawHnSignals, segments);
     sourceMode = "live_research";
   } else {
-    /* Not enough real URL-backed signals — fall back to AI hypotheses */
-    const hypSignals = await buildHypothesisSignals(client, {
-      productIdea, targetUsers, problem, category, segments,
-    });
-    /* Include any real signals we did collect, unlabelled as live_research */
-    const classifiedReal = rawSignals.length > 0
-      ? await classifySignals(client, rawSignals, segments)
-      : [];
-    signals = [...classifiedReal, ...hypSignals];
+    /* Not enough real signals — generate hypotheses AND include any real ones */
+    const [hypSignals, classifiedReal] = await Promise.all([
+      buildHypothesisSignals(client, { productIdea, targetUsers, problem, category, segments }),
+      rawHnSignals.length > 0
+        ? classifySignals(client, rawHnSignals, segments)
+        : Promise.resolve([]),
+    ]);
+    signals    = [...classifiedReal, ...hypSignals];
     sourceMode = "ai_hypothesis";
   }
 
-  const { evidenceSummary, updatedSegments } = buildResults(signals, sourceMode, segments);
+  logger.info(
+    { totalSignals: signals.length, urlBackedCount, sourceMode },
+    "research: collection complete",
+  );
 
-  return { sourceMode, signals, evidenceSummary, updatedSegments };
+  const { evidenceSummary, updatedSegments } = buildResults(signals, urlBackedCount, sourceMode, segments);
+
+  return { sourceMode, signals, urlBackedSignalCount: urlBackedCount, evidenceSummary, updatedSegments };
 }

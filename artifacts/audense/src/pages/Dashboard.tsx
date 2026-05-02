@@ -788,21 +788,39 @@ export default function Dashboard() {
       const data = await res.json() as {
         sourceMode: "live_research" | "ai_hypothesis";
         signals: ResearchSignal[];
+        urlBackedSignalCount: number;
         evidenceSummary: AudienceMapResult["evidenceSummary"];
         updatedSegments: AudienceMapResult["segments"];
       };
-      const updatedMap: AudienceMapResult = {
-        ...audienceMap,
-        evidenceSummary: data.evidenceSummary,
-        segments: data.updatedSegments,
-      };
-      setAudienceMap(updatedMap);
-      setSegments(buildSegmentsFromMap(updatedMap));
-      saveAudienceMap(updatedMap);
-      const label = data.sourceMode === "live_research"
-        ? `${data.signals.filter((s) => s.url).length} live signals collected`
-        : `${data.signals.length} hypothesis signals generated`;
-      showToast("success", label);
+
+      /* Only apply map update if we have useful data — never wipe a good map */
+      const hasUsefulSignals = data.signals.length > 0;
+      if (hasUsefulSignals) {
+        const updatedMap: AudienceMapResult = {
+          ...audienceMap,
+          evidenceSummary: data.evidenceSummary,
+          segments: data.updatedSegments,
+        };
+        setAudienceMap(updatedMap);
+        setSegments(buildSegmentsFromMap(updatedMap));
+        saveAudienceMap(updatedMap);
+      } else {
+        /* Still update just the evidenceSummary so sourceMode/limitations stay honest */
+        if (data.evidenceSummary) {
+          const updatedMap: AudienceMapResult = { ...audienceMap, evidenceSummary: data.evidenceSummary };
+          setAudienceMap(updatedMap);
+          saveAudienceMap(updatedMap);
+        }
+      }
+
+      const urlCount = data.urlBackedSignalCount ?? data.signals.filter((s) => s.url).length;
+      if (data.sourceMode === "live_research") {
+        showToast("success", `Live research added ${urlCount} source-backed signal${urlCount !== 1 ? "s" : ""}.`);
+      } else if (urlCount >= 1) {
+        showToast("info", `Not enough live signals found yet — this map is still hypothesis-led.`);
+      } else {
+        showToast("info", "No live source-backed signals found yet. Audense is still using hypothesis-led audience estimates.");
+      }
     } catch {
       showToast("error", "Research scan failed — your map is unchanged");
     } finally {

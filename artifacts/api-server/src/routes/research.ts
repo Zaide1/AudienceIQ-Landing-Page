@@ -19,6 +19,10 @@ researchRouter.post("/research/collect-signals", async (req, res) => {
       onboardingData ?? {},
       currentAudienceMap as Parameters<typeof collectSignals>[1],
     );
+    req.log.info(
+      { sourceMode: result.sourceMode, signals: result.signals.length, urlBacked: result.urlBackedSignalCount },
+      "research collect-signals done",
+    );
     res.json(result);
   } catch (err) {
     req.log.error({ err }, "research collect-signals failed");
