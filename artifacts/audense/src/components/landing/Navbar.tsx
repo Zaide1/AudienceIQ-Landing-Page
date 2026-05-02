@@ -17,6 +17,11 @@ export function Navbar() {
         <img
           src={logoImg}
           alt="Audense Logo"
+          width={48}
+          height={48}
+          decoding="sync"
+          loading="eager"
+          fetchPriority="high"
           style={{ width: 48, height: 48, objectFit: "contain" }}
           className="rounded-lg"
         />

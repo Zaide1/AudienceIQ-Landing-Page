@@ -1774,6 +1774,11 @@ export default function Dashboard() {
           <img
             src={logoImg}
             alt="Audense"
+            width={36}
+            height={36}
+            decoding="sync"
+            loading="eager"
+            fetchPriority="high"
             style={{ width: 36, height: 36, objectFit: "contain", flexShrink: 0, marginBottom: 20 }}
           />
           {/* Top nav icons */}

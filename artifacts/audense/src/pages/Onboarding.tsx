@@ -66,7 +66,17 @@ function TopBar({ step }: { step: number }) {
           fontFamily: "inherit",
         }}
       >
-        <img src={logoImg} alt="Audense" style={{ width: 36, height: 36, objectFit: "contain" }} className="rounded-lg" />
+        <img
+          src={logoImg}
+          alt="Audense"
+          width={36}
+          height={36}
+          decoding="sync"
+          loading="eager"
+          fetchPriority="high"
+          style={{ width: 36, height: 36, objectFit: "contain" }}
+          className="rounded-lg"
+        />
         <span style={{ fontWeight: 700, fontSize: 20, letterSpacing: "-0.02em", color: "#111827" }}>Audense</span>
       </button>
       <div className="flex flex-col items-end gap-1.5">
