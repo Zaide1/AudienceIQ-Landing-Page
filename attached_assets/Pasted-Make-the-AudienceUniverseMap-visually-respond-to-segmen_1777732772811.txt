@@ -1,0 +1,56 @@
+Make the AudienceUniverseMap visually respond to segment percentages before we add the backend.
+
+Important:
+- Only edit the AudienceUniverseMap/dot map rendering logic and the data passed into it if needed.
+- Do not change landing.
+- Do not change onboarding UI.
+- Do not change dashboard layout.
+- Do not add backend/OpenAI/auth yet.
+- Preserve the current polished visual style.
+
+Current issue:
+AudienceMapResult changes after onboarding, but the dot map looks visually identical because cluster shapes are static.
+
+Goal:
+Keep the same Audense signature visual style, but make coloured blob sizes respond to each segment’s percentage.
+
+Required behaviour:
+- Larger segment percentage = visibly larger coloured blob.
+- Smaller segment percentage = visibly smaller coloured blob.
+- Keep the same general cluster positions:
+  - purple left
+  - blue upper-middle
+  - green lower-middle
+  - orange right
+  - pink far-right/lower
+- Keep grey universe dots.
+- Keep organic blob shapes.
+- Keep feathered boundary dots.
+- Keep tooltip/hover/click/deselect behaviour working.
+- Do not randomise map layout each render.
+- Same data should produce same map.
+
+Implementation guidance:
+- Keep fixed cluster centres.
+- Replace fixed cluster radii/static bitmap sizes with percentage-scaled radii.
+- Use each segment.percent to calculate radius scale.
+- Example:
+  const scale = clamp(0.75 + segment.percent / 40, 0.8, 1.45)
+- Apply scale to radiusX and radiusY for that cluster.
+- Clamp sizes so:
+  - no cluster becomes tiny/invisible
+  - no cluster overwhelms the whole map
+- Tooltip positions can stay anchored to cluster centres, but should remain visually aligned.
+
+Validation:
+After implementing, verify:
+1. If a segment is 30%, its blob is visibly larger than a 10% segment.
+2. If segment percentages change after chat Confirm update, the blob sizes update.
+3. If onboarding generates different segment percentages, the map visually changes.
+4. Hover/click/deselect still works.
+5. The dot map still looks polished and close to the current design.
+
+After implementing, explain:
+- Where percentage scaling was added
+- The exact scale formula/clamps used
+- How you verified the map changes visually

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
   Settings, HelpCircle, Send, Plus, Info, Paperclip,
@@ -144,34 +144,42 @@ const TINT2: Record<string, string> = {
 };
 const GREY = "#E5E7EB";
 
-function buildDots(): { feathered: string[]; raw: string[] } {
+/* Fixed cluster centres + base radii (calibrated to look correct at each
+   segment's default percentage when scale = 0.75 + pct/40, clamped 0.8–1.45) */
+const CLUSTERS = [
+  { color: "#7C3AED", cx:  8.0, cy: 8.5, baseRx: 5.5, baseRy: 3.2 }, // purple  – left
+  { color: "#3B82F6", cx: 28.0, cy: 4.5, baseRx: 3.5, baseRy: 1.8 }, // blue    – upper-mid
+  { color: "#10B981", cx: 31.0, cy: 8.5, baseRx: 4.0, baseRy: 2.0 }, // green   – lower-mid
+  { color: "#F59E0B", cx: 43.0, cy: 5.5, baseRx: 3.5, baseRy: 2.2 }, // orange  – upper-right
+  { color: "#EC4899", cx: 47.5, cy: 8.5, baseRx: 3.5, baseRy: 2.5 }, // pink    – lower-right
+] as const;
+
+function clampN(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+/* Builds dot arrays driven by each segment's pct — same inputs → same output */
+function buildDynamicDots(segments: Segment[]): { feathered: string[]; raw: string[] } {
   const dots: string[] = new Array(ROWS * COLS).fill(GREY);
-  const set = (r: number, c: number, color: string) => {
-    if (r >= 0 && r < ROWS && c >= 0 && c < COLS) dots[r * COLS + c] = color;
-  };
-  const rect = (rA: number, rB: number, cA: number, cB: number, color: string) => {
-    for (let r = rA; r <= rB; r++) for (let c = cA; c <= cB; c++) set(r, c, color);
-  };
-  rect(8, 11, 1,  3,  "#7C3AED");
-  rect(6, 11, 4,  7,  "#7C3AED");
-  rect(5, 11, 8,  11, "#7C3AED");
-  rect(6, 11, 12, 14, "#7C3AED");
-  rect(7, 11, 15, 16, "#7C3AED");
-  rect(3, 7,  23, 25, "#3B82F6");
-  rect(2, 7,  26, 30, "#3B82F6");
-  rect(3, 7,  31, 33, "#3B82F6");
-  rect(7, 11, 26, 28, "#10B981");
-  rect(6, 11, 29, 33, "#10B981");
-  rect(7, 11, 34, 36, "#10B981");
-  rect(4, 8,  39, 41, "#F59E0B");
-  rect(3, 8,  42, 45, "#F59E0B");
-  rect(5, 8,  46, 47, "#F59E0B");
-  rect(7, 11, 44, 46, "#EC4899");
-  rect(6, 11, 47, 50, "#EC4899");
-  rect(8, 11, 51, 51, "#EC4899");
+
+  segments.forEach((seg, i) => {
+    if (i >= CLUSTERS.length) return;
+    const { color, cx, cy, baseRx, baseRy } = CLUSTERS[i];
+    const scale = clampN(0.75 + seg.pct / 40, 0.8, 1.45);
+    const rx = baseRx * scale;
+    const ry = baseRy * scale;
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const dx = (c - cx) / rx;
+        const dy = (r - cy) / ry;
+        if (dx * dx + dy * dy <= 1) dots[r * COLS + c] = color;
+      }
+    }
+  });
 
   const raw = [...dots];
 
+  /* Feathered boundary — same algorithm as before */
   const isGrey = (r: number, c: number) =>
     r < 0 || r >= ROWS || c < 0 || c >= COLS || dots[r * COLS + c] === GREY;
   const feathered = [...dots];
@@ -203,8 +211,6 @@ function buildDots(): { feathered: string[]; raw: string[] } {
   }
   return { feathered, raw };
 }
-
-const { feathered: BASE_DOTS, raw: RAW_DOTS } = buildDots();
 
 /* accent color → segment id, used for dot hit-testing */
 const COLOR_TO_SEG: Record<string, string> = {
@@ -319,6 +325,12 @@ function AudienceMap({
   onSelect: (id: string | null) => void;
   onHover: (id: string | null) => void;
 }) {
+  /* Recompute dot grid whenever segment percentages change */
+  const { feathered: activeDots, raw: activeRaw } = useMemo(
+    () => buildDynamicDots(segments),
+    [segments],
+  );
+
   /* Debounce hover so rapid dot-to-dot moves don't cause jitter */
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scheduleHover = (id: string | null) => {
@@ -356,8 +368,8 @@ function AudienceMap({
             gap: 4,
           }}
         >
-          {BASE_DOTS.map((color, i) => {
-            const segId = COLOR_TO_SEG[RAW_DOTS[i]] ?? null;
+          {activeDots.map((color, i) => {
+            const segId = COLOR_TO_SEG[activeRaw[i]] ?? null;
             const isClickable = segId !== null;
             return (
               <div
