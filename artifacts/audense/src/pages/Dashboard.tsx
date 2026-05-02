@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
   Settings, HelpCircle, Send, Plus, Paperclip, X as XIcon, FileText, Image,
+  Home, Layers, Database,
 } from "lucide-react";
 import {
   FaInstagram, FaTiktok, FaYoutube, FaLinkedin,
@@ -484,6 +485,43 @@ function NavItem({
         {label}
       </span>
     </div>
+  );
+}
+
+/* ─── Rail icon button ────────────────────────────────────────────── */
+function RailIcon({
+  icon, label, onClick, active,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      title={label}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        border: "none",
+        background: active || hovered ? "#F5F3FF" : "transparent",
+        color: active ? "#7C3AED" : onClick ? (hovered ? "#7C3AED" : "#6B7280") : "#D1D5DB",
+        cursor: onClick ? "pointer" : "default",
+        marginBottom: 2,
+        flexShrink: 0,
+        transition: "background 0.15s, color 0.15s",
+      }}
+    >
+      {icon}
+    </button>
   );
 }
 
@@ -1269,35 +1307,116 @@ export default function Dashboard() {
           width: `${splitPct}%`,
           flexShrink: 0,
           display: "flex",
-          flexDirection: "column",
           background: "#fff",
           overflow: "hidden",
         }}
       >
-        {/* Logo */}
+        {/* ── Icon rail ────────────────────────────────────── */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 9,
-            padding: "18px 20px 14px",
-            borderBottom: "1px solid #F3F4F6",
+            width: 64,
             flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            borderRight: "1px solid #E5E7EB",
+            paddingTop: 12,
+            paddingBottom: 14,
+            background: "#fff",
           }}
         >
+          {/* Logo */}
           <div
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
+              width: 36,
+              height: 36,
+              borderRadius: 9,
               background: `#EDE9FE url(${logoImg}) center/cover no-repeat`,
               flexShrink: 0,
+              marginBottom: 20,
             }}
           />
-          <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: -0.4, color: "#111827" }}>
-            Audense
-          </span>
+          {/* Top nav icons */}
+          <RailIcon icon={<Home size={18} />} label="Home" active onClick={() => {}} />
+          <RailIcon icon={<Layers size={18} />} label="Research (coming soon)" />
+          <RailIcon icon={<Database size={18} />} label="Sources (coming soon)" />
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+          {/* Settings */}
+          <RailIcon
+            icon={<Settings size={18} />}
+            label="Settings"
+            onClick={() => setIsSettingsOpen(true)}
+          />
+          {/* Help popover */}
+          <div style={{ position: "relative" }}>
+            {isHelpPopoverOpen && (
+              <>
+                <div
+                  style={{ position: "fixed", inset: 0, zIndex: 9000 }}
+                  onClick={() => setIsHelpPopoverOpen(false)}
+                />
+                <div
+                  style={{
+                    position: "absolute", bottom: 0, left: "calc(100% + 8px)",
+                    width: 200, background: "#fff",
+                    borderRadius: 10, boxShadow: "0 8px 32px rgba(15,23,42,0.16)",
+                    border: "1px solid #E5E7EB",
+                    zIndex: 9001, overflow: "hidden",
+                    padding: "4px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => { setIsHelpPopoverOpen(false); setIsHelpModalOpen(true); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 9,
+                      width: "100%", padding: "9px 12px", borderRadius: 7,
+                      background: "none", border: "none", cursor: "pointer",
+                      fontSize: 13.5, color: "#374151", fontWeight: 500,
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F3FF")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  >
+                    How it works
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setIsHelpPopoverOpen(false); setIsSupportModalOpen(true); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 9,
+                      width: "100%", padding: "9px 12px", borderRadius: 7,
+                      background: "none", border: "none", cursor: "pointer",
+                      fontSize: 13.5, color: "#374151", fontWeight: 500,
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F3FF")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  >
+                    Get support
+                  </button>
+                </div>
+              </>
+            )}
+            <RailIcon
+              icon={<HelpCircle size={18} />}
+              label="Help"
+              onClick={() => setIsHelpPopoverOpen((v) => !v)}
+            />
+          </div>
         </div>
+
+        {/* ── Chat area ────────────────────────────────────── */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            minWidth: 0,
+          }}
+        >
 
         {/* "Today" label */}
         <div style={{ padding: "14px 20px 6px", flexShrink: 0 }}>
@@ -1553,68 +1672,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Bottom nav */}
-        <div style={{ padding: "6px 12px 14px", borderTop: "1px solid #F3F4F6", flexShrink: 0 }}>
-          <NavItem icon={<Settings size={15} />} label="Settings" onClick={() => setIsSettingsOpen(true)} />
-
-          {/* Help popover anchor */}
-          <div style={{ position: "relative" }}>
-            {isHelpPopoverOpen && (
-              <>
-                {/* backdrop to close on outside click */}
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 9000 }}
-                  onClick={() => setIsHelpPopoverOpen(false)}
-                />
-                <div
-                  style={{
-                    position: "absolute", bottom: "calc(100% + 6px)", left: 0,
-                    width: 200, background: "#fff",
-                    borderRadius: 10, boxShadow: "0 8px 32px rgba(15,23,42,0.16)",
-                    border: "1px solid #E5E7EB",
-                    zIndex: 9001, overflow: "hidden",
-                    padding: "4px",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => { setIsHelpPopoverOpen(false); setIsHelpModalOpen(true); }}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 9,
-                      width: "100%", padding: "9px 12px", borderRadius: 7,
-                      background: "none", border: "none", cursor: "pointer",
-                      fontSize: 13.5, color: "#374151", fontWeight: 500,
-                      textAlign: "left",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F3FF")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-                  >
-                    How it works
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setIsHelpPopoverOpen(false); setIsSupportModalOpen(true); }}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 9,
-                      width: "100%", padding: "9px 12px", borderRadius: 7,
-                      background: "none", border: "none", cursor: "pointer",
-                      fontSize: 13.5, color: "#374151", fontWeight: 500,
-                      textAlign: "left",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F3FF")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-                  >
-                    Get support
-                  </button>
-                </div>
-              </>
-            )}
-            <NavItem
-              icon={<HelpCircle size={15} />}
-              label="Need help?"
-              onClick={() => setIsHelpPopoverOpen((v) => !v)}
-            />
-          </div>
         </div>
       </div>
 

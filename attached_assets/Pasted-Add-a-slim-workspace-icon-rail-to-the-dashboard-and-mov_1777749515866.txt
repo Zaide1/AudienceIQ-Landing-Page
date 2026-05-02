@@ -1,0 +1,67 @@
+Add a slim workspace icon rail to the dashboard and move Settings/Help there.
+
+Important:
+- Do not change chat behaviour.
+- Do not change audience map behaviour.
+- Do not change onboarding.
+- Do not change backend.
+- Do not change the dashboard cards/map/segments logic.
+- Keep the current split layout working.
+
+Current issue:
+Settings and Help are currently at the bottom of the chat panel. This makes the chat feel like a sidebar instead of a focused conversation area.
+
+Goal:
+Add a compact left icon rail for app-level navigation/actions, similar to modern workspace apps.
+
+Layout:
+1. Add a slim vertical rail on the far left of the dashboard.
+   - Width around 64px.
+   - Full height.
+   - White background.
+   - Right border: #E5E7EB.
+   - Icons centered.
+   - Keep it visually quiet and premium.
+
+2. Rail items:
+   - Audense logo at the top.
+   - Home icon.
+   - Research/history icon.
+   - Sources/evidence icon.
+   - Settings icon near the bottom.
+   - Help icon near the bottom.
+
+3. Settings:
+   - Move Settings from the bottom of the chat panel into the rail.
+   - Clicking the Settings icon should open the existing settings modal.
+   - Do not rebuild the settings modal.
+
+4. Help:
+   - Move Help from the bottom of the chat panel into the rail.
+   - Clicking Help should open the existing help popover/modal.
+   - Do not rebuild help content.
+
+5. Remove old bottom links:
+   - Remove the bottom “Settings” row from the chat panel.
+   - Remove the bottom “Need help?” row from the chat panel.
+
+6. Chat panel:
+   - Use the freed vertical space for chat messages and the input area.
+   - The input should stay pinned at the bottom.
+   - Suggested action chips should remain above the input.
+   - No duplicate Settings/Help controls.
+
+7. Responsive:
+   - Keep the rail visible on desktop.
+   - On narrow widths, the rail can stay slim but must not squash the chat input.
+   - No horizontal overflow.
+
+Validation:
+- Dashboard still loads.
+- Chat still sends messages.
+- Suggested action chips still work.
+- Settings opens from the rail.
+- Help opens from the rail.
+- Old bottom Settings/Help links are gone.
+- Split resize still works.
+- No overflow at narrow widths.
