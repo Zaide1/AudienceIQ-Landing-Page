@@ -1,0 +1,44 @@
+Fix the visible rectangular edge from the local glow without spreading the glow across the whole page.
+
+Important:
+- Do not move the glow across the whole site.
+- Do not change the hero layout.
+- Do not change CTA/dashboard preview/content.
+- Keep the glow local to this landing section.
+- Only fix the visible seam/rectangle edge.
+
+Current issue:
+The local glow/background tint ends with a visible rectangular boundary. I want the glow to stay in this section, but the edge should be feathered so the division is hidden.
+
+Goal:
+Keep the glow mostly contained, but make its bottom/right edge fade naturally into the base background.
+
+Preferred fix:
+1. Keep the glow inside the current section or section wrapper.
+2. Add a mask/fade to the glow layer:
+   - Use CSS mask-image / -webkit-mask-image with a linear gradient.
+   - Fade from visible in the centre/top area to transparent before the section boundary.
+   - Example direction: to bottom, black 0%, black 65%, transparent 100%.
+3. If the seam is mainly on the right/corner, combine with a radial gradient or second fade:
+   - Make the glow strongest in the top/right area.
+   - Ensure it reaches transparent before its rectangular container edge.
+4. Do not use a hard rectangular gradient block.
+5. Avoid pure white-to-purple block transitions. The glow should be transparent at its edges.
+
+Alternative if mask is awkward:
+- Add a pseudo-element overlay at the bottom of the glow section:
+  background: linear-gradient(to bottom, rgba(...,0), var(--page-bg) 80%);
+- Position it over the bottom 120–200px of the glow area.
+- This should cover the hard edge while keeping the glow local.
+
+Validation:
+- No visible rectangular seam.
+- Glow remains subtle and mostly in the current section.
+- The lower section does not become washed in purple.
+- Desktop and mobile both look smooth.
+- No layout changes.
+
+After implementing, explain:
+- Whether you used mask-image or a fade overlay
+- Which element had the hard edge
+- Why the glow now stays local without showing a rectangle

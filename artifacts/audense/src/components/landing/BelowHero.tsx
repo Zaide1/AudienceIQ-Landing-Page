@@ -88,11 +88,26 @@ function ProductValueSection() {
         position: "relative",
         width: "100%",
         padding: "clamp(96px, 12vw, 160px) clamp(24px, 5vw, 72px)",
-        background:
-          "linear-gradient(180deg, #FFFFFF 0%, #FBFAFE 14%, #F1ECF9 50%, #FBFAFE 88%, #FFFFFF 100%)",
+        background: "#FFFFFF",
+        overflow: "hidden",
       }}
     >
-      <div style={{ maxWidth: 1180, margin: "0 auto", textAlign: "center" }}>
+      {/* Local feathered glow — confined to this section, edges masked so no rectangle is visible */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background:
+            "radial-gradient(ellipse 65% 55% at 50% 50%, rgba(167,139,250,0.22) 0%, rgba(167,139,250,0.10) 40%, rgba(167,139,250,0.04) 65%, transparent 80%)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom, transparent 0%, #000 18%, #000 78%, transparent 100%)",
+          maskImage:
+            "linear-gradient(to bottom, transparent 0%, #000 18%, #000 78%, transparent 100%)",
+        }}
+      />
+      <div style={{ position: "relative", maxWidth: 1180, margin: "0 auto", textAlign: "center" }}>
         <h2
           style={{
             fontSize: "clamp(36px, 4vw, 60px)",
