@@ -108,22 +108,6 @@ export function Hero() {
           paddingBottom: 24,
         }}
       >
-        {/* Lavender glow — outside the perspective wrapper so it isn't skewed */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "70%",
-            height: "75%",
-            background: "radial-gradient(ellipse, rgba(167,139,250,0.18) 0%, rgba(124,58,237,0.05) 40%, transparent 65%)",
-            filter: "blur(70px)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
         {/* Subtle 2D tilt — matches reference, just slightly off vertical */}
         <div
           style={{
