@@ -1,0 +1,56 @@
+Add a simple resizable split layout to the Audense dashboard, inspired by the Jack & Jill reference.
+
+Important:
+- Only edit the `/dashboard` layout.
+- Do not change landing.
+- Do not change onboarding.
+- Do not change AudienceUniverseMap cluster logic.
+- Do not add backend/auth/OpenAI.
+- Keep current dashboard content and styling.
+
+Goal:
+Allow users to resize the left Audense chat panel and the right audience dashboard/map area, but never fully hide either side.
+
+Desktop behaviour:
+- Add a draggable vertical divider between the left chat panel and the right dashboard content.
+- The layout should always remain split.
+- Default split should be 50% chat / 50% dashboard.
+- Left chat panel minimum width: 30% of available dashboard width.
+- Left chat panel maximum width: 70% of available dashboard width.
+- Right dashboard automatically takes the remaining width.
+- This means the right dashboard also always stays between 30% and 70%.
+- Do not allow either panel to collapse to 0.
+- Do not add hide/show buttons.
+- Do not add full-screen modes.
+
+Resize interaction:
+- User can drag the divider horizontally.
+- Cursor should become col-resize on hover.
+- Divider should be subtle: 1px border with a small draggable handle.
+- Save the split percentage in localStorage so it persists on refresh.
+- Clamp the stored split between 30 and 70.
+
+Optional quick controls:
+Add small view preset buttons if simple:
+- Chat focus = 70% chat / 30% dashboard
+- Split = 50% chat / 50% dashboard
+- Map focus = 30% chat / 70% dashboard
+
+These presets should only resize the split. They should not hide either side.
+
+Responsive behaviour:
+- Below 900px width, disable drag resizing.
+- Stack or tab the panels if needed.
+- But desktop is priority for the hackathon demo.
+
+Visual style:
+- Match Audense styling: soft borders, white panels, subtle lavender accent.
+- The resize handle should feel polished but minimal.
+- Do not make the UI look technical.
+
+After implementing, explain:
+- How the split percentage is stored
+- The default split value
+- The min/max percentages used
+- How the drag clamp works
+- Whether preset buttons were added
