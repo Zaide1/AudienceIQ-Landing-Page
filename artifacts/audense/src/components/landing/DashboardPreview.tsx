@@ -352,8 +352,8 @@ function ChatPanel() {
         {MESSAGES.map((m, i) => (
           <div key={i} style={{ display: "flex", gap: 7, alignItems: "flex-start", flexDirection: m.role === "user" ? "row-reverse" : "row" }}>
             {m.role === "ai" ? (
-              <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: "1px solid #EDE9FE" }}>
-                <img src={logoImg} alt="Audense AI" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <img src={logoImg} alt="Audense AI" style={{ width: "130%", height: "130%", objectFit: "contain" }} />
               </div>
             ) : null}
             <div
