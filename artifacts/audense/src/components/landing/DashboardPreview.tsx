@@ -13,35 +13,31 @@ const ROWS = 14;
 type DotColor = string;
 
 function buildDots(): DotColor[] {
-  const dots: DotColor[] = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      let color = "#E5E7EB"; // untapped grey
+  // All dots start as uniform grey (untapped)
+  const dots: DotColor[] = new Array(ROWS * COLS).fill("#E5E7EB");
 
-      // Purple cluster — bottom-left
-      if (c < 6 && r >= ROWS - 5) {
-        color = Math.random() > 0.2 ? "#7C3AED" : "#A78BFA";
+  // Paint a rectangular block of dots with a solid segment colour.
+  // Proportions match segment percentages (25 : 30 : 20 : 15 : 10 = 80 covered dots total).
+  // Clusters step upward left→right, matching the reference layout.
+  const paint = (rStart: number, rEnd: number, cStart: number, cEnd: number, color: string) => {
+    for (let r = rStart; r <= rEnd && r < ROWS; r++) {
+      for (let c = cStart; c <= cEnd && c < COLS; c++) {
+        dots[r * COLS + c] = color;
       }
-      // Blue cluster — left-center
-      else if (c >= 5 && c < 9 && r >= 5 && r < ROWS - 2) {
-        color = Math.random() > 0.35 ? "#3B82F6" : "#93C5FD";
-      }
-      // Green cluster — center
-      else if (c >= 9 && c < 14 && r >= 4 && r < ROWS - 1) {
-        color = Math.random() > 0.3 ? "#10B981" : "#6EE7B7";
-      }
-      // Orange/yellow cluster — center-right
-      else if (c >= 14 && c < 19 && r >= 2 && r < ROWS - 2) {
-        color = Math.random() > 0.3 ? "#F59E0B" : "#FDE68A";
-      }
-      // Pink cluster — right
-      else if (c >= 19 && r >= 1 && r < ROWS - 1) {
-        color = Math.random() > 0.3 ? "#EC4899" : "#FBCFE8";
-      }
-
-      dots.push(color);
     }
-  }
+  };
+
+  // Gym Goers        25% → 20 dots  → rows 9–13 (5 rows) × cols 0–3  (4 cols)
+  paint(9,  13, 0,  3,  "#7C3AED");
+  // Busy Professionals 30% → 24 dots → rows 8–13 (6 rows) × cols 4–7  (4 cols)
+  paint(8,  13, 4,  7,  "#3B82F6");
+  // Health Conscious  20% → 16 dots  → rows 10–13 (4 rows) × cols 8–11 (4 cols)
+  paint(10, 13, 8,  11, "#10B981");
+  // Weight Loss       15% → 12 dots  → rows 11–13 (3 rows) × cols 12–15 (4 cols)
+  paint(11, 13, 12, 15, "#F59E0B");
+  // Nutrition         10% →  8 dots  → rows 12–13 (2 rows) × cols 16–19 (4 cols)
+  paint(12, 13, 16, 19, "#EC4899");
+
   return dots;
 }
 
