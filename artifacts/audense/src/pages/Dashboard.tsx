@@ -429,6 +429,24 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
   );
 }
 
+/* ─── Split layout constants ──────────────────────────────────────── */
+const SPLIT_KEY = "audense-dashboard-split";
+const SPLIT_MIN = 30;
+const SPLIT_MAX = 70;
+const SPLIT_DEFAULT = 50;
+
+function clampSplit(v: number) {
+  return Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, v));
+}
+
+function loadSplit(): number {
+  try {
+    const raw = localStorage.getItem(SPLIT_KEY);
+    if (raw !== null) return clampSplit(Number(raw));
+  } catch {}
+  return SPLIT_DEFAULT;
+}
+
 /* ─── Main Dashboard ──────────────────────────────────────────────── */
 export default function Dashboard() {
   const [, navigate] = useLocation();
@@ -442,6 +460,36 @@ export default function Dashboard() {
 
   const shortRegion = finalRegion.length > 20 ? finalRegion.split(",")[0].trim() : finalRegion;
   const shortIdea = productIdea.length > 40 ? productIdea.slice(0, 38) + "…" : productIdea;
+
+  const [splitPct, setSplitPct] = useState<number>(loadSplit);
+  const isDragging = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const onDividerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const pct = clampSplit(((ev.clientX - rect.left) / rect.width) * 100);
+      setSplitPct(pct);
+    };
+
+    const onMouseUp = (ev: MouseEvent) => {
+      isDragging.current = false;
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const pct = clampSplit(((ev.clientX - rect.left) / rect.width) * 100);
+        try { localStorage.setItem(SPLIT_KEY, String(pct)); } catch {}
+      }
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }, []);
 
   const [segments, setSegments] = useState<Segment[]>(BASE_SEGMENTS);
   const [selectedId, setSelectedId] = useState("gym");
@@ -529,6 +577,7 @@ export default function Dashboard() {
 
   return (
     <div
+      ref={containerRef}
       style={{
         height: "100vh",
         display: "flex",
@@ -540,12 +589,11 @@ export default function Dashboard() {
       {/* ── Left panel ─────────────────────────────────────── */}
       <div
         style={{
-          width: 440,
+          width: `${splitPct}%`,
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
           background: "#fff",
-          borderRight: "1px solid #E5E7EB",
           overflow: "hidden",
         }}
       >
@@ -713,6 +761,18 @@ export default function Dashboard() {
           <NavItem icon={<HelpCircle size={15} />} label="Need help? Chat with us" />
         </div>
       </div>
+
+      {/* ── Divider ────────────────────────────────────────── */}
+      <div
+        onMouseDown={onDividerMouseDown}
+        style={{
+          width: 5,
+          flexShrink: 0,
+          cursor: "col-resize",
+          background: "#E5E7EB",
+          zIndex: 10,
+        }}
+      />
 
       {/* ── Right panel ────────────────────────────────────── */}
       <div
