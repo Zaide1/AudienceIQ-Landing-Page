@@ -96,8 +96,17 @@ export function Hero() {
       </div>
 
       {/* ── Right column — dashboard mockup ─────────────────────────── */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {/* Subtle purple glow */}
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          paddingTop: 24,
+          paddingBottom: 24,
+        }}
+      >
+        {/* Lavender glow — outside the perspective wrapper so it isn't skewed */}
         <div
           aria-hidden="true"
           style={{
@@ -105,16 +114,27 @@ export function Hero() {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "80%",
-            height: "70%",
-            background: "radial-gradient(ellipse, rgba(124,58,237,0.11) 0%, transparent 70%)",
-            filter: "blur(48px)",
+            width: "95%",
+            height: "85%",
+            background: "radial-gradient(ellipse, rgba(167,139,250,0.20) 0%, rgba(124,58,237,0.06) 45%, transparent 70%)",
+            filter: "blur(60px)",
             pointerEvents: "none",
             zIndex: 0,
           }}
         />
-        <div className="mockup-outer" style={{ position: "relative", zIndex: 1 }}>
-          <DashboardPreview />
+        {/* Subtle 2D tilt — matches reference, just slightly off vertical */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            width: "100%",
+            transform: "rotate(2deg)",
+            transformOrigin: "center center",
+          }}
+        >
+          <div className="mockup-outer">
+            <DashboardPreview />
+          </div>
         </div>
       </div>
     </section>

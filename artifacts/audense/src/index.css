@@ -355,8 +355,8 @@
 
 @media (min-width: 1200px) {
   .hero-grid {
-    grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
-    gap: clamp(36px, 4vw, 64px);
+    grid-template-columns: minmax(380px, 0.38fr) minmax(0, 0.62fr);
+    gap: clamp(32px, 3.5vw, 56px);
     padding-top: 32px;
     padding-bottom: 32px;
   }
