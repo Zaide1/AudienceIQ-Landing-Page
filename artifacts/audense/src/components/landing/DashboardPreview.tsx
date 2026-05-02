@@ -12,34 +12,53 @@ const ROWS = 12;
 
 type DotColor = string;
 
+// Lighter tints for soft-edge feathering (tier 1: 1–2 grey neighbours)
+const TINT1: Record<string, string> = {
+  "#7C3AED": "#C4B5FD",
+  "#3B82F6": "#93C5FD",
+  "#10B981": "#6EE7B7",
+  "#F59E0B": "#FDE68A",
+  "#EC4899": "#FBCFE8",
+};
+
+// Very faint tints (tier 2: 3–4 grey neighbours — corner / isolated edge dots)
+const TINT2: Record<string, string> = {
+  "#7C3AED": "#EDE9FE",
+  "#3B82F6": "#DBEAFE",
+  "#10B981": "#D1FAE5",
+  "#F59E0B": "#FEF3C7",
+  "#EC4899": "#FCE7F3",
+};
+
+const GREY = "#E5E7EB";
+
 function buildDots(): DotColor[] {
   // All dots start as uniform grey (untapped universe)
-  const dots: DotColor[] = new Array(ROWS * COLS).fill("#E5E7EB");
+  const dots: DotColor[] = new Array(ROWS * COLS).fill(GREY);
 
   const set = (r: number, c: number, color: string) => {
     if (r >= 0 && r < ROWS && c >= 0 && c < COLS) dots[r * COLS + c] = color;
   };
 
-  // Paint a solid rectangle
+  // Paint a solid rectangle of full-intensity colour
   const rect = (rA: number, rB: number, cA: number, cB: number, color: string) => {
     for (let r = rA; r <= rB; r++) for (let c = cA; c <= cB; c++) set(r, c, color);
   };
 
   // ── PURPLE — Gym Goers — large stepped left island ──────────────────
-  // Stepped top edge: tallest in the middle columns, slopes down on sides
   rect(8, 11, 1,  3,  "#7C3AED"); // left foot
-  rect(6, 11, 4,  7,  "#7C3AED"); // left shoulder (taller)
-  rect(5, 11, 8,  11, "#7C3AED"); // peak columns
+  rect(6, 11, 4,  7,  "#7C3AED"); // left shoulder
+  rect(5, 11, 8,  11, "#7C3AED"); // peak
   rect(6, 11, 12, 14, "#7C3AED"); // right shoulder
   rect(7, 11, 15, 16, "#7C3AED"); // right foot taper
 
   // ── BLUE — Busy Professionals — centre, elevated island ─────────────
   rect(3, 7,  23, 25, "#3B82F6"); // left taper
-  rect(2, 7,  26, 30, "#3B82F6"); // main body (tallest)
+  rect(2, 7,  26, 30, "#3B82F6"); // main body
   rect(3, 7,  31, 33, "#3B82F6"); // right taper
 
-  // ── GREEN — Health Conscious — lower centre, overlapping blue area ───
-  rect(7, 11, 26, 28, "#10B981"); // left overlap with blue base
+  // ── GREEN — Health Conscious — lower centre ──────────────────────────
+  rect(7, 11, 26, 28, "#10B981"); // left overlap
   rect(6, 11, 29, 33, "#10B981"); // main body
   rect(7, 11, 34, 36, "#10B981"); // right taper
 
@@ -53,7 +72,32 @@ function buildDots(): DotColor[] {
   rect(6, 11, 47, 50, "#EC4899"); // main body
   rect(8, 11, 51, 51, "#EC4899"); // right stub
 
-  return dots;
+  // ── Feathering pass ─────────────────────────────────────────────────
+  // For each coloured dot, count how many of its 4 neighbours are grey.
+  // 1–2 grey neighbours → medium tint  (soft edge)
+  // 3–4 grey neighbours → very faint   (corner / isolated boundary dot)
+  const isGrey = (r: number, c: number) =>
+    r < 0 || r >= ROWS || c < 0 || c >= COLS || dots[r * COLS + c] === GREY;
+
+  const feathered = [...dots];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const base = dots[r * COLS + c];
+      if (base === GREY) continue;
+      const greyCount = [
+        isGrey(r - 1, c), isGrey(r + 1, c),
+        isGrey(r, c - 1), isGrey(r, c + 1),
+      ].filter(Boolean).length;
+
+      if (greyCount >= 3 && TINT2[base]) {
+        feathered[r * COLS + c] = TINT2[base];
+      } else if (greyCount >= 1 && TINT1[base]) {
+        feathered[r * COLS + c] = TINT1[base];
+      }
+    }
+  }
+
+  return feathered;
 }
 
 // Build once, outside component so it's stable across renders
