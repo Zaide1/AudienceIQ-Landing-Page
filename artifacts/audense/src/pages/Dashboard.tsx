@@ -3,7 +3,49 @@ import { useLocation } from "wouter";
 import {
   Settings, HelpCircle, Send, Plus, Info, Paperclip,
 } from "lucide-react";
+import {
+  FaInstagram, FaTiktok, FaYoutube, FaLinkedin,
+  FaXTwitter, FaReddit, FaFacebook, FaGoogle,
+} from "react-icons/fa6";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
+
+/* ─── Platform icon map ───────────────────────────────────────────── */
+const PLATFORM_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
+  Instagram: { icon: <FaInstagram />, color: "#E1306C" },
+  TikTok:    { icon: <FaTiktok />,    color: "#010101" },
+  YouTube:   { icon: <FaYoutube />,   color: "#FF0000" },
+  LinkedIn:  { icon: <FaLinkedin />,  color: "#0A66C2" },
+  X:         { icon: <FaXTwitter />,  color: "#000000" },
+  Reddit:    { icon: <FaReddit />,    color: "#FF4500" },
+  Facebook:  { icon: <FaFacebook />,  color: "#1877F2" },
+  Google:    { icon: <FaGoogle />,    color: "#4285F4" },
+};
+
+function PlatformIcon({ name }: { name: string }) {
+  const entry = PLATFORM_ICONS[name];
+  if (!entry) return null;
+  return (
+    <span
+      title={name}
+      aria-label={name}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 26,
+        height: 26,
+        borderRadius: "50%",
+        background: "#fff",
+        border: "1px solid #E5E7EB",
+        color: entry.color,
+        fontSize: 14,
+        flexShrink: 0,
+      }}
+    >
+      {entry.icon}
+    </span>
+  );
+}
 
 /* ─── Read onboarding data from localStorage ─────────────────────── */
 function loadOnboarding() {
@@ -1097,22 +1139,9 @@ export default function Dashboard() {
                       >
                         Top Platforms
                       </div>
-                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {seg.platforms.map((p) => (
-                          <span
-                            key={p}
-                            style={{
-                              background: "#fff",
-                              border: `1px solid ${seg.accent}33`,
-                              borderRadius: 5,
-                              padding: "2px 7px",
-                              fontSize: 10,
-                              fontWeight: 600,
-                              color: "#374151",
-                            }}
-                          >
-                            {p}
-                          </span>
+                          <PlatformIcon key={p} name={p} />
                         ))}
                       </div>
                     </div>
