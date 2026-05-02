@@ -9,6 +9,8 @@ import {
 } from "react-icons/fa6";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { SettingsModal } from "../components/SettingsModal";
+import { HelpModal } from "../components/HelpModal";
+import { SupportModal } from "../components/SupportModal";
 import {
   loadAudienceMap, generateMockAudienceMap, saveAudienceMap, formatK,
   type AudienceMapResult, type ResearchSignal,
@@ -735,6 +737,9 @@ export default function Dashboard() {
     : audienceMap.region;
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isHelpPopoverOpen, setIsHelpPopoverOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [splitPct, setSplitPct] = useState<number>(loadSplit);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1249,7 +1254,65 @@ export default function Dashboard() {
         {/* Bottom nav */}
         <div style={{ padding: "6px 12px 14px", borderTop: "1px solid #F3F4F6", flexShrink: 0 }}>
           <NavItem icon={<Settings size={15} />} label="Settings" onClick={() => setIsSettingsOpen(true)} />
-          <NavItem icon={<HelpCircle size={15} />} label="Need help? Chat with us" onClick={() => navigate("/help")} />
+
+          {/* Help popover anchor */}
+          <div style={{ position: "relative" }}>
+            {isHelpPopoverOpen && (
+              <>
+                {/* backdrop to close on outside click */}
+                <div
+                  style={{ position: "fixed", inset: 0, zIndex: 9000 }}
+                  onClick={() => setIsHelpPopoverOpen(false)}
+                />
+                <div
+                  style={{
+                    position: "absolute", bottom: "calc(100% + 6px)", left: 0,
+                    width: 200, background: "#fff",
+                    borderRadius: 10, boxShadow: "0 8px 32px rgba(15,23,42,0.16)",
+                    border: "1px solid #E5E7EB",
+                    zIndex: 9001, overflow: "hidden",
+                    padding: "4px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => { setIsHelpPopoverOpen(false); setIsHelpModalOpen(true); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 9,
+                      width: "100%", padding: "9px 12px", borderRadius: 7,
+                      background: "none", border: "none", cursor: "pointer",
+                      fontSize: 13.5, color: "#374151", fontWeight: 500,
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F3FF")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  >
+                    How it works
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setIsHelpPopoverOpen(false); setIsSupportModalOpen(true); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 9,
+                      width: "100%", padding: "9px 12px", borderRadius: 7,
+                      background: "none", border: "none", cursor: "pointer",
+                      fontSize: 13.5, color: "#374151", fontWeight: 500,
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F3FF")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  >
+                    Get support
+                  </button>
+                </div>
+              </>
+            )}
+            <NavItem
+              icon={<HelpCircle size={15} />}
+              label="Need help?"
+              onClick={() => setIsHelpPopoverOpen((v) => !v)}
+            />
+          </div>
         </div>
       </div>
 
@@ -1691,6 +1754,8 @@ export default function Dashboard() {
     </div>
 
     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+    <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
+    <SupportModal isOpen={isSupportModalOpen} onClose={() => setIsSupportModalOpen(false)} />
     </>
   );
 }

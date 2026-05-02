@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, User, Search, MessageSquare, Database, HelpCircle } from "lucide-react";
+import { X, User, Search, MessageSquare, Database } from "lucide-react";
 import { loadAudienceMap, type AudienceMapResult } from "../lib/audienceMap";
 
 /* ─── helpers ─────────────────────────────────────────────────────── */
@@ -68,52 +68,14 @@ function DisabledToggleRow({ label }: { label: string }) {
   );
 }
 
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ borderBottom: "1px solid #F3F4F6" }}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        style={{
-          width: "100%", textAlign: "left", background: "none", border: "none",
-          padding: "13px 0", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-        }}
-      >
-        <span style={{ fontSize: 13.5, fontWeight: 500, color: "#111827" }}>{q}</span>
-        <span style={{ color: "#9CA3AF", fontSize: 16, flexShrink: 0, lineHeight: 1 }}>
-          {open ? "−" : "+"}
-        </span>
-      </button>
-      {open && (
-        <div style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.65, paddingBottom: 13 }}>
-          {a}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ─── tab definitions ────────────────────────────────────────────── */
-type Tab = "profile" | "research" | "chat" | "data" | "help";
+type Tab = "profile" | "research" | "chat" | "data";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "profile",  label: "Profile",  icon: <User size={15} /> },
   { id: "research", label: "Research", icon: <Search size={15} /> },
   { id: "chat",     label: "Chat",     icon: <MessageSquare size={15} /> },
   { id: "data",     label: "Data",     icon: <Database size={15} /> },
-  { id: "help",     label: "Help",     icon: <HelpCircle size={15} /> },
-];
-
-const FAQ = [
-  { q: "What is Reachable Audience?",      a: "A directional estimate of people Audense thinks are reachable for your product, category, and region. It's a starting hypothesis, not official market-size data." },
-  { q: "What is Est. Coverage?",            a: "The share of your reachable audience your current positioning is likely to address first. This is an MVP estimate based on category benchmarks and product specificity." },
-  { q: "What is Untapped Opportunity?",     a: "The remaining audience potential outside your early focus. It's calculated by subtracting estimated coverage from your total reachable audience." },
-  { q: "What is Confidence?",               a: "How reliable this map is, based on how much onboarding detail you provided, the source quality, and whether live research signals were used." },
-  { q: "What is Audience Universe?",        a: "A visual map showing directional slices of your reachable market. Coloured clusters represent audience segments Audense identified as most relevant." },
-  { q: "What does Run live research do?",  a: "Searches connected public sources (currently Hacker News) for real audience signals. Results add supporting evidence to your map but source coverage may be limited." },
-  { q: "Why are estimates directional?",   a: "Market sizing at the MVP stage is inherently uncertain. These numbers are hypotheses to help you decide where to test first — not guarantees or official statistics." },
 ];
 
 /* ─── tab content components ─────────────────────────────────────── */
@@ -318,16 +280,6 @@ function DataTab() {
   );
 }
 
-function HelpTab() {
-  return (
-    <>
-      <div style={{ fontSize: 18, fontWeight: 700, color: "#111827", marginBottom: 4 }}>Help</div>
-      <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 20 }}>Answers to common questions about your audience map.</div>
-      {FAQ.map((item) => <FaqItem key={item.q} q={item.q} a={item.a} />)}
-    </>
-  );
-}
-
 /* ─── Main modal ─────────────────────────────────────────────────── */
 interface SettingsModalProps {
   isOpen: boolean;
@@ -422,7 +374,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {activeTab === "research" && <ResearchTab map={map} />}
           {activeTab === "chat"     && <ChatTab />}
           {activeTab === "data"     && <DataTab />}
-          {activeTab === "help"     && <HelpTab />}
         </div>
 
         {/* Close */}
