@@ -392,7 +392,7 @@ function NavItem({
 function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
   if (msg.role === "confirm") {
     return (
-      <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: 9, alignItems: "flex-start", minWidth: 0 }}>
         <div
           style={{
             width: 28,
@@ -402,7 +402,7 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
             background: `#EDE9FE url(${logoImg}) center/cover no-repeat`,
           }}
         />
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0, flex: 1 }}>
           <div
             style={{
               background: "#fff",
@@ -413,6 +413,8 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
               lineHeight: 1.55,
               color: "#111827",
               boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              wordBreak: "break-word",
+              minWidth: 0,
             }}
           >
             {msg.text}
@@ -440,7 +442,7 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
 
   if (msg.role === "success") {
     return (
-      <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: 9, alignItems: "flex-start", minWidth: 0 }}>
         <div
           style={{
             width: 28,
@@ -460,6 +462,8 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
             lineHeight: 1.55,
             color: "#15803D",
             fontWeight: 600,
+            minWidth: 0,
+            wordBreak: "break-word",
           }}
         >
           {msg.text}
@@ -470,7 +474,7 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
 
   if (msg.role === "ai") {
     return (
-      <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: 9, alignItems: "flex-start", minWidth: 0 }}>
         <div
           style={{
             width: 28,
@@ -490,6 +494,8 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
             lineHeight: 1.55,
             color: "#111827",
             boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+            minWidth: 0,
+            wordBreak: "break-word",
           }}
         >
           {msg.text}
@@ -499,7 +505,7 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
   }
 
   return (
-    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+    <div style={{ display: "flex", justifyContent: "flex-end", minWidth: 0 }}>
       <div
         style={{
           background: "#F5F3FF",
@@ -510,6 +516,7 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
           lineHeight: 1.55,
           color: "#4C1D95",
           maxWidth: "82%",
+          wordBreak: "break-word",
         }}
       >
         {msg.text}
@@ -724,10 +731,12 @@ export default function Dashboard() {
           style={{
             flex: 1,
             overflowY: "auto",
+            overflowX: "hidden",
             padding: "6px 20px 8px",
             display: "flex",
             flexDirection: "column",
             gap: 14,
+            minWidth: 0,
           }}
         >
           {messages.map((msg) => (

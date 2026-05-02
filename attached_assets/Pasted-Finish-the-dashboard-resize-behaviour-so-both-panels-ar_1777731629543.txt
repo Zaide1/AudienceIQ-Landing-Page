@@ -1,0 +1,72 @@
+Finish the dashboard resize behaviour so both panels are fully dynamic.
+
+Important:
+- Only edit `/dashboard` layout/responsive behaviour.
+- Do not change landing.
+- Do not change onboarding.
+- Do not change AudienceUniverseMap cluster logic.
+- Do not add backend/auth/OpenAI.
+- Do not redesign the visual style.
+
+Current issue:
+The split resize works, but the content inside the chat panel and audience panel does not fully adapt when the divider moves.
+Some elements become squashed or overflow.
+
+Goal:
+Make the dashboard fully responsive to the split percentage from 30/70 to 70/30.
+
+Split rules:
+- Default split: 50% chat / 50% audience dashboard.
+- Chat panel min: 30%.
+- Chat panel max: 70%.
+- Audience panel takes remaining width.
+- Neither side can collapse or disappear.
+
+Panel behaviour:
+- The full dashboard should be height: 100vh.
+- Left chat panel and right audience panel should each have independent scrolling.
+- No page-level horizontal overflow.
+- Use min-width: 0 on flex/grid children so content can shrink correctly.
+- Use overflow-hidden on the outer split container.
+- Use overflow-y: auto inside each panel where needed.
+
+Chat panel responsiveness:
+- Chat panel should look good from 30% to 70%.
+- Message bubbles should wrap text naturally.
+- User bubbles should max out at around 70% to 80% of chat width.
+- Audense bubbles should max out at around 80% to 90% of chat width.
+- Suggested prompt chips should wrap onto multiple lines.
+- Bottom input should stay pinned to the bottom of the chat panel.
+- Input should stretch to available width.
+- Settings/help footer should remain subtle and not crowd the chat.
+- Do not let chat messages overflow horizontally.
+
+Audience panel responsiveness:
+- Audience panel should look good from 30% to 70%.
+- Header should wrap if needed.
+- Metric cards should use responsive grid:
+  repeat(auto-fit, minmax(180px, 1fr))
+- Segment cards should use responsive grid:
+  repeat(auto-fit, minmax(180px, 1fr))
+- Segment cards must never shrink into unreadable slivers.
+- Audience map card should scale to panel width.
+- If the panel is narrow, reduce map height and dot size if needed.
+- Avoid horizontal overflow.
+
+Resize implementation:
+- Keep existing drag divider.
+- While dragging, update split percentage smoothly.
+- Clamp split between 30 and 70.
+- Persist split percentage in localStorage if already implemented.
+- Do not add hide/show modes.
+
+CSS cleanup:
+- Remove any fixed widths that force overflow inside panels.
+- Replace hard-coded 4-column or 5-column layouts with responsive grids.
+- Add min-width: 0 to key flex/grid children.
+- Use box-sizing: border-box consistently.
+
+After implementing, explain:
+- Which fixed widths were removed
+- How chat adapts at 30%, 50%, and 70%
+- How audience cards adapt at 30%, 50%, and 70%
