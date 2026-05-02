@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa6";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import {
-  loadAudienceMap, generateMockAudienceMap, formatK,
+  loadAudienceMap, generateMockAudienceMap, saveAudienceMap, formatK,
   type AudienceMapResult,
 } from "../lib/audienceMap";
 
@@ -309,6 +309,7 @@ interface Message {
   id: number;
   role: "ai" | "user" | "confirm" | "success";
   text: string;
+  proposedMap?: AudienceMapResult;
 }
 
 /* ─── Dot map component ───────────────────────────────────────────── */
@@ -472,10 +473,12 @@ function NavItem({
 function Bubble({
   msg,
   onConfirm,
+  onDismiss,
   isPending = false,
 }: {
   msg: Message;
   onConfirm: () => void;
+  onDismiss: () => void;
   isPending?: boolean;
 }) {
   if (msg.role === "confirm") {
@@ -507,24 +510,40 @@ function Bubble({
           >
             {msg.text}
           </div>
-          {/* Button only rendered for the currently pending update */}
+          {/* Confirm + Dismiss buttons only on the live pending bubble */}
           {isPending && (
-            <button
-              onClick={onConfirm}
-              style={{
-                alignSelf: "flex-start",
-                background: "#7C3AED",
-                color: "#fff",
-                border: "none",
-                borderRadius: 8,
-                padding: "7px 14px",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Confirm update →
-            </button>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                onClick={onConfirm}
+                style={{
+                  background: "#7C3AED",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "7px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Confirm update →
+              </button>
+              <button
+                onClick={onDismiss}
+                style={{
+                  background: "transparent",
+                  color: "#6B7280",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: 8,
+                  padding: "7px 14px",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                Dismiss
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -641,8 +660,8 @@ export default function Dashboard() {
 
   const displayName = ob?.displayName ?? "Founder";
 
-  /* Load or generate the audience map once — runs only on initial mount */
-  const [audienceMap] = useState<AudienceMapResult>(
+  /* Load or generate the audience map — mutable so confirmed updates re-render */
+  const [audienceMap, setAudienceMap] = useState<AudienceMapResult>(
     () => loadAudienceMap() ?? generateMockAudienceMap(ob)
   );
 
@@ -684,10 +703,14 @@ export default function Dashboard() {
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>("gym");
   const [hoveredSegmentId, setHoveredSegmentId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
   /* pendingUpdateId: the msg.id of the one active confirm bubble, or null */
   const [pendingUpdateId, setPendingUpdateId] = useState<number | null>(null);
   /* Synchronous ref guard — prevents stale-closure double-fires before re-render */
   const pendingUpdateRef = useRef<number | null>(null);
+  /* The proposed AudienceMapResult waiting for confirm/dismiss */
+  const pendingMapRef = useRef<AudienceMapResult | null>(null);
   const msgId = useRef(100);
 
   const [messages, setMessages] = useState<Message[]>(() => loadChatMessages(displayName));
@@ -698,44 +721,99 @@ export default function Dashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = () => {
-    const text = chatInput.trim();
-    if (!text || pendingUpdateRef.current !== null) return;
-    setChatInput("");
+  const callRefineAPI = async (text: string) => {
     const userMsg: Message = { id: ++msgId.current, role: "user", text };
-    const confirmId = ++msgId.current;
-    const aiMsg: Message = {
-      id: confirmId,
-      role: "confirm",
-      text: "I can refine the audience map based on that. Confirm this update?",
-    };
-    pendingUpdateRef.current = confirmId;
-    setPendingUpdateId(confirmId);
-    setMessages((prev) => [...prev, userMsg, aiMsg]);
+    setMessages((prev) => [...prev, userMsg]);
+
+    try {
+      const recentMessages = messages.slice(-10).map((m) => ({ role: m.role, text: m.text }));
+      const res = await fetch("/api/chat/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          onboardingData: ob ?? {},
+          currentAudienceMap: audienceMap,
+          messages: recentMessages,
+          userMessage: text,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json() as {
+        type: "answer" | "proposed_update";
+        message: string;
+        proposedAudienceMap: AudienceMapResult | null;
+        suggestedActions: string[];
+      };
+
+      if (data.type === "proposed_update" && data.proposedAudienceMap) {
+        /* Guard: if another update is pending, tell user to resolve it first */
+        if (pendingUpdateRef.current !== null) {
+          const guardMsg: Message = {
+            id: ++msgId.current,
+            role: "ai",
+            text: "Please confirm or dismiss the current proposed update before requesting another change.",
+          };
+          setMessages((prev) => [...prev, guardMsg]);
+          return;
+        }
+
+        const confirmId = ++msgId.current;
+        pendingMapRef.current = data.proposedAudienceMap;
+        pendingUpdateRef.current = confirmId;
+        setPendingUpdateId(confirmId);
+
+        const confirmMsg: Message = {
+          id: confirmId,
+          role: "confirm",
+          text: data.message,
+          proposedMap: data.proposedAudienceMap,
+        };
+        setMessages((prev) => [...prev, confirmMsg]);
+      } else {
+        const aiMsg: Message = {
+          id: ++msgId.current,
+          role: "ai",
+          text: data.message,
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+      }
+    } catch {
+      /* Network/parse error — show generic fallback */
+      const errMsg: Message = {
+        id: ++msgId.current,
+        role: "ai",
+        text: "I'm having trouble reaching the server. Your audience map is safe — try again in a moment.",
+      };
+      setMessages((prev) => [...prev, errMsg]);
+    }
+  };
+
+  const sendMessage = async () => {
+    const text = chatInput.trim();
+    if (!text || isSending) return;
+    setChatInput("");
+    setIsSending(true);
+    try {
+      await callRefineAPI(text);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleConfirm = () => {
     /* Synchronous ref check — fires before any re-render, prevents double-apply */
     if (pendingUpdateRef.current === null) return;
+    const map = pendingMapRef.current;
     pendingUpdateRef.current = null;
+    pendingMapRef.current = null;
     setPendingUpdateId(null);
 
-    setSegments((prev) => {
-      const BOOST = 6;
-      const newFirstPct = Math.min(prev[0].pct + BOOST, 45);
-      const actualGain = newFirstPct - prev[0].pct;
-      const others = prev.slice(1);
-      const totalOther = others.reduce((s, x) => s + x.pct, 0);
-      let remaining = actualGain;
-      const rest = others.map((s, i) => {
-        const share = i < others.length - 1
-          ? Math.round(actualGain * (s.pct / totalOther))
-          : remaining;
-        remaining -= share;
-        return { ...s, pct: Math.max(s.pct - share, 5) };
-      });
-      return [{ ...prev[0], pct: newFirstPct }, ...rest];
-    });
+    if (map) {
+      setAudienceMap(map);
+      setSegments(buildSegmentsFromMap(map));
+      saveAudienceMap(map);
+    }
 
     const successMsg: Message = {
       id: ++msgId.current,
@@ -745,25 +823,34 @@ export default function Dashboard() {
     setMessages((prev) => [...prev, successMsg]);
   };
 
+  const handleDismiss = () => {
+    if (pendingUpdateRef.current === null) return;
+    pendingUpdateRef.current = null;
+    pendingMapRef.current = null;
+    setPendingUpdateId(null);
+
+    const dismissMsg: Message = {
+      id: ++msgId.current,
+      role: "ai",
+      text: "No problem — I'll leave the audience map unchanged.",
+    };
+    setMessages((prev) => [...prev, dismissMsg]);
+  };
+
   const CHIPS = [
-    "Why wouldn't they use my app?",
+    "Who should I target first?",
     "Where do I find them?",
     "What message works?",
   ];
 
-  const sendChip = (chip: string) => {
-    if (pendingUpdateRef.current !== null) return;
-    setChatInput("");
-    const userMsg: Message = { id: ++msgId.current, role: "user", text: chip };
-    const confirmId = ++msgId.current;
-    const aiMsg: Message = {
-      id: confirmId,
-      role: "confirm",
-      text: "I can refine the audience map based on that. Confirm this update?",
-    };
-    pendingUpdateRef.current = confirmId;
-    setPendingUpdateId(confirmId);
-    setMessages((prev) => [...prev, userMsg, aiMsg]);
+  const sendChip = async (chip: string) => {
+    if (isSending || pendingUpdateRef.current !== null) return;
+    setIsSending(true);
+    try {
+      await callRefineAPI(chip);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -838,6 +925,7 @@ export default function Dashboard() {
               key={msg.id}
               msg={msg}
               onConfirm={handleConfirm}
+              onDismiss={handleDismiss}
               isPending={msg.id === pendingUpdateId}
             />
           ))}
@@ -858,16 +946,16 @@ export default function Dashboard() {
             <button
               key={chip}
               onClick={() => sendChip(chip)}
-              disabled={pendingUpdateId !== null}
+              disabled={isSending || pendingUpdateId !== null}
               style={{
-                background: pendingUpdateId !== null ? "#F9FAFB" : "#F5F3FF",
+                background: (isSending || pendingUpdateId !== null) ? "#F9FAFB" : "#F5F3FF",
                 border: "1px solid #DDD6FE",
                 borderRadius: 20,
                 padding: "5px 11px",
                 fontSize: 11.5,
                 fontWeight: 500,
-                color: pendingUpdateId !== null ? "#9CA3AF" : "#6D28D9",
-                cursor: pendingUpdateId !== null ? "not-allowed" : "pointer",
+                color: (isSending || pendingUpdateId !== null) ? "#9CA3AF" : "#6D28D9",
+                cursor: (isSending || pendingUpdateId !== null) ? "not-allowed" : "pointer",
                 whiteSpace: "nowrap",
               }}
             >
@@ -908,11 +996,11 @@ export default function Dashboard() {
             <Paperclip size={14} style={{ color: "#9CA3AF", flexShrink: 0 }} />
             <input
               type="text"
-              placeholder="Ask your audience anything..."
+              placeholder={isSending ? "Thinking…" : "Ask your audience anything..."}
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              disabled={pendingUpdateId !== null}
+              onKeyDown={(e) => e.key === "Enter" && !isSending && sendMessage()}
+              disabled={isSending || pendingUpdateId !== null}
               style={{
                 flex: 1,
                 border: "none",
@@ -925,17 +1013,17 @@ export default function Dashboard() {
             />
             <button
               onClick={sendMessage}
-              disabled={!chatInput.trim() || pendingUpdateId !== null}
+              disabled={!chatInput.trim() || isSending || pendingUpdateId !== null}
               style={{
                 width: 30,
                 height: 30,
                 borderRadius: "50%",
-                background: !chatInput.trim() || pendingUpdateId !== null ? "#C4B5FD" : "#7C3AED",
+                background: !chatInput.trim() || isSending || pendingUpdateId !== null ? "#C4B5FD" : "#7C3AED",
                 border: "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                cursor: !chatInput.trim() || pendingUpdateId !== null ? "not-allowed" : "pointer",
+                cursor: !chatInput.trim() || isSending || pendingUpdateId !== null ? "not-allowed" : "pointer",
                 flexShrink: 0,
                 transition: "background 0.2s",
               }}
