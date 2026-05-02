@@ -399,7 +399,10 @@ function AudienceMap({
             position: "absolute",
             top: 8,
             left: display?.tooltipLeft ?? "14%",
-            transform: "translateX(-10%)",
+            /* Flip anchor direction for right-edge clusters so tooltip grows leftward */
+            transform: parseFloat(display?.tooltipLeft ?? "14") > 65
+              ? "translateX(-82%)"
+              : "translateX(-10%)",
             background: "#fff",
             border: `1px solid ${display?.accent ?? "#7C3AED"}44`,
             borderRadius: 10,
