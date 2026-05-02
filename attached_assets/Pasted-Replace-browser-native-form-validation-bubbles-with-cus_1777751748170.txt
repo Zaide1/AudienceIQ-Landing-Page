@@ -1,0 +1,51 @@
+Replace browser-native form validation bubbles with custom Audense validation errors.
+
+Important:
+- Do not change auth flow logic.
+- Do not change Supabase wiring.
+- Do not change routing.
+- Do not change the overall auth modal design.
+- Only change form validation UX.
+
+Current issue:
+The browser shows default validation popups like “Please fill in this field.” on email/password fields. This feels unpolished and off-brand.
+
+Goal:
+Use custom inline validation messages instead.
+
+Implementation:
+1. Remove native browser validation bubbles:
+   - Add noValidate to the auth form.
+   - Remove required attributes if they trigger native bubbles, or prevent native validation from firing.
+
+2. Add local validation before submitting:
+   - Email empty → “Enter your email.”
+   - Email invalid → “Enter a valid email address.”
+   - Password empty → “Enter your password.”
+   - Password too short → “Password must be at least 6 characters.”
+
+3. Display errors inline:
+   - Show the message directly under the relevant input.
+   - Use small text, soft red colour, and spacing consistent with the app.
+   - Highlight the input border subtly red when invalid.
+   - Clear each field’s error when the user starts typing in that field.
+
+4. Submit behaviour:
+   - If validation fails, do not call Supabase.
+   - Focus the first invalid field.
+   - Keep the button enabled unless a request is actively loading.
+
+5. Supabase errors:
+   - Continue showing Supabase/auth errors in the existing form-level error area.
+   - Make them friendly where possible:
+     - Invalid login credentials → “That email or password doesn’t look right.”
+     - Email not confirmed → “Please confirm your email before signing in.”
+     - User already registered → “An account already exists for this email.”
+
+Validation:
+- Empty sign in should show inline errors, not browser popup.
+- Invalid email should show inline error.
+- Short password should show inline error.
+- Typing clears the relevant error.
+- Supabase errors still show correctly.
+- No browser-native “Please fill in this field” popup appears anywhere.

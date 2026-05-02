@@ -2289,7 +2289,7 @@ export default function Dashboard() {
                       display: "inline-block",
                     }}
                   />
-                  Covered 7%
+                  Covered {audienceMap.coverage.percent}%
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <span
@@ -2302,7 +2302,7 @@ export default function Dashboard() {
                       display: "inline-block",
                     }}
                   />
-                  Untapped 93%
+                  Untapped {audienceMap.untapped.percent}%
                 </span>
               </div>
             </div>
