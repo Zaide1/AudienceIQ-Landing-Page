@@ -1,0 +1,114 @@
+Add named competitor and alternative intelligence to Audense.
+
+Important:
+- Do not change landing page.
+- Do not change onboarding design.
+- Do not change dashboard layout unless adding small optional competitor sections/cards.
+- Do not add Supabase/auth yet.
+- Keep existing audience generation, chat/refinement, live research, and fallback behaviour.
+- Do not break existing localStorage keys.
+- Do not claim competitors are exhaustive or officially verified unless source-backed.
+
+Goal:
+Audense should be able to name real or likely competitor products, alternatives, and substitute behaviours for the user's product idea, so the chat can discuss them concretely.
+
+Data model:
+Extend AudienceMapResult with an optional field:
+
+competitors?: {
+  direct: CompetitorItem[]
+  adjacent: CompetitorItem[]
+  substitutes: CompetitorItem[]
+  notes: string
+}
+
+CompetitorItem:
+- name: string
+- type: "direct" | "adjacent" | "substitute"
+- whyRelevant: string
+- targetOverlap: string
+- weaknessToExploit: string
+- confidence: "low" | "medium" | "high"
+- sourceUrl?: string
+- sourceLabel?: string
+
+Rules:
+1. direct competitors should be products solving a similar core job.
+2. adjacent competitors should solve part of the workflow or compete for user attention.
+3. substitutes should include manual workarounds or current user behaviours.
+4. If no sourceUrl exists, confidence should usually be "low" or "medium".
+5. If sourced from live research, include sourceUrl and sourceLabel.
+6. Do not invent fake URLs.
+7. Do not say "real competitors" unless source-backed.
+8. If unsure, phrase as "likely alternatives to compare against".
+
+Generation:
+Update /api/audience/generate:
+- Include competitors in the generated AudienceMapResult.
+- If AI is available, ask it for named competitors and substitutes.
+- If AI fails, deterministic fallback should still generate reasonable category-based alternatives.
+- Validate competitor objects before returning.
+- If competitor validation fails, omit competitors rather than breaking the map.
+
+Live research:
+Update live research flow if possible:
+- Use public source-backed signals to strengthen competitor suggestions.
+- If Hacker News results mention products/tools, map them into competitors with sourceUrl.
+- Keep source honesty clear:
+  - "Mentioned in public Hacker News discussion"
+  - not "market leader" unless verified.
+
+Chat:
+Update /api/chat/refine:
+- Include competitors in the AI context when present.
+- The chat should be able to answer:
+  - "Who are my competitors?"
+  - "What tools are similar?"
+  - "Who should I position against?"
+  - "What is missing from existing tools?"
+  - "How do I beat [competitor]?"
+  - "Compare me to [competitor]"
+- Answers should name specific competitors when available.
+- If competitors are hypothesis-only, say so lightly.
+- Keep responses concise.
+
+Frontend:
+- Do not redesign the dashboard.
+- Add a small optional "Competitors & alternatives" section only if it fits cleanly.
+- Better MVP option:
+  - show competitor names inside a modal/drawer when the user asks in chat or clicks a "Competitors" suggested action.
+- Add suggested action chip:
+  "Who are my competitors?"
+- If competitors exist, the chat should use them.
+- If competitors are missing, the chat can generate a short competitor list from current context.
+
+Fallback examples:
+For productivity/file organisation:
+- Direct/adjacent: Everything, Raycast, Spotlight, Google Drive Search, Dropbox Search, Notion
+- Substitutes: manual folders, browser bookmarks, screenshots, notes apps
+
+For fitness/calorie tracking:
+- Direct/adjacent: MyFitnessPal, Lose It!, Cronometer, Yazio, Lifesum
+- Substitutes: notes app, spreadsheets, manual calorie labels, photos of meals
+
+For SaaS/dev tools:
+- Direct/adjacent should be generated based on category and product idea.
+
+Validation:
+Test these chat questions:
+1. "Who are my competitors?"
+   Expected: answer with named competitors/alternatives.
+2. "Give me one tool similar to what I want to build"
+   Expected: names one concrete tool and explains why.
+3. "How do I beat [competitor]?"
+   Expected: concise positioning advice using current audience map.
+4. "What are users doing instead today?"
+   Expected: substitutes/manual workarounds.
+5. If no competitors exist in the map, dashboard should not crash.
+
+After implementing, explain:
+- Where competitors are stored
+- How competitors are generated
+- How source-backed vs hypothesis competitors are labelled
+- How chat uses competitor context
+- What fallback competitors exist

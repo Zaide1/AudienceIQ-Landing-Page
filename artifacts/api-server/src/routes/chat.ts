@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import OpenAI from "openai";
 import multer from "multer";
-import { type AudienceMapResult, calculateCoverageEstimate, recalculateCoverageFields } from "../lib/audienceAI";
+import { type AudienceMapResult, type CompetitorIntelligence, calculateCoverageEstimate, recalculateCoverageFields } from "../lib/audienceAI";
 
 const router: IRouter = Router();
 
@@ -235,6 +235,33 @@ function buildFallbackUpdate(map: AudienceMapResult): ChatRefineResponse {
   };
 }
 
+/* ─── Competitor context builder ─────────────────────────────────── */
+function buildCompetitorContext(c: CompetitorIntelligence): string {
+  const lines: string[] = [];
+  if (c.direct.length > 0) {
+    lines.push("Direct competitors (solving the same job):");
+    for (const item of c.direct) {
+      const src = item.sourceLabel ? ` [${item.sourceLabel}]` : "";
+      lines.push(`  • ${item.name}${src}: ${item.whyRelevant}. Exploitable gap: ${item.weaknessToExploit}`);
+    }
+  }
+  if (c.adjacent.length > 0) {
+    lines.push("Adjacent (competing for attention/workflow):");
+    for (const item of c.adjacent) {
+      const src = item.sourceLabel ? ` [${item.sourceLabel}]` : "";
+      lines.push(`  • ${item.name}${src}: ${item.whyRelevant}. Gap: ${item.weaknessToExploit}`);
+    }
+  }
+  if (c.substitutes.length > 0) {
+    lines.push("Substitutes (what users do today instead):");
+    for (const item of c.substitutes) {
+      lines.push(`  • ${item.name}: ${item.whyRelevant}`);
+    }
+  }
+  if (c.notes) lines.push(`Note: ${c.notes}`);
+  return lines.join("\n");
+}
+
 /* ─── Shared system prompt builder ──────────────────────────────── */
 function buildSystemPrompt(body: ChatRefineRequest, attachmentEvidence?: string): string {
   const { onboardingData, currentAudienceMap, messages } = body;
@@ -276,6 +303,10 @@ function buildSystemPrompt(body: ChatRefineRequest, attachmentEvidence?: string)
     ? `\n═══ ATTACHMENT EVIDENCE ═══\nThe founder has attached real-world evidence. Use it to sharpen your response and suggest map updates only if the evidence clearly supports one.\nDo not claim attachments prove the entire market. If it's a screenshot of comments/reviews, summarise visible signals: pain points, objections, desired outcomes, competitor mentions, and which segment it likely affects.\n\n${attachmentEvidence}\n`
     : "";
 
+  const competitorSection = currentAudienceMap.competitors
+    ? `\n═══ COMPETITOR INTELLIGENCE ═══\nUse this to answer competitor questions with specific named products. If confidence is "low" say "likely" not "verified". For "Who are my competitors?" or "What tools are similar?" questions, name specific products from the list below.\n${buildCompetitorContext(currentAudienceMap.competitors)}\n`
+    : "";
+
   return `You are Audense, a sharp audience intelligence coach for early-stage founders.
 Be concise, specific, and practical. Ground every answer in the founder's current audience map.
 Never invent statistics. Treat audience numbers as directional MVP estimates.
@@ -294,7 +325,7 @@ ${evidenceContext ? `\nEvidence signals (hypotheses):\n${evidenceContext}` : ""}
 
 Recent conversation:
 ${recentContext || "(none)"}
-${attachmentSection}
+${attachmentSection}${competitorSection}
 ═══ EVIDENCE HONESTY ═══
 ${evidenceNote}
 If the user asks what people are saying on Reddit, X, TikTok, YouTube, or competitor pages — be honest:
@@ -429,6 +460,10 @@ router.post("/chat/refine", async (req, res) => {
         req.log.warn("Proposed map failed validation — degrading to answer");
         res.json({ type: "answer", message, proposedAudienceMap: null, suggestedActions } satisfies ChatRefineResponse);
         return;
+      }
+      /* Preserve competitors so the frontend doesn't lose them on map update */
+      if (currentAudienceMap.competitors) {
+        proposedAudienceMap = { ...proposedAudienceMap, competitors: currentAudienceMap.competitors };
       }
     }
 
@@ -587,6 +622,9 @@ router.post(
           req.log.warn("Attachment route: proposed map failed validation — degrading to answer");
           res.json({ type: "answer", message, proposedAudienceMap: null, suggestedActions } satisfies ChatRefineResponse);
           return;
+        }
+        if (currentAudienceMap.competitors) {
+          proposedAudienceMap = { ...proposedAudienceMap, competitors: currentAudienceMap.competitors };
         }
       }
 

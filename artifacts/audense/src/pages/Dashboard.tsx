@@ -13,7 +13,7 @@ import { HelpModal } from "../components/HelpModal";
 import { SupportModal } from "../components/SupportModal";
 import {
   loadAudienceMap, generateMockAudienceMap, saveAudienceMap, formatK,
-  type AudienceMapResult, type ResearchSignal,
+  type AudienceMapResult, type ResearchSignal, type CompetitorIntelligence, type CompetitorItem,
 } from "../lib/audienceMap";
 
 /* ─── Platform icon map ───────────────────────────────────────────── */
@@ -702,6 +702,133 @@ function ThinkingBubble() {
   );
 }
 
+/* ─── Competitor Drawer ───────────────────────────────────────────── */
+const CONF_COLOR: Record<string, string> = { high: "#059669", medium: "#D97706", low: "#6B7280" };
+const CONF_BG: Record<string, string>    = { high: "#ECFDF5", medium: "#FFFBEB", low: "#F3F4F6" };
+
+function CompetitorSection({
+  title, items,
+}: { title: string; items: CompetitorItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#6B7280", marginBottom: 10 }}>
+        {title}
+      </div>
+      {items.map((item) => (
+        <div
+          key={item.name}
+          style={{
+            background: "#F9F8FF", border: "1px solid #EDE9FE",
+            borderRadius: 10, padding: "12px 14px", marginBottom: 8,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, flexWrap: "wrap" }}>
+            <span style={{ fontWeight: 700, fontSize: 13, color: "#111827" }}>{item.name}</span>
+            <span
+              style={{
+                fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 10,
+                background: CONF_BG[item.confidence] ?? "#F3F4F6",
+                color: CONF_COLOR[item.confidence] ?? "#6B7280",
+              }}
+            >
+              {item.confidence}
+            </span>
+            {item.sourceUrl && (
+              <a
+                href={item.sourceUrl} target="_blank" rel="noopener noreferrer"
+                style={{ fontSize: 10, color: "#7C3AED", textDecoration: "none", marginLeft: "auto" }}
+              >
+                {item.sourceLabel ?? "Source ↗"}
+              </a>
+            )}
+          </div>
+          <div style={{ fontSize: 12, color: "#374151", marginBottom: 4, lineHeight: 1.5 }}>
+            {item.whyRelevant}
+          </div>
+          <div style={{ fontSize: 11, color: "#7C3AED", fontWeight: 500, lineHeight: 1.45 }}>
+            Gap to exploit: {item.weaknessToExploit}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CompetitorDrawer({
+  competitors, productSummary, onClose,
+}: {
+  competitors: CompetitorIntelligence;
+  productSummary: string;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.18)", zIndex: 200 }}
+      />
+      <div
+        style={{
+          position: "fixed", top: 0, right: 0, bottom: 0,
+          width: 420, maxWidth: "92vw",
+          background: "#fff",
+          boxShadow: "-4px 0 28px rgba(0,0,0,0.12)",
+          zIndex: 201,
+          display: "flex", flexDirection: "column",
+          fontFamily: "Inter, sans-serif",
+        }}
+      >
+        <div
+          style={{
+            padding: "18px 20px 14px", borderBottom: "1px solid #F3F4F6",
+            display: "flex", alignItems: "flex-start", gap: 10, flexShrink: 0,
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 15, color: "#111827", marginBottom: 3 }}>
+              Competitors & Alternatives
+            </div>
+            <div style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.4 }}>
+              {productSummary}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              border: "none", background: "#F3F4F6", borderRadius: 8,
+              width: 28, height: 28, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 16, color: "#6B7280", flexShrink: 0,
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {competitors.notes && (
+          <div
+            style={{
+              margin: "12px 20px 0", padding: "8px 12px",
+              background: "#FFFBEB", border: "1px solid #FDE68A",
+              borderRadius: 8, fontSize: 11, color: "#92400E", lineHeight: 1.5,
+              flexShrink: 0,
+            }}
+          >
+            {competitors.notes}
+          </div>
+        )}
+
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 24px" }}>
+          <CompetitorSection title="Direct competitors" items={competitors.direct} />
+          <CompetitorSection title="Adjacent (competing for attention)" items={competitors.adjacent} />
+          <CompetitorSection title="What users do today instead" items={competitors.substitutes} />
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ─── Split layout constants ──────────────────────────────────────── */
 const SPLIT_KEY = "audense-dashboard-split";
 const SPLIT_MIN = 30;
@@ -743,6 +870,7 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [showCompetitorDrawer, setShowCompetitorDrawer] = useState(false);
   const [splitPct, setSplitPct] = useState<number>(loadSplit);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -810,6 +938,7 @@ export default function Dashboard() {
         urlBackedSignalCount: number;
         evidenceSummary: AudienceMapResult["evidenceSummary"];
         updatedSegments: AudienceMapResult["segments"];
+        competitors?: AudienceMapResult["competitors"];
       };
 
       /* Only apply map update if we have useful data — never wipe a good map */
@@ -819,6 +948,8 @@ export default function Dashboard() {
           ...audienceMap,
           evidenceSummary: data.evidenceSummary,
           segments: data.updatedSegments,
+          /* Merge HN-derived competitors if present; fallback keeps existing */
+          ...(data.competitors ? { competitors: data.competitors } : {}),
         };
         setAudienceMap(updatedMap);
         setSegments(buildSegmentsFromMap(updatedMap));
@@ -1090,9 +1221,10 @@ export default function Dashboard() {
         "Who should I target first?",
         `Where do I find ${topSeg.name}?`,
         `What message works for ${topSeg.name}?`,
+        "Who are my competitors?",
       ];
     }
-    return ["Who should I target first?", "Where do I find them?", "What message works?"];
+    return ["Who should I target first?", "Where do I find them?", "What message works?", "Who are my competitors?"];
   }, [pendingUpdateId, suggestedChips, hasSelectedSegment, selectedSegmentId, segments]);
 
   const sendChip = async (chip: string) => {
@@ -1105,6 +1237,11 @@ export default function Dashboard() {
     /* Regular chips cannot be sent while a pending update is unresolved
        (except the three above which are handled above) */
     if (pendingUpdateRef.current !== null && chip !== "What changed?") return;
+    /* Competitor chip opens the drawer directly if data is present */
+    if (chip === "Who are my competitors?" && audienceMap.competitors) {
+      setShowCompetitorDrawer(true);
+      return;
+    }
     setSuggestedChips([]);
     setIsSending(true);
     try {
@@ -1920,6 +2057,13 @@ export default function Dashboard() {
     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
     <SupportModal isOpen={isSupportModalOpen} onClose={() => setIsSupportModalOpen(false)} />
+    {showCompetitorDrawer && audienceMap.competitors && (
+      <CompetitorDrawer
+        competitors={audienceMap.competitors}
+        productSummary={audienceMap.productSummary}
+        onClose={() => setShowCompetitorDrawer(false)}
+      />
+    )}
     </>
   );
 }

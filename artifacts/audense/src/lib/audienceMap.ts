@@ -18,6 +18,24 @@ export interface EvidenceSummary {
   sourcesUsed?: string[];
 }
 
+export interface CompetitorItem {
+  name: string;
+  type: "direct" | "adjacent" | "substitute";
+  whyRelevant: string;
+  targetOverlap: string;
+  weaknessToExploit: string;
+  confidence: "low" | "medium" | "high";
+  sourceUrl?: string;
+  sourceLabel?: string;
+}
+
+export interface CompetitorIntelligence {
+  direct: CompetitorItem[];
+  adjacent: CompetitorItem[];
+  substitutes: CompetitorItem[];
+  notes: string;
+}
+
 export interface ResearchSignal {
   id: string;
   source: "hacker_news" | "web" | "competitor_site" | "youtube" | "review_site" | "manual";
@@ -72,6 +90,7 @@ export interface AudienceMapResult {
   segments: AudienceSegment[];
   insights: AudienceInsight[];
   evidenceSummary?: EvidenceSummary;
+  competitors?: CompetitorIntelligence;
 }
 
 /* ─── Storage ────────────────────────────────────────────────────── */

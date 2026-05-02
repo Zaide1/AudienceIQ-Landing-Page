@@ -4,6 +4,8 @@ import type {
   AudienceMapResult,
   AudienceSegment,
   EvidenceSummary,
+  CompetitorItem,
+  CompetitorIntelligence,
 } from "./audienceAI";
 
 /* ─── ResearchSignal type (spec-compliant) ──────────────────────── */
@@ -26,6 +28,7 @@ export interface CollectSignalsResult {
   urlBackedSignalCount: number;
   evidenceSummary: EvidenceSummary;
   updatedSegments: AudienceSegment[];
+  competitors?: CompetitorIntelligence;
 }
 
 /* ─── HN Algolia hit type ───────────────────────────────────────── */
@@ -395,6 +398,43 @@ function buildResults(
   return { evidenceSummary, updatedSegments };
 }
 
+/* ─── Extract competitor items from HN-classified signals ────────── */
+function extractCompetitorsFromSignals(
+  signals: ResearchSignal[],
+  category: string,
+): CompetitorIntelligence | null {
+  const compSignals = signals.filter((s) => s.signalType === "competitor" && s.url);
+  if (compSignals.length === 0) return null;
+
+  const seen = new Set<string>();
+  const direct: CompetitorItem[] = [];
+
+  for (const s of compSignals) {
+    const name = s.title.slice(0, 60).trim();
+    if (seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    direct.push({
+      name,
+      type: "direct",
+      whyRelevant: s.snippet.slice(0, 120),
+      targetOverlap: `Users in the ${category} space`,
+      weaknessToExploit: "See Hacker News discussion for community-reported gaps",
+      confidence: "medium",
+      sourceUrl: s.url,
+      sourceLabel: "Mentioned in public Hacker News discussion",
+    });
+  }
+
+  if (direct.length === 0) return null;
+
+  return {
+    direct,
+    adjacent: [],
+    substitutes: [],
+    notes: "Competitor signals collected from public Hacker News discussions. Treat as directional, not exhaustive.",
+  };
+}
+
 /* ─── Main export ────────────────────────────────────────────────── */
 export async function collectSignals(
   onboardingData: Record<string, string>,
@@ -462,5 +502,15 @@ export async function collectSignals(
 
   const { evidenceSummary, updatedSegments } = buildResults(signals, urlBackedCount, sourceMode, segments, category);
 
-  return { sourceMode, signals, urlBackedSignalCount: urlBackedCount, evidenceSummary, updatedSegments };
+  /* Extract source-backed competitors from HN competitor signals */
+  const hnCompetitors = extractCompetitorsFromSignals(signals, category);
+
+  return {
+    sourceMode,
+    signals,
+    urlBackedSignalCount: urlBackedCount,
+    evidenceSummary,
+    updatedSegments,
+    ...(hnCompetitors ? { competitors: hnCompetitors } : {}),
+  };
 }
