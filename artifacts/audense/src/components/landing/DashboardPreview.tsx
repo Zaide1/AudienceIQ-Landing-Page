@@ -314,17 +314,16 @@ function StatCards() {
           key={s.label}
           style={{
             background: "#fff",
-            border: `1px solid ${s.border}`,
+            border: s.accent ? "1.5px solid #7C3AED" : `1px solid ${s.border}`,
             borderRadius: 10,
             padding: "10px 12px",
             position: "relative",
             overflow: "hidden",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+            boxShadow: s.accent
+              ? "0 0 0 3px rgba(124,58,237,0.08)"
+              : "0 1px 3px rgba(0,0,0,0.04)",
           }}
         >
-          {s.accent && (
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "#7C3AED" }} />
-          )}
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
             <span style={{ fontSize: 11 }}>{s.icon}</span>
             <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: s.color }}>{s.label}</span>
