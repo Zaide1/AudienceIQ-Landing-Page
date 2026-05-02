@@ -1,0 +1,107 @@
+Before changing the overall landing spacing again, fix the design of the "Your Audience" dashboard preview itself.
+
+The current preview content is wrong:
+- Top Audience Segments are displayed as horizontal list rows.
+- In the reference, they are five vertical coloured cards.
+- The dashboard preview has visible scrollbars.
+- The stat cards and map feel too small.
+- The "Your Audience" area should look like a polished analytics dashboard, not a list UI.
+
+Please update ONLY the landing page dashboard preview/mockup component and its CSS.
+
+Do not change the real dashboard page unless the landing preview shares the same component.
+Do not change routing.
+Do not add backend/auth/OpenAI.
+Do not add animations.
+Do not change the overall landing hero spacing yet.
+
+Target design for the mockup:
+Inside the fixed desktop mockup canvas:
+- Left chat panel
+- Right dashboard panel titled "Your Audience"
+- Four stat cards across the top
+- Large Audience Universe dot-map card
+- Five Top Audience Segment cards across the bottom
+
+Specific requirements:
+
+1. Remove scrollbars from preview
+- The mockup should not show vertical scrollbars.
+- The preview should fit inside its fixed canvas.
+- Use overflow: hidden on the mockup window if needed.
+- Do not make the preview internally scrollable.
+
+2. Right dashboard layout
+- Use a dashboard content area with generous padding.
+- Header:
+  - Title: "Your Audience"
+  - Subtitle: "Market insights for AI Calorie Tracker in UK"
+- Top metric cards:
+  - Four cards in one horizontal row.
+  - Each card should be wide enough, not narrow pills.
+  - Use soft icon blocks and labels.
+  - Values:
+    Reachable Audience: 850K – 1.4M
+    Coverage: 7%
+    Untapped Opportunity: 93%
+    Confidence: Medium
+
+3. Audience Universe card
+- Make this card large and wide.
+- Dot grid should span almost the full width.
+- Use many evenly spaced small dots.
+- Grey dots for untapped.
+- Coloured clusters:
+  purple, blue, green, orange, pink.
+- Add legend at top-right:
+  Covered 7%, Untapped 93%
+- Add tooltip card over purple cluster:
+  Gym Goers
+  25% of audience
+  ~210K – 350K people
+- This section should be visually prominent.
+
+4. Top Audience Segments
+Replace the current horizontal list rows with five vertical cards.
+
+Cards should be arranged in a horizontal row, just like the reference.
+
+Each card:
+- Fixed equal width.
+- Soft tinted background.
+- Rounded corners.
+- Small icon/label at top.
+- Large percentage.
+- Audience range.
+- "Key Pain Points" label.
+- Two bullet points.
+- "Top Platforms" label.
+- 2–3 small platform icons or text pills.
+
+Use these cards:
+- Gym Goers, 25%, ~210K – 350K, pain points: Tracking is tedious, Forget to log meals, platforms: Insta, TikTok, YouTube
+- Busy Professionals, 30%, ~255K – 420K, pain points: No time to track, Inconsistent routine, platforms: LinkedIn, X, Reddit
+- Health Conscious, 20%, ~170K – 280K, pain points: Want simplicity, Hate manual input, platforms: Insta, YouTube, Facebook
+- Weight Loss Beginners, 15%, ~125K – 210K, pain points: Don’t know where to start, Overwhelmed, platforms: TikTok, Instagram, Reddit
+- Nutrition Optimisers, 10%, ~85K – 140K, pain points: Want advanced insights, Need accuracy, platforms: YouTube, Reddit, Google
+
+Colour themes:
+- Gym Goers: purple tint
+- Busy Professionals: blue tint
+- Health Conscious: green tint
+- Weight Loss Beginners: orange tint
+- Nutrition Optimisers: pink tint
+
+5. Canvas proportions
+- Keep the fixed internal canvas strategy.
+- Make sure all dashboard content fits without scrolling.
+- If space is tight, reduce font sizes slightly, but keep the 5 segment cards visible as cards.
+- Do not collapse segment cards into list rows.
+- Do not stack the cards vertically in the desktop preview.
+
+6. Visual quality
+- Use soft borders, subtle shadows, and consistent spacing.
+- The preview should resemble the supplied reference image closely.
+- It should feel like a real polished product screenshot.
+
+After changes, explain what you changed in the "Your Audience" preview layout.
