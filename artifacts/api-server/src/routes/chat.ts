@@ -6,7 +6,7 @@ const router: IRouter = Router();
 
 /* ─── Constants ──────────────────────────────────────────────────── */
 const AI_TIMEOUT_MS  = 13_000;
-const MAX_TOKENS     = 1200;   /* ~150 words answer + JSON overhead + proposed_update map room */
+const MAX_TOKENS     = 1200;
 const MAX_ACTIONS    = 4;
 const MAX_ACTION_LEN = 40;
 
@@ -35,6 +35,74 @@ interface ChatRefineResponse {
   message: string;
   proposedAudienceMap: AudienceMapResult | null;
   suggestedActions: string[];
+}
+
+/* ─── Out-of-scope classifier ────────────────────────────────────── */
+/*
+ * These patterns match clearly out-of-scope requests.
+ * Each regex is checked against the full userMessage (case-insensitive).
+ * A separate audience-framing override lets through messages that are
+ * obviously about product/audience research even if they touch a
+ * sensitive domain (e.g. "My app helps GLP-1 users — who should I target?").
+ */
+
+const OOS_MEDICAL = /\b(should i prescribe|prescrib(e|ing|ed) (?:this|it|them)|glp.?1 safety|ozempic safety|semaglutide safety|is (?:this|it) safe to (take|use)|dosage (?:of|for) \w+|drug interaction|contraindication|clinical trial result|medical advice|treatment plan|diagnos[ei]s? (?:of|for)|my patient (asked|needs|has)|as a (doctor|physician|nurse|clinician))\b/i;
+
+const OOS_LEGAL = /\b(legal advice|should i sue|am i liable|can they sue me|statute of limitations|habeas corpus|attorney advice|lawyer advice)\b/i;
+
+const OOS_FINANCIAL = /\b(should i invest in|which stocks? (to|should)|stock pick|crypto advice|financial advice|investment advice|tax advice for me)\b/i;
+
+const OOS_GENERAL = /\b(write my essay|do my homework|explain (?:photosynthesis|evolution|quantum mechanics|general relativity) (?:to me|for me)|what is the capital of|history of (?:world war|the roman|ancient))\b/i;
+
+type OOSCategory = "medical" | "legal" | "financial" | "general";
+
+/*
+ * If a message contains out-of-scope patterns BUT is clearly framed as
+ * product/audience research, the audience framing takes priority → allowed.
+ */
+const AUDIENCE_FRAMING = [
+  /\b(my product|our product|my app|our app|my startup|my business|my service|my platform|my tool)\b/i,
+  /\b(who should i target|who (is|are) (the |my )?(audience|users?|customers?)|target audience|ideal user)\b/i,
+  /\b(audience (for|of|segment)|user segment|customer segment|market (for|of)|who would (use|buy|pay for))\b/i,
+  /\b(pain point|user objection|messaging angle|acquisition channel|how do i reach|where (are|do i find) (my|the))\b/i,
+  /\b(tracking app|adherence app|health app|wellness app|fitness app|mental health app|what (worries|concerns) (my )?users)\b/i,
+];
+
+function classifyOOS(msg: string): OOSCategory | null {
+  let category: OOSCategory | null = null;
+  if (OOS_MEDICAL.test(msg))   category = "medical";
+  else if (OOS_LEGAL.test(msg))     category = "legal";
+  else if (OOS_FINANCIAL.test(msg)) category = "financial";
+  else if (OOS_GENERAL.test(msg))   category = "general";
+
+  if (!category) return null;
+
+  /* Audience research framing overrides the block */
+  const hasAudienceFraming = AUDIENCE_FRAMING.some((p) => p.test(msg));
+  return hasAudienceFraming ? null : category;
+}
+
+/* ─── Out-of-scope redirect response ────────────────────────────── */
+function productContext(body: ChatRefineRequest): string {
+  const ctx =
+    body.currentAudienceMap?.productSummary?.trim() ||
+    body.onboardingData?.productIdea?.trim();
+  return ctx && ctx.length > 0 ? ctx : "your product";
+}
+
+function buildOOSResponse(ctx: string, category: OOSCategory): ChatRefineResponse {
+  const domain =
+    category === "medical"   ? "medical" :
+    category === "legal"     ? "legal" :
+    category === "financial" ? "finance" :
+    "general-purpose";
+
+  return {
+    type: "answer",
+    message: `Not my lane — I'm an audience coach, not a ${domain} advisor. I'm here to help map who wants ${ctx}, where they are, and how to reach them. What do you want to know about your audience?`,
+    proposedAudienceMap: null,
+    suggestedActions: [],
+  };
 }
 
 /* ─── Colour enforcement ─────────────────────────────────────────── */
@@ -83,7 +151,6 @@ function validateProposedMap(raw: unknown): AudienceMapResult | null {
 
   if (Math.abs(pctSum - 100) > 5) return null;
 
-  /* Normalise if slightly off */
   if (pctSum !== 100) {
     const scale = 100 / pctSum;
     let rem = 100;
@@ -122,7 +189,6 @@ function isRefinementRequest(msg: string): boolean {
   return REFINEMENT_KEYWORDS.some((kw) => msg.toLowerCase().includes(kw));
 }
 
-/** Trim suggestedActions to spec: max 4, max 40 chars each */
 function cleanActions(raw: unknown[]): string[] {
   return raw
     .filter((a): a is string => typeof a === "string")
@@ -130,7 +196,7 @@ function cleanActions(raw: unknown[]): string[] {
     .map((a) => a.length > MAX_ACTION_LEN ? a.slice(0, MAX_ACTION_LEN - 1) + "…" : a);
 }
 
-/* ─── Deterministic fallbacks (concise) ─────────────────────────── */
+/* ─── Deterministic fallbacks ────────────────────────────────────── */
 function buildFallbackAnswer(map: AudienceMapResult): ChatRefineResponse {
   const seg = map.segments[0];
   return {
@@ -164,10 +230,7 @@ function buildFallbackUpdate(map: AudienceMapResult): ChatRefineResponse {
     type: "proposed_update",
     message: `Boosted ${map.segments[0]?.name ?? "top segment"} to ${updated.segments[0]!.percent}%. Confirm to apply.`,
     proposedAudienceMap: updated,
-    suggestedActions: [
-      "Confirm update",
-      "Ask why this was prioritised",
-    ],
+    suggestedActions: ["Confirm update", "Ask why this was prioritised"],
   };
 }
 
@@ -178,6 +241,14 @@ router.post("/chat/refine", async (req, res) => {
 
   if (!userMessage?.trim()) {
     res.status(400).json({ error: "userMessage is required" });
+    return;
+  }
+
+  /* ── Out-of-scope guard (no AI call needed) ───────────────────── */
+  const oosCategory = classifyOOS(userMessage);
+  if (oosCategory) {
+    req.log.info({ blocked: oosCategory }, "chat/refine OOS blocked");
+    res.json(buildOOSResponse(productContext(body), oosCategory));
     return;
   }
 
@@ -192,14 +263,13 @@ router.post("/chat/refine", async (req, res) => {
     return;
   }
 
-  /* Abort controller for the 13s timeout */
+  /* ── Abort controller for 13s timeout ────────────────────────── */
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 
   try {
     const client = new OpenAI({ apiKey, baseURL });
 
-    /* Context blocks */
     const recentContext = (messages ?? [])
       .filter((m) => m.role === "user" || m.role === "ai")
       .slice(-6)
@@ -210,9 +280,12 @@ router.post("/chat/refine", async (req, res) => {
       .map((s) => `- ${s.name} (${s.percent}%): ${s.painPoints.slice(0, 2).join(", ")}. Platforms: ${s.platforms.slice(0, 2).join(", ")}. Angle: ${s.acquisitionAngle}`)
       .join("\n");
 
+    const productCtx = productContext(body);
+
     const systemPrompt = `You are Audense, a sharp audience intelligence coach for early-stage founders.
 Be concise, specific, and practical. Ground every answer in the founder's current audience map.
 Never invent statistics. Treat audience numbers as directional MVP estimates.
+No emojis. No robotic filler. Short, punchy, founder-friendly.
 
 CONTEXT:
 Product: ${onboardingData?.productIdea ?? "Not specified"}
@@ -226,6 +299,29 @@ Reach: ${currentAudienceMap.reachableAudience.min.toLocaleString()}–${currentA
 
 Recent conversation:
 ${recentContext || "(none)"}
+
+═══ SCOPE GUARDRAILS ═══
+You are an audience intelligence coach only. You cannot and will not provide:
+- Medical, clinical, or drug safety advice (even if the user is a doctor or healthcare professional)
+- Legal or regulatory advice
+- Financial, investment, or tax advice
+- General factual answers with no connection to the current product/audience
+- Personal life advice
+
+NUANCE — grey-area framing:
+If the user asks about a sensitive topic but frames it clearly as audience/product research
+(e.g. "What pain points do GLP-1 users have about an adherence app?" or
+"What objections would mental health app users have?"), you MAY answer — focus on
+audience insights, not professional advice.
+
+If a question is clearly out of scope, return this exact JSON:
+{
+  "type": "answer",
+  "message": "Not my lane — I'm an audience coach, not a [medical/legal/finance] advisor. I'm here to help map who wants ${productCtx}, where they are, and how to reach them. What do you want to know about your audience?",
+  "proposedAudienceMap": null,
+  "suggestedActions": []
+}
+Replace [medical/legal/finance] with the relevant domain. Use "general-purpose" for off-topic questions.
 
 ═══ ANSWER FORMAT (type "answer") ═══
 ONE sentence: your single best recommendation.
@@ -252,6 +348,7 @@ insights (1–3 × {title,description}).
 
 ═══ suggestedActions ═══
 2–4 items. Each ≤ 40 characters. No articles or filler words.
+If out-of-scope: return suggestedActions as [].
 
 Return ONLY valid JSON (no markdown, no text outside JSON):
 {"type":"answer|proposed_update","message":"…","proposedAudienceMap":null,"suggestedActions":["…"]}`;
