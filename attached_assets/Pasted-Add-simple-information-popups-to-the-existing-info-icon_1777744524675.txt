@@ -1,0 +1,75 @@
+Add simple information popups to the existing info icons on the dashboard.
+
+Important:
+- Do not change dashboard layout.
+- Do not change routing.
+- Do not change onboarding.
+- Do not change chat behaviour.
+- Do not change AudienceMapResult shape.
+- Do not add auth/Supabase.
+- Do not add new cards or major UI.
+- Only add lightweight info popups/tooltips to the existing ⓘ icons.
+
+Goal:
+When the user clicks or hovers the existing info icons, show a small premium tooltip/popover explaining what that section means.
+
+Apply to the existing info icons for:
+1. Audience Universe
+2. Top Audience Segments
+
+Tooltip behaviour:
+- Show on hover and on click.
+- Hide on mouse leave.
+- Hide when clicking outside or pressing Escape.
+- Should work on desktop and mobile.
+- Use local React state only.
+- Keep the styling soft, clean, and consistent with the current UI.
+
+Tooltip styling:
+- White background.
+- Soft border: #E5E7EB or similar.
+- Subtle shadow.
+- Border radius around 12px.
+- Padding around 10–12px.
+- Text size around 12–13px.
+- Max width around 280px.
+- Dark title text and muted body text.
+- Purple accent only if needed.
+- Position near the icon without covering the main content too much.
+- Ensure it does not get clipped by parent containers.
+
+Tooltip copy:
+
+Audience Universe tooltip:
+Title: “Audience Universe”
+Body:
+“Each dot represents a directional slice of your reachable audience. Coloured clusters show the segments Audense believes are most relevant for this product and region. Grey dots represent remaining untapped audience potential.”
+
+Add a smaller muted note:
+“These are MVP estimates, not official market statistics.”
+
+Top Audience Segments tooltip:
+Title: “Top Audience Segments”
+Body:
+“These are the highest-priority groups Audense thinks you could target first. Percentages show how your current audience focus is distributed across segments.”
+
+Add a smaller muted note:
+“You can refine these by chatting with Audense and confirming map updates.”
+
+Implementation preference:
+- Create a small reusable InfoTooltip component in Dashboard.tsx or a nearby component file if one already exists.
+- Replace the existing plain info icon with the InfoTooltip trigger.
+- Do not create a dependency on a tooltip library unless one is already installed.
+
+Validation:
+- Hovering/clicking Audience Universe info icon shows the correct tooltip.
+- Hovering/clicking Top Audience Segments info icon shows the correct tooltip.
+- Escape closes the tooltip.
+- Clicking outside closes the tooltip.
+- Dashboard layout remains unchanged.
+- No console errors.
+
+After implementing, explain:
+- Where the tooltip component lives
+- Which info icons now use it
+- How it closes

@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
-  Settings, HelpCircle, Send, Plus, Info, Paperclip,
+  Settings, HelpCircle, Send, Plus, Paperclip,
 } from "lucide-react";
 import {
   FaInstagram, FaTiktok, FaYoutube, FaLinkedin,
   FaXTwitter, FaReddit, FaFacebook, FaGoogle,
 } from "react-icons/fa6";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
+import { InfoTooltip } from "../components/InfoTooltip";
 import {
   loadAudienceMap, generateMockAudienceMap, saveAudienceMap, formatK,
   type AudienceMapResult, type ResearchSignal,
@@ -1510,7 +1511,11 @@ export default function Dashboard() {
                 <span style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
                   Audience Universe
                 </span>
-                <Info size={13} style={{ color: "#9CA3AF", cursor: "default" }} />
+                <InfoTooltip
+                  title="Audience Universe"
+                  body="Each dot represents a directional slice of your reachable audience. Coloured clusters show the segments Audense believes are most relevant for this product and region. Grey dots represent remaining untapped audience potential."
+                  note="These are MVP estimates, not official market statistics."
+                />
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, fontWeight: 600, color: "#6B7280", flexWrap: "wrap" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -1570,7 +1575,11 @@ export default function Dashboard() {
               <span style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
                 Top Audience Segments
               </span>
-              <Info size={13} style={{ color: "#9CA3AF", cursor: "default" }} />
+              <InfoTooltip
+                title="Top Audience Segments"
+                body="These are the highest-priority groups Audense thinks you could target first. Percentages show how your current audience focus is distributed across segments."
+                note="You can refine these by chatting with Audense and confirming map updates."
+              />
             </div>
             <div style={{ fontSize: 11.5, color: "#9CA3AF", marginBottom: 14 }}>
               Click a segment to explore deeper insights
