@@ -1,0 +1,163 @@
+Create a polished Settings page for Audense.
+
+Important:
+- Do not add auth/Supabase yet.
+- Do not add backend changes.
+- Do not change landing page.
+- Do not change onboarding flow.
+- Do not change dashboard layout.
+- Do not change chat/refinement behaviour.
+- Use local React state and localStorage only.
+- Keep the page visually consistent with the existing Audense dashboard.
+
+Goal:
+Add a Settings page that feels real and ready for future auth/database integration, but works locally for now.
+
+1. Routing / navigation
+- Add a /settings route if it does not already exist.
+- Make the existing Settings item in the dashboard/sidebar navigate to /settings.
+- Keep the same app shell/sidebar/header style as the dashboard where possible.
+- Include a simple back/navigation path to return to the dashboard.
+
+2. Settings page sections
+
+A) Account
+Show:
+- Display name
+- Email placeholder
+- Workspace/project name
+
+Use localStorage for now:
+- displayName key: audense-display-name
+- workspaceName key: audense-workspace-name
+
+If no data exists, default to:
+- Display name: Founder
+- Email: Not connected yet
+- Workspace: My Audience Workspace
+
+Fields:
+- Display name editable text input
+- Workspace name editable text input
+- Email shown disabled/read-only with helper text: “Connect an account later to sync across devices.”
+
+B) Research Preferences
+Controls:
+- Default region
+- Default category
+- Preferred sources
+
+Use localStorage:
+- audense-default-region
+- audense-default-category
+- audense-preferred-sources
+
+Default region options:
+- United States
+- United Kingdom
+- Canada
+- Australia
+- Germany
+- France
+- India
+- Global
+
+Default category options:
+- Health & Fitness
+- SaaS / Software
+- E-commerce
+- Education
+- Finance
+- Creator Tools
+- Consumer Apps
+- Other
+
+Preferred sources checkboxes:
+- Hacker News
+- Reddit
+- X / Twitter
+- TikTok
+- YouTube
+- Review sites
+- Competitor websites
+
+Important:
+- Only Hacker News is currently connected.
+- For sources not connected yet, show a small “Coming soon” label.
+- Do not pretend these sources are live.
+
+C) Chat Preferences
+Controls:
+- Response style:
+  - Concise
+  - Balanced
+  - Detailed
+- Allow map update suggestions:
+  - toggle on/off
+- Show suggested follow-up chips:
+  - toggle on/off
+
+Use localStorage:
+- audense-response-style
+- audense-allow-map-updates
+- audense-show-suggested-actions
+
+Defaults:
+- response style: Balanced
+- allow map updates: true
+- show suggested actions: true
+
+D) Data & Privacy
+Show a clear local-only explanation:
+“Your current MVP data is stored locally in this browser. When accounts are added, you’ll be able to sync projects across devices.”
+
+Add buttons:
+- Export local data
+- Clear chat history
+- Clear current audience map
+- Reset onboarding data
+
+Behaviour:
+- Export local data downloads a JSON file containing:
+  - audense_onboarding
+  - audense-audience-map
+  - audense-chat-messages
+  - audense-dashboard-split
+  - all settings keys added above
+- Clear chat history removes audense-chat-messages only.
+- Clear current audience map removes audense-audience-map only.
+- Reset onboarding data removes audense_onboarding and audense-audience-map.
+- Destructive actions should ask for confirmation using window.confirm.
+
+E) About Audense
+Show:
+- App name: Audense
+- Version: MVP Preview
+- Short copy:
+  “Audense helps founders turn product ideas into audience maps, research hypotheses, and go-to-market direction.”
+
+3. Save behaviour
+- Settings should auto-save on change OR have a Save changes button.
+- If using Save changes, show a small success state: “Settings saved.”
+- Keep implementation simple.
+
+4. Design requirements
+- Use cards with soft borders and rounded corners.
+- Use purple accents consistently.
+- Inputs should match onboarding/dashboard styling.
+- Page should feel premium, not like a raw form.
+- It should work at desktop and narrow split-panel widths.
+
+5. Do not overbuild
+- No login.
+- No billing.
+- No team management.
+- No integrations setup flow.
+- No real source connection logic.
+- No API calls.
+
+After implementing, explain:
+- Files changed
+- Route added
+- localStorage keys used
+- What each Data & Privacy button does

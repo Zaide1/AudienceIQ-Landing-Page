@@ -1245,7 +1245,7 @@ export default function Dashboard() {
 
         {/* Bottom nav */}
         <div style={{ padding: "6px 12px 14px", borderTop: "1px solid #F3F4F6", flexShrink: 0 }}>
-          <NavItem icon={<Settings size={15} />} label="Settings" />
+          <NavItem icon={<Settings size={15} />} label="Settings" onClick={() => navigate("/settings")} />
           <NavItem icon={<HelpCircle size={15} />} label="Need help? Chat with us" onClick={() => navigate("/help")} />
         </div>
       </div>
