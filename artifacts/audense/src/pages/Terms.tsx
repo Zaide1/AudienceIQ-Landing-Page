@@ -1,29 +1,4 @@
-import { useLocation } from "wouter";
-import { ArrowLeft } from "lucide-react";
-
-const SECTION_STYLE: React.CSSProperties = {
-  background: "#fff",
-  border: "1px solid #E5E7EB",
-  borderRadius: 14,
-  padding: "22px 24px",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-};
-
-const HEADING_STYLE: React.CSSProperties = {
-  fontSize: 15,
-  fontWeight: 700,
-  color: "#111827",
-  marginBottom: 14,
-  paddingBottom: 10,
-  borderBottom: "1px solid #F3F4F6",
-};
-
-const BODY_STYLE: React.CSSProperties = {
-  fontSize: 13.5,
-  color: "#374151",
-  lineHeight: 1.7,
-  margin: 0,
-};
+import { DocPage, DocSection, DocParagraph } from "../components/DocPage";
 
 const SECTIONS: { heading: string; paragraphs: string[] }[] = [
   {
@@ -83,83 +58,24 @@ const SECTIONS: { heading: string; paragraphs: string[] }[] = [
 ];
 
 export default function Terms() {
-  const [, navigate] = useLocation();
-
-  const goBack = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigate("/");
-    }
-  };
+  const lastUpdated = new Date().toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+  });
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#F9FAFB",
-        padding: "28px 20px 64px",
-        boxSizing: "border-box",
-      }}
+    <DocPage
+      title="Terms of Service"
+      subtitle="The honest agreement for using Audense while it's in beta."
+      lastUpdated={lastUpdated}
     >
-      <div style={{ maxWidth: 760, margin: "0 auto" }}>
-        <button
-          onClick={goBack}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: "none",
-            border: "none",
-            padding: "4px 0",
-            fontSize: 13.5,
-            fontWeight: 500,
-            color: "#6B7280",
-            cursor: "pointer",
-            marginBottom: 24,
-            fontFamily: "inherit",
-          }}
-        >
-          <ArrowLeft size={15} />
-          Back
-        </button>
-
-        <div style={{ marginBottom: 28 }}>
-          <h1
-            style={{
-              fontSize: 28,
-              fontWeight: 800,
-              color: "#111827",
-              margin: "0 0 8px",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Terms
-          </h1>
-          <p style={{ fontSize: 14, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-            The honest agreement for using Audense while it's in beta.
-          </p>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {SECTIONS.map((s) => (
-            <div key={s.heading} style={SECTION_STYLE}>
-              <div style={HEADING_STYLE}>{s.heading}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {s.paragraphs.map((p, i) => (
-                  <p key={i} style={BODY_STYLE}>
-                    {p}
-                  </p>
-                ))}
-              </div>
-            </div>
+      {SECTIONS.map((s) => (
+        <DocSection key={s.heading} heading={s.heading}>
+          {s.paragraphs.map((p, i) => (
+            <DocParagraph key={i}>{p}</DocParagraph>
           ))}
-
-          <p style={{ fontSize: 12, color: "#9CA3AF", margin: "8px 0 0", textAlign: "center" }}>
-            Last updated: {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long" })}
-          </p>
-        </div>
-      </div>
-    </div>
+        </DocSection>
+      ))}
+    </DocPage>
   );
 }

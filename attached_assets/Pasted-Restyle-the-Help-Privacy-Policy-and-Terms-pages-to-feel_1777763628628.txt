@@ -1,0 +1,58 @@
+Restyle the Help, Privacy Policy, and Terms pages to feel premium and consistent with the Audense homepage.
+
+Use Cluely’s page structure as visual inspiration only: spacious layout, large calm hero typography, soft full-width gradient top section, centered readable content, generous spacing, minimal dividers, and clean long-form sections.
+
+Important:
+- Do not copy Cluely’s exact design, copy, colours, icons, footer, or brand style.
+- Keep Audense branding throughout.
+- Use Audense’s own visual system: primary purple, soft lilac gradients, white content cards, subtle borders, slate/neutral body text, and rounded corners.
+- Do not change routing.
+- Do not change dashboard.
+- Do not change auth.
+- Do not change onboarding.
+- Only restyle the Help, Privacy Policy, and Terms pages.
+
+Page requirements:
+1. Help page
+- Add a large soft gradient hero section at the top.
+- Use a clear heading like “Help & guidance”.
+- Add a short subtitle explaining that this page helps users understand their audience map, estimates, live research, and validation workflow.
+- Convert the current dense card layout into cleaner sections with better spacing.
+- Keep the existing explanations, but make them easier to scan.
+- Use grouped sections such as:
+  - Understanding your audience map
+  - What the numbers mean
+  - How to use the map
+  - Live research and evidence
+  - Saving research and history
+
+2. Privacy Policy page
+- Add the same premium top gradient treatment.
+- Use a large “Privacy Policy” heading and last-updated text.
+- Center the content in a readable max-width column.
+- Improve typography, spacing, section headings, paragraphs, and links.
+- Keep the existing legal copy unchanged unless there are typos.
+- Avoid cramped blocks of text.
+
+3. Terms page
+- Match the Privacy page layout exactly.
+- Add the same premium top gradient treatment.
+- Use a large “Terms of Service” heading and last-updated text.
+- Center the content in a readable max-width column.
+- Improve typography, spacing, section headings, paragraphs, and links.
+- Keep the existing legal copy unchanged unless there are typos.
+
+Design direction:
+- The pages should feel like polished product documentation/legal pages, not dashboard cards.
+- Use generous whitespace.
+- Avoid cheap accordion/dropdown styling.
+- Avoid overly small text.
+- Avoid heavy shadows.
+- Make the top gradient blend smoothly into the rest of the page.
+- Ensure mobile responsiveness.
+
+After implementing, explain:
+- Which files changed
+- What layout system was used
+- How Help, Privacy, and Terms now share consistent styling
+- What copy was preserved unchanged
