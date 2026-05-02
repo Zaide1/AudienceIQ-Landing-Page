@@ -478,11 +478,13 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        className="audense-faq-button"
         style={{
           width: "100%",
           background: "transparent",
           border: "none",
-          padding: "22px 4px",
+          padding: "22px 12px",
+          margin: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -490,6 +492,10 @@ function FAQItem({ q, a }: { q: string; a: string }) {
           cursor: "pointer",
           textAlign: "left",
           fontFamily: "inherit",
+          borderRadius: 8,
+          transition: "background 0.15s ease",
+          outline: "none",
+          WebkitTapHighlightColor: "transparent",
         }}
       >
         <span
@@ -502,33 +508,29 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         >
           {q}
         </span>
-        <span
+        <svg
           aria-hidden="true"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#9CA3AF"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            background: open ? "#7C3AED" : "#F5F3FF",
-            color: open ? "#fff" : "#7C3AED",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 18,
-            lineHeight: 1,
-            fontWeight: 700,
-            transition: "background 0.18s, color 0.18s, transform 0.2s",
-            transform: open ? "rotate(45deg)" : "rotate(0deg)",
             flexShrink: 0,
+            transition: "transform 0.2s ease",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
           }}
         >
-          +
-        </span>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
       </button>
       {open && (
         <div
           style={{
-            paddingBottom: 22,
-            paddingRight: 56,
+            padding: "0 12px 22px",
             fontSize: 15,
             lineHeight: 1.65,
             color: "#6B7280",
@@ -570,6 +572,19 @@ function FAQSection() {
           ))}
         </div>
       </div>
+      <style>{`
+        .audense-faq-button:hover {
+          background: #FAFAFB;
+        }
+        .audense-faq-button:focus {
+          outline: none;
+        }
+        .audense-faq-button:focus-visible {
+          outline: none;
+          background: #F5F3FF;
+          box-shadow: inset 0 0 0 1px #E5DEFB;
+        }
+      `}</style>
     </section>
   );
 }
