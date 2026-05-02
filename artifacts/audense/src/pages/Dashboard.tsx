@@ -383,13 +383,23 @@ function AudienceMap({
                 onMouseEnter={() => isClickable && scheduleHover(segId)}
                 style={{
                   aspectRatio: "1",
-                  borderRadius: "50%",
-                  background: color,
                   minWidth: 0,
                   cursor: isClickable ? "pointer" : "default",
-                  opacity: isUntapped ? 0.75 : 0.88,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-              />
+              >
+                <div
+                  style={{
+                    width: "84%",
+                    height: "84%",
+                    borderRadius: "9999px",
+                    background: color,
+                    opacity: isUntapped ? 0.75 : 0.88,
+                  }}
+                />
+              </div>
             );
           })}
         </div>
