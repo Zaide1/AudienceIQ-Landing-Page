@@ -128,7 +128,7 @@ export function Hero() {
             position: "relative",
             zIndex: 1,
             width: "100%",
-            transform: "rotate(2deg)",
+            transform: "rotate(0.8deg)",
             transformOrigin: "center center",
           }}
         >
