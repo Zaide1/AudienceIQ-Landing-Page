@@ -1,0 +1,77 @@
+Update the Audense landing page hero and below-hero section only.
+
+Important:
+- Do not change routing.
+- Do not change onboarding.
+- Do not change dashboard.
+- Do not change any dashboard screenshot/mockup/image/card/layout shown in the hero.
+- Do not change the right-side hero product mockup at all.
+- Do not change the main hero layout.
+- Do not add auth, Supabase, billing, or pricing.
+- Keep the current Audense brand: clean, soft, purple, premium, founder-focused.
+
+Protected elements — do not touch:
+- The Audense logo/header.
+- The hero headline: “Your audience, found.”
+- The hero subtext.
+- The main CTA button: “Map my audience →”
+- The CTA styling, size, text, position, hover state, shadow, border radius, icon, spacing, or behaviour.
+- The dashboard/product mockup on the right side of the hero.
+- Any dashboard UI, dashboard route, dashboard components, Audience Universe, segment cards, chat panel, or map logic.
+
+Only change:
+1. Remove the fake social proof row under the CTA:
+- Remove overlapping avatars.
+- Remove “Join 1,200+ founders”.
+- Do not replace with fake user counts, testimonials, logos, or reviews.
+
+2. In that exact row area, add three honest value chips:
+- Validate the idea
+- Find your first audience
+- Plan where to reach them
+
+Style:
+- Soft purple/white pills.
+- Small text.
+- Premium and subtle.
+- Same horizontal area where the social proof row currently sits.
+- Do not move the CTA or hero mockup to fit them.
+
+3. Add a below-hero product proof section lower down the landing page, beneath the existing hero.
+
+Section headline:
+“Stop building before you know who wants it.”
+
+Section subtext:
+“Audense helps founders turn a rough idea into an audience map, validation plan, and go-to-market starting point.”
+
+Add 3 cards:
+Card 1:
+Title: “Map the audience”
+Body: “See who is most likely to care, where they are, and how big the opportunity looks.”
+
+Card 2:
+Title: “Validate the idea”
+Body: “Ask what people might object to, what competitors they already use, and what to test first.”
+
+Card 3:
+Title: “Turn research into action”
+Body: “Get messaging angles, channel plans, and next steps based on your audience map.”
+
+4. Add a compact chat example preview below or beside the cards:
+Founder:
+“Who should I target first?”
+
+Audense:
+“Start with the segment that has the clearest pain, easiest message, and most reachable channels.”
+
+Keep it styled like the existing Audense chat bubbles.
+
+Honesty:
+- Do not claim real users.
+- Do not claim live Reddit/TikTok/X research.
+- Do not mention fake metrics.
+- Do not add “trusted by” or “used by” sections.
+
+Goal:
+Make the landing page feel more complete and honest without changing the hero CTA, hero mockup, or dashboard.

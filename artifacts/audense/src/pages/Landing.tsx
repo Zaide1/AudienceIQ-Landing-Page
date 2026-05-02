@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
+import { BelowHero } from "@/components/landing/BelowHero";
 
 export default function Landing() {
   return (
@@ -50,8 +51,11 @@ export default function Landing() {
 
       <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1 }}>
         <Navbar />
-        <main style={{ flex: 1, display: "flex", alignItems: "center" }}>
-          <Hero />
+        <main style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "center", minHeight: "calc(100vh - 80px)" }}>
+            <Hero />
+          </div>
+          <BelowHero />
         </main>
       </div>
     </div>
