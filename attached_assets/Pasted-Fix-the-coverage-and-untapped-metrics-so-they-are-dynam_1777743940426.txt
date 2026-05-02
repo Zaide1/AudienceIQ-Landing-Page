@@ -1,0 +1,93 @@
+Fix the coverage and untapped metrics so they are dynamic.
+
+Important:
+- Do not change UI design.
+- Do not change dashboard layout.
+- Do not change onboarding.
+- Do not change chat behaviour.
+- Do not change AudienceMapResult shape.
+- Do not add auth/Supabase.
+- Keep existing fallback behaviour.
+
+Current issue:
+coverage.percent is always 7 and untapped.percent is always 93, regardless of product, category, region, or generated segments. This makes the audience map feel fake.
+
+Goal:
+Make coverage and untapped values directional but dynamic.
+
+Rules:
+1. coverage.percent should vary based on the generated audience map.
+2. coverage.percent must be clamped between 3 and 28.
+3. untapped.percent must always equal 100 - coverage.percent.
+4. coverage.people must equal reachableAudience.min * coverage.percent / 100, rounded.
+5. untapped.min must equal reachableAudience.min - coverage.people, rounded.
+6. untapped.max must equal reachableAudience.max * untapped.percent / 100, rounded.
+7. Values should be honest MVP directional estimates, not official statistics.
+
+Create a shared helper:
+calculateCoverageEstimate(input)
+
+It should consider:
+- category
+- region
+- product specificity
+- targetUsers specificity
+- problem specificity
+- whether evidenceSummary.sourceMode is "live_research" or "ai_hypothesis"
+- segment concentration / whether one segment dominates
+- whether the product sounds consumer, B2B, SaaS, technical, local, or niche
+
+Suggested deterministic ranges:
+- vague/general product: 3–6%
+- broad consumer product: 5–9%
+- normal startup/product idea: 7–13%
+- niche B2B/SaaS/productivity tool: 12–20%
+- highly specific technical product with live research signals: 18–28%
+
+Clamp final coverage between 3 and 28.
+
+Implementation:
+1. Frontend mock generation:
+- Use calculateCoverageEstimate inside generateMockAudienceMap.
+- Remove hardcoded coverage.percent = 7 and untapped.percent = 93.
+- Derive coverage.people, untapped.percent, untapped.min, and untapped.max from the helper result.
+
+2. Backend deterministic fallback:
+- Use the same logic in the backend mock/fallback generation.
+- Remove hardcoded 7/93 from backend generation.
+
+3. OpenAI generation:
+- The AI may suggest coverage.percent.
+- Validate coverage.percent:
+  - must be a number
+  - must be between 3 and 28
+- If invalid, missing, or suspicious, replace it with calculateCoverageEstimate.
+- Regardless of AI output, always recalculate:
+  - untapped.percent = 100 - coverage.percent
+  - coverage.people = reachableAudience.min * coverage.percent / 100
+  - untapped.min = reachableAudience.min - coverage.people
+  - untapped.max = reachableAudience.max * untapped.percent / 100
+- Do not trust AI-generated untapped values directly.
+
+4. Chat/refinement proposed updates:
+- If a proposedAudienceMap is returned by chat/refine, validate and recalculate coverage/untapped using the same rules.
+- Do not allow chat refinements to leave stale 7/93 metrics.
+
+Validation:
+- Generate a vague product like "an app for everyone": coverage should be low, around 3–6%.
+- Generate a broad consumer fitness/social app: coverage should usually be around 5–9%.
+- Generate a normal startup idea: coverage should usually be around 7–13%.
+- Generate a niche B2B/SaaS product: coverage should usually be higher, around 12–20%.
+- Generate a highly specific technical product with live_research evidence: coverage can be higher, around 18–28%.
+- untapped.percent always equals 100 - coverage.percent.
+- coverage.people is recalculated from reachableAudience.min.
+- untapped.min and untapped.max are recalculated from reachableAudience and untapped.percent.
+- Dashboard cards and legend update correctly.
+- No hardcoded 7/93 remains except as a possible calculated output.
+
+After implementing, explain:
+- Where coverage is calculated
+- What inputs influence it
+- How untapped is derived
+- How invalid AI values are corrected
+- Whether frontend, backend generation, and chat refinement all use the same rules

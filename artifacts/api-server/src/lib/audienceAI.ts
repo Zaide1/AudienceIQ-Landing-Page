@@ -82,6 +82,70 @@ function buildMockSegmentEvidence(painPoints: string[]): SegmentEvidence {
   };
 }
 
+/* ─── Coverage estimate helpers (mirrors frontend audienceMap.ts) ── */
+interface CoverageInput {
+  category: string;
+  productIdea?: string;
+  targetUsers?: string;
+  problem?: string;
+  sourceMode?: "mock" | "ai_hypothesis" | "live_research";
+  segments?: Array<{ percent: number }>;
+}
+
+export function calculateCoverageEstimate(input: CoverageInput): number {
+  const { category, productIdea = "", targetUsers = "", problem = "", sourceMode, segments } = input;
+  const cat = category.toLowerCase();
+
+  let base: number;
+  if (["saas", "software", "developer", "devtools", "b2b", "enterprise", "analytics", "productivity", "fintech"].some((k) => cat.includes(k))) {
+    base = 14;
+  } else if (["health", "fitness", "consumer", "ecommerce", "social", "lifestyle", "fashion", "food", "beauty"].some((k) => cat.includes(k))) {
+    base = 7;
+  } else if (["creator", "media", "content", "video", "podcast"].some((k) => cat.includes(k))) {
+    base = 10;
+  } else if (["education", "learning", "course", "training"].some((k) => cat.includes(k))) {
+    base = 9;
+  } else if (["finance", "investment", "banking", "insurance"].some((k) => cat.includes(k))) {
+    base = 11;
+  } else {
+    base = 8;
+  }
+
+  const combinedLen = productIdea.trim().length + targetUsers.trim().length + problem.trim().length;
+  if (combinedLen < 30) base -= 3;
+  else if (combinedLen > 150) base += 2;
+
+  if (targetUsers.trim().length > 15) base += 1;
+  if (problem.trim().length > 15) base += 1;
+
+  if (sourceMode === "live_research") base += 4;
+
+  if (segments && segments.length > 0) {
+    const maxPct = Math.max(...segments.map((s) => s.percent));
+    if (maxPct >= 40) base -= 1;
+  }
+
+  return Math.min(28, Math.max(3, Math.round(base)));
+}
+
+export function recalculateCoverageFields(
+  coveragePct: number,
+  reachMin: number,
+  reachMax: number,
+): { coverage: { percent: number; people: number }; untapped: { percent: number; min: number; max: number } } {
+  const pct = Math.min(28, Math.max(3, Math.round(coveragePct)));
+  const people = Math.round(reachMin * pct / 100);
+  const untappedPct = 100 - pct;
+  return {
+    coverage: { percent: pct, people },
+    untapped: {
+      percent: untappedPct,
+      min:     Math.round(reachMin - people),
+      max:     Math.round(reachMax * untappedPct / 100),
+    },
+  };
+}
+
 /* ─── Build deterministic fallback ──────────────────────────────── */
 export function buildMockResult(
   productIdea: string,
@@ -93,9 +157,9 @@ export function buildMockResult(
   const categoryLabel = CATEGORY_LABELS[finalCategory] ?? finalCategory;
   const templates = resolveTemplate(finalCategory);
 
-  const coveragePct = 7;
+  const coveragePct    = calculateCoverageEstimate({ category: finalCategory, productIdea, sourceMode: "mock" });
   const coveragePeople = Math.round(reachMin * (coveragePct / 100));
-  const untappedPct = 100 - coveragePct;
+  const untappedPct    = 100 - coveragePct;
 
   const segments: AudienceSegment[] = templates.map((t) => ({
     id: t.id,
@@ -120,7 +184,7 @@ export function buildMockResult(
     coverage: { percent: coveragePct, people: coveragePeople },
     untapped: {
       percent: untappedPct,
-      min: Math.round(reachMin * (untappedPct / 100)),
+      min: Math.round(reachMin - coveragePeople),
       max: Math.round(reachMax * (untappedPct / 100)),
     },
     segments,
@@ -258,9 +322,14 @@ function validateResult(raw: unknown): AudienceMapResult | null {
     region: r.region,
     category: r.category,
     confidence: r.confidence as "Low" | "Medium" | "High",
-    reachableAudience: { min: ra.min, max: ra.max, label: ra.label },
-    coverage: { percent: cov.percent, people: cov.people },
-    untapped: { percent: unt.percent, min: unt.min, max: unt.max },
+    reachableAudience: { min: ra.min as number, max: ra.max as number, label: ra.label as string },
+    ...(() => {
+      const rawCovPct = typeof cov.percent === "number" ? (cov.percent as number) : 0;
+      const validCovPct = rawCovPct >= 3 && rawCovPct <= 28
+        ? rawCovPct
+        : calculateCoverageEstimate({ category: r.category as string, sourceMode: "ai_hypothesis", segments });
+      return recalculateCoverageFields(validCovPct, ra.min as number, ra.max as number);
+    })(),
     segments,
     insights,
     evidenceSummary,
@@ -295,6 +364,10 @@ Be honest — treat audience numbers as directional MVP estimates, not official 
 Do not use words like "verified", "official", "census-backed", or "guaranteed".
 Return ONLY valid JSON, no markdown, no explanation.`;
 
+  const hintCovPct    = calculateCoverageEstimate({ category: finalCategory, productIdea, targetUsers, problem, sourceMode: "ai_hypothesis" });
+  const hintCovPeople = Math.round(reachMin * hintCovPct / 100);
+  const hintUntPct    = 100 - hintCovPct;
+
   const userPrompt = `Analyse this product and return an audience map as strict JSON.
 
 Product idea: ${productIdea || "Not specified"}
@@ -317,13 +390,13 @@ Return a JSON object with exactly this shape — no extra keys:
     "label": "people in ${regionLabel}"
   },
   "coverage": {
-    "percent": 7,
-    "people": ${Math.round(reachMin * 0.07)}
+    "percent": ${hintCovPct},
+    "people": ${hintCovPeople}
   },
   "untapped": {
-    "percent": 93,
-    "min": ${Math.round(reachMin * 0.93)},
-    "max": ${Math.round(reachMax * 0.93)}
+    "percent": ${hintUntPct},
+    "min": ${Math.round(reachMin * hintUntPct / 100)},
+    "max": ${Math.round(reachMax * hintUntPct / 100)}
   },
   "segments": [
     {

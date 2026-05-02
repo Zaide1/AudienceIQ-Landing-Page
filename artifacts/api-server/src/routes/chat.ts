@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import OpenAI from "openai";
-import { type AudienceMapResult } from "../lib/audienceAI";
+import { type AudienceMapResult, calculateCoverageEstimate, recalculateCoverageFields } from "../lib/audienceAI";
 
 const router: IRouter = Router();
 
@@ -166,14 +166,25 @@ function validateProposedMap(raw: unknown): AudienceMapResult | null {
     description: String(ins.description ?? ""),
   }));
 
+  /* Validate coverage range and always recalculate derived fields */
+  const rawCovPct = cov.percent as number;
+  const validCovPct = rawCovPct >= 3 && rawCovPct <= 28
+    ? rawCovPct
+    : calculateCoverageEstimate({ category: r.category as string, sourceMode: "ai_hypothesis", segments: segments as Array<{ percent: number }> });
+  const { coverage: covField, untapped: untField } = recalculateCoverageFields(
+    validCovPct,
+    ra.min as number,
+    ra.max as number,
+  );
+
   return {
     productSummary: r.productSummary,
     region: r.region,
     category: r.category,
     confidence: r.confidence as "Low" | "Medium" | "High",
     reachableAudience: { min: ra.min as number, max: ra.max as number, label: ra.label as string },
-    coverage: { percent: cov.percent as number, people: cov.people as number },
-    untapped: { percent: unt.percent as number, min: unt.min as number, max: unt.max as number },
+    coverage: covField,
+    untapped: untField,
     segments: segments as AudienceMapResult["segments"],
     insights,
   };
