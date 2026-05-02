@@ -16,6 +16,11 @@ import {
   loadAudienceMap, generateMockAudienceMap, saveAudienceMap, formatK,
   type AudienceMapResult, type ResearchSignal, type CompetitorIntelligence, type CompetitorItem,
 } from "../lib/audienceMap";
+import {
+  loadSessions, getActiveSession, getActiveSessionId, setActiveSessionId,
+  updateActiveSession,
+  type ResearchSession, type StoredMessage,
+} from "../lib/researchSessions";
 
 /* ─── Platform icon map ───────────────────────────────────────────── */
 type IconComponent = React.ComponentType<{ size?: number | string }>;
@@ -867,6 +872,202 @@ function CompetitorDrawer({
   );
 }
 
+/* ─── Research History Panel ─────────────────────────────────────── */
+function HistoryPanel({
+  onClose,
+  onSelect,
+  activeSessionId,
+}: {
+  onClose: () => void;
+  onSelect: (session: ResearchSession) => void;
+  activeSessionId: string;
+}) {
+  const sessions = loadSessions();
+
+  function fmtDate(iso: string) {
+    try {
+      const d = new Date(iso);
+      const now = new Date();
+      const diffMs = now.getTime() - d.getTime();
+      const diffMin = Math.floor(diffMs / 60_000);
+      if (diffMin < 2)  return "Just now";
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const diffH = Math.floor(diffMin / 60);
+      if (diffH < 24)   return `${diffH}h ago`;
+      const diffD = Math.floor(diffH / 24);
+      if (diffD < 7)    return `${diffD}d ago`;
+      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    } catch { return ""; }
+  }
+
+  const CATEGORY_LABELS: Record<string, string> = {
+    "health-fitness": "Health & Fitness",
+    saas:             "SaaS",
+    ecommerce:        "E-commerce",
+    education:        "Education",
+    finance:          "Finance",
+    "creator-tools":  "Creator Tools",
+    "consumer-apps":  "Consumer Apps",
+  };
+
+  const REGION_LABELS: Record<string, string> = {
+    us: "United States", uk: "United Kingdom", ca: "Canada",
+    au: "Australia", in: "India", de: "Germany", fr: "France",
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        style={{ position: "fixed", inset: 0, zIndex: 5000, background: "rgba(0,0,0,0.25)" }}
+        onClick={onClose}
+      />
+      {/* Panel */}
+      <div
+        style={{
+          position: "fixed", top: 0, left: 0, bottom: 0,
+          width: 380, zIndex: 5001,
+          background: "#fff",
+          display: "flex", flexDirection: "column",
+          boxShadow: "4px 0 32px rgba(15,23,42,0.16)",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 20px 14px", borderBottom: "1px solid #F3F4F6", flexShrink: 0,
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Research history</div>
+            <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
+              {sessions.length === 0
+                ? "No sessions yet"
+                : `${sessions.length} session${sessions.length !== 1 ? "s" : ""}`}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              border: "none", background: "#F3F4F6", borderRadius: 8,
+              width: 30, height: 30, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18, color: "#6B7280",
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Session list */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 12px 24px" }}>
+          {sessions.length === 0 ? (
+            <div
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                justifyContent: "center", paddingTop: 60, gap: 8, textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 36 }}>📋</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>No previous research yet.</div>
+              <div style={{ fontSize: 13, color: "#9CA3AF", maxWidth: 240, lineHeight: 1.5 }}>
+                Create a new research map to see it here.
+              </div>
+            </div>
+          ) : (
+            sessions.map((s) => {
+              const isActive = s.id === activeSessionId;
+              const cat = s.onboardingData?.finalCategory ?? s.onboardingData?.category ?? "";
+              const reg = s.onboardingData?.finalRegion   ?? s.onboardingData?.region   ?? "";
+              const catLabel = CATEGORY_LABELS[cat] ?? cat;
+              const regLabel = REGION_LABELS[reg]   ?? reg;
+              const reach = s.audienceMap?.reachableAudience;
+              const reachStr = reach
+                ? `${formatK(reach.min)} – ${formatK(reach.max)}`
+                : null;
+
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => onSelect(s)}
+                  style={{
+                    display: "block", width: "100%", textAlign: "left",
+                    background: isActive ? "#F5F3FF" : "#FAFAFA",
+                    border: isActive ? "1.5px solid #C4B5FD" : "1.5px solid #E5E7EB",
+                    borderRadius: 12, padding: "14px 16px", marginBottom: 8,
+                    cursor: "pointer", transition: "border-color 0.15s, background 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLButtonElement).style.background = "#F9F8FF";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#C4B5FD";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLButtonElement).style.background = "#FAFAFA";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#E5E7EB";
+                    }
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <span
+                          style={{
+                            fontSize: 13.5, fontWeight: 600,
+                            color: isActive ? "#6D28D9" : "#111827",
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            maxWidth: 200,
+                          }}
+                        >
+                          {s.title}
+                        </span>
+                        {isActive && (
+                          <span
+                            style={{
+                              fontSize: 10.5, fontWeight: 600, color: "#7C3AED",
+                              background: "#EDE9FE", borderRadius: 20, padding: "2px 8px",
+                              flexShrink: 0,
+                            }}
+                          >
+                            Current
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px", marginTop: 6 }}>
+                        {catLabel && (
+                          <span style={{ fontSize: 11.5, color: "#6B7280" }}>
+                            {catLabel}
+                          </span>
+                        )}
+                        {regLabel && (
+                          <span style={{ fontSize: 11.5, color: "#6B7280" }}>
+                            {regLabel}
+                          </span>
+                        )}
+                        {reachStr && (
+                          <span style={{ fontSize: 11.5, color: "#7C3AED", fontWeight: 500 }}>
+                            {reachStr} people
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#9CA3AF", flexShrink: 0, paddingTop: 2 }}>
+                      {fmtDate(s.updatedAt)}
+                    </div>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ─── Split layout constants ──────────────────────────────────────── */
 const SPLIT_KEY = "audense-dashboard-split";
 const SPLIT_MIN = 30;
@@ -888,14 +1089,26 @@ function loadSplit(): number {
 /* ─── Main Dashboard ──────────────────────────────────────────────── */
 export default function Dashboard() {
   const [, navigate] = useLocation();
-  const ob = loadOnboarding();
+
+  /* ── Active session — drives initial hydration ──────────────────── */
+  const [activeSessionId, setActiveSessionIdState] = useState<string>(
+    () => getActiveSessionId() ?? "",
+  );
+
+  const [ob, setOb] = useState<Record<string, string> | null>(() => {
+    const session = getActiveSession();
+    if (session) return session.onboardingData;
+    return loadOnboarding();
+  });
 
   const displayName = ob?.displayName ?? "Founder";
 
-  /* Load or generate the audience map — mutable so confirmed updates re-render */
-  const [audienceMap, setAudienceMap] = useState<AudienceMapResult>(
-    () => loadAudienceMap() ?? generateMockAudienceMap(ob)
-  );
+  /* Load or generate the audience map — prefer active session, fall back to compat keys */
+  const [audienceMap, setAudienceMap] = useState<AudienceMapResult>(() => {
+    const session = getActiveSession();
+    if (session) return session.audienceMap;
+    return loadAudienceMap() ?? generateMockAudienceMap(ob);
+  });
 
   const shortRegion = audienceMap.region.length > 20
     ? audienceMap.region.split(",")[0].trim()
@@ -903,6 +1116,7 @@ export default function Dashboard() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpPopoverOpen, setIsHelpPopoverOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -992,12 +1206,14 @@ export default function Dashboard() {
         setAudienceMap(updatedMap);
         setSegments(buildSegmentsFromMap(updatedMap));
         saveAudienceMap(updatedMap);
+        updateActiveSession({ audienceMap: updatedMap });
       } else {
         /* Still update just the evidenceSummary so sourceMode/limitations stay honest */
         if (data.evidenceSummary) {
           const updatedMap: AudienceMapResult = { ...audienceMap, evidenceSummary: data.evidenceSummary };
           setAudienceMap(updatedMap);
           saveAudienceMap(updatedMap);
+          updateActiveSession({ audienceMap: updatedMap });
         }
       }
 
@@ -1027,11 +1243,18 @@ export default function Dashboard() {
   const pendingMapRef = useRef<AudienceMapResult | null>(null);
   const msgId = useRef(100);
 
-  const [messages, setMessages] = useState<Message[]>(() => loadChatMessages(displayName));
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const session = getActiveSession();
+    if (session?.chatMessages && session.chatMessages.length > 0) {
+      return session.chatMessages as Message[];
+    }
+    return loadChatMessages(displayName);
+  });
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     saveChatMessages(messages);
+    updateActiveSession({ chatMessages: messages as StoredMessage[] });
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -1206,6 +1429,7 @@ export default function Dashboard() {
       setAudienceMap(map);
       setSegments(buildSegmentsFromMap(map));
       saveAudienceMap(map);
+      updateActiveSession({ audienceMap: map });
     }
 
     const successMsg: Message = {
@@ -1230,6 +1454,27 @@ export default function Dashboard() {
     };
     setMessages((prev) => [...prev, dismissMsg]);
   };
+
+  /* ── Session switching ──────────────────────────────────────────── */
+  const switchSession = useCallback((session: ResearchSession) => {
+    setActiveSessionId(session.id);
+    setActiveSessionIdState(session.id);
+    /* Write compat keys so single-session helpers (settings, chat init) stay in sync */
+    try { localStorage.setItem("audense_onboarding", JSON.stringify(session.onboardingData)); } catch {}
+    saveAudienceMap(session.audienceMap);
+    saveChatMessages(session.chatMessages as Message[]);
+    /* Hydrate React state */
+    setOb(session.onboardingData);
+    setAudienceMap(session.audienceMap);
+    setSegments(buildSegmentsFromMap(session.audienceMap));
+    setMessages(session.chatMessages as Message[]);
+    /* Clear any pending AI updates so they don't bleed across sessions */
+    pendingUpdateRef.current = null;
+    pendingMapRef.current = null;
+    setPendingUpdateId(null);
+    setSuggestedChips([]);
+    setIsHistoryOpen(false);
+  }, []);
 
   /* ── Active chips derivation ────────────────────────────────────── */
   const activeChips = useMemo(() => {
@@ -1291,6 +1536,13 @@ export default function Dashboard() {
 
   return (
     <>
+    {isHistoryOpen && (
+      <HistoryPanel
+        onClose={() => setIsHistoryOpen(false)}
+        onSelect={switchSession}
+        activeSessionId={activeSessionId}
+      />
+    )}
     <div
       ref={containerRef}
       style={{
@@ -1338,7 +1590,12 @@ export default function Dashboard() {
           />
           {/* Top nav icons */}
           <RailIcon icon={<Home size={18} />} label="Home" active onClick={() => {}} />
-          <RailIcon icon={<Layers size={18} />} label="Research (coming soon)" />
+          <RailIcon
+            icon={<Layers size={18} />}
+            label="Research history"
+            active={isHistoryOpen}
+            onClick={() => setIsHistoryOpen((v) => !v)}
+          />
           <RailIcon icon={<Database size={18} />} label="Sources (coming soon)" />
           {/* Spacer */}
           <div style={{ flex: 1 }} />

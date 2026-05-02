@@ -1,0 +1,141 @@
+Implement functional Research History for Audense.
+
+Important:
+- Do not change landing page.
+- Do not change onboarding design.
+- Do not change dashboard visual design except adding the history UI where needed.
+- Do not change AudienceMapResult shape unless absolutely necessary.
+- Do not add Supabase/auth yet.
+- Use localStorage only for now.
+- Keep existing chat/refinement, live research, and map update behaviour working.
+- Keep settings/help modals working.
+
+Goal:
+Audense should support multiple research sessions locally.
+
+Concept:
+- A “research session” represents one product/idea/company the user is exploring.
+- Each session has its own:
+  - onboarding data
+  - audience map
+  - chat messages
+  - createdAt
+  - updatedAt
+  - title
+- Starting “New Research” should create a new session after onboarding/generation.
+- History should let the user switch back to previous research sessions.
+
+LocalStorage data model:
+Create a new key:
+audense-research-sessions
+
+It should store an array of ResearchSession objects:
+
+ResearchSession:
+- id: string
+- title: string
+- createdAt: string
+- updatedAt: string
+- onboardingData: object
+- audienceMap: AudienceMapResult
+- chatMessages: Message[]
+
+Also create/update:
+audense-active-session-id
+
+Rules:
+1. When onboarding completes and an audience map is generated:
+   - Create a new ResearchSession.
+   - id can use crypto.randomUUID() if available, otherwise Date.now fallback.
+   - title should come from productIdea, shortened nicely.
+   - Save onboardingData, generated audienceMap, and initial chat state.
+   - Save it into audense-research-sessions.
+   - Set audense-active-session-id to the new id.
+   - Also keep writing existing keys for compatibility:
+     - audense_onboarding
+     - audense-audience-map
+     - audense-chat-messages
+
+2. Dashboard load:
+   - Read audense-active-session-id.
+   - Load the matching session from audense-research-sessions.
+   - If found, hydrate dashboard from that session.
+   - If missing, fall back to current localStorage behaviour.
+
+3. Chat updates:
+   - When chat messages change, update the active session’s chatMessages.
+   - Update updatedAt.
+
+4. Map updates:
+   - When Confirm update applies a proposedAudienceMap:
+     - Update audense-audience-map.
+     - Update the active session’s audienceMap.
+     - Update updatedAt.
+
+5. Live research:
+   - If live research updates evidence/map data:
+     - Update active session’s audienceMap.
+     - Update updatedAt.
+
+6. History UI:
+   - Make the History nav item functional.
+   - It should open a modal or side panel, not a full page.
+   - Title: “Research history”
+   - Show previous research sessions as cards/list rows:
+     - title
+     - category
+     - region
+     - updated time
+     - reachable audience range
+   - Clicking a session:
+     - Sets audense-active-session-id
+     - Writes that session’s onboardingData/audienceMap/chatMessages back to the compatibility keys
+     - Updates the dashboard immediately without requiring reload
+     - Closes the history panel
+   - Active session should be visually marked.
+
+7. New Research:
+   - Keep existing New Research flow.
+   - It should navigate to onboarding/start the onboarding flow.
+   - It should not overwrite existing sessions until the new generation is completed.
+   - Once generation completes, save a new session and make it active.
+
+8. Empty state:
+   - If there is no history, show:
+     “No previous research yet.”
+     “Create a new research map to see it here.”
+
+9. Safety:
+   - Do not delete old sessions.
+   - Do not merge chats between sessions.
+   - Do not let one session’s chat bleed into another.
+   - Do not break existing single-session users.
+
+10. Optional but useful:
+   - Add a small “Current” badge on the active research session.
+   - Add a “Last updated” timestamp.
+   - Add a maximum stored sessions limit of 20 to avoid localStorage bloat.
+
+Validation:
+- Generate first research map.
+- Ask chat a question.
+- Generate second research map for a different product.
+- Open History.
+- Switch back to first session.
+- Confirm:
+  - old audience map returns
+  - old chat returns
+  - second session is preserved
+- Switch to second session.
+- Confirm:
+  - second map/chat returns
+  - no data bleed
+- Confirm New Research does not overwrite the current session until generation completes.
+
+After implementing, explain:
+- Files changed
+- New localStorage keys
+- ResearchSession shape
+- How session switching works
+- How chat/map updates persist per session
+- Any compatibility behaviour kept for old keys

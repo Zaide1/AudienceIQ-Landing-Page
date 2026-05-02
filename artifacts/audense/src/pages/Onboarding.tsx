@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { generateMockAudienceMap, saveAudienceMap } from "../lib/audienceMap";
+import { upsertSession, setActiveSessionId, makeSessionTitle, newSessionId } from "../lib/researchSessions";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 interface OnboardingState {
@@ -643,14 +644,40 @@ export default function Onboarding() {
         clearTimeout(timer);
       }
 
-      if (map) {
-        saveAudienceMap(map as Parameters<typeof saveAudienceMap>[0]);
-      } else {
-        /* Timed out, network error, or bad response — fall back to local mock */
-        generateMockAudienceMap(onboardingData);
-      }
+      const finalMap = map
+        ? (map as Parameters<typeof saveAudienceMap>[0])
+        : generateMockAudienceMap(onboardingData);
+
+      saveAudienceMap(finalMap);
+
+      /* ── Create a new research session ─────────────────────────── */
+      const sessionId = newSessionId();
+      const now = new Date().toISOString();
+      upsertSession({
+        id: sessionId,
+        title: makeSessionTitle(onboardingData),
+        createdAt: now,
+        updatedAt: now,
+        onboardingData,
+        audienceMap: finalMap,
+        chatMessages: [],
+      });
+      setActiveSessionId(sessionId);
     } catch {
-      generateMockAudienceMap(onboardingData);
+      const fallback = generateMockAudienceMap(onboardingData);
+      saveAudienceMap(fallback);
+      const sessionId = newSessionId();
+      const now = new Date().toISOString();
+      upsertSession({
+        id: sessionId,
+        title: makeSessionTitle(onboardingData),
+        createdAt: now,
+        updatedAt: now,
+        onboardingData,
+        audienceMap: fallback,
+        chatMessages: [],
+      });
+      setActiveSessionId(sessionId);
     } finally {
       setGenerating(false);
     }
