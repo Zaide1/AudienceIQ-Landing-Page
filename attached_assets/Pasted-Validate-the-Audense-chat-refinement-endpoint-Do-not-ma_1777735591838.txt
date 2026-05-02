@@ -1,0 +1,72 @@
+Validate the Audense chat/refinement endpoint.
+
+Do not make code changes unless there is a clear bug. First inspect and report.
+
+Please verify:
+
+1. Backend endpoint
+- POST /api/chat/refine exists.
+- Request body includes onboardingData, currentAudienceMap, messages, userMessage.
+- Response shape is exactly:
+  type: "answer" | "proposed_update"
+  message: string
+  proposedAudienceMap: AudienceMapResult | null
+  suggestedActions: string[]
+
+2. Context handling
+- The AI prompt includes onboardingData.
+- The AI prompt includes currentAudienceMap.
+- The AI prompt includes recent messages.
+- The AI prompt includes the latest userMessage.
+- The prompt tells Audense to act as an audience intelligence coach, not a generic chatbot.
+- The prompt treats each dashboard session as one research instance.
+- It does not reference or invent past projects.
+
+3. Answer vs proposed_update
+- Normal/advice question returns type: "answer".
+- Planning question returns type: "answer".
+- Explicit map/refinement request returns type: "proposed_update".
+- The system does not propose a map update for every message.
+
+4. proposedAudienceMap validation
+- Exactly 5 segments.
+- Percentages sum to 100.
+- Colours are exactly purple, blue, green, orange, pink.
+- Required fields exist.
+- Metrics remain valid.
+- Fallback happens if validation fails.
+
+5. Frontend chat behaviour
+- Sending a message calls POST /api/chat/refine.
+- answer response appends an AI message only.
+- proposed_update response stores pendingUpdate.
+- Confirm update applies pendingUpdate exactly once.
+- Confirm saves audense-audience-map.
+- Confirm clears pendingUpdate.
+- Dismiss clears pendingUpdate without changing the map.
+- Chat messages stay in audense-chat-messages.
+- Existing map stays in audense-audience-map.
+- Existing onboarding stays in audense_onboarding.
+
+6. Edge cases
+- Confirm cannot be spammed.
+- If pendingUpdate exists and user sends another message, app asks them to confirm/dismiss first.
+- If backend/AI fails, safe fallback response is used.
+- Dashboard does not crash.
+
+7. Manual examples
+Verify expected behaviour for:
+- “Where do I find Busy Professionals?”
+  Expected: answer
+- “Give me a TikTok plan for Gym Goers”
+  Expected: answer
+- “Prioritise paid users”
+  Expected: proposed_update
+- “Make Busy Professionals the main audience”
+  Expected: proposed_update
+
+Return:
+- Pass/fail for each check
+- Files inspected
+- Any bugs found
+- Whether we are safe to move to auth/Supabase or final polish next

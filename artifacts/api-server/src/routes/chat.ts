@@ -221,18 +221,38 @@ Untapped: ${currentAudienceMap.untapped.percent}%
 Recent conversation:
 ${recentContext || "(no previous messages)"}
 
-RESPONSE RULES:
-- If the founder asks an informational, advisory, or planning question (where to find users, what message works, why a segment matters, TikTok plan, validation ideas, etc.) → return type "answer" with proposedAudienceMap as null.
-- ONLY return type "proposed_update" with a proposedAudienceMap when the founder EXPLICITLY asks to change, update, refine, prioritise, shift, focus, or rebalance the audience map.
-- Do NOT propose a map update for every message. Most messages should be type "answer".
-- When returning proposed_update, the proposedAudienceMap must have exactly 5 segments with percentages summing to 100, colors in order: purple, blue, green, orange, pink.
+DECISION RULE — choose exactly one type:
 
-Return ONLY valid JSON, no markdown:
+TYPE = "answer" when:
+- The founder asks a question: where to find users, what message works, why a segment matters, how to validate, TikTok/LinkedIn/Reddit plan, what to say, why they won't use it, etc.
+- The founder asks for advice, ideas, or strategy without asking you to change anything.
+- Examples: "Where do I find gym goers?", "Give me a TikTok plan", "Why wouldn't they use my app?", "Who should I target first?"
+
+TYPE = "proposed_update" (with a full proposedAudienceMap) when:
+- The founder uses directive language to change the map: "make X the main/primary/lead", "prioritise X", "shift focus to X", "increase X's share", "drop segment X", "rebalance", "update the map", "refine the segments", "focus on X instead".
+- The founder names a segment plus a clear directive verb.
+- Examples: "Make Busy Professionals the main audience", "Prioritise gym goers", "Shift focus to weight loss beginners", "Update the map to focus on paid users".
+- CRITICAL: If your message text says things like "I'd shift the map", "I'd increase X", "I'd prioritise X" — that means you MUST return type "proposed_update", not "answer". Never describe a map change in prose and return type "answer". If you would change the map, DO it.
+
+DO NOT return proposed_update for informational or strategy questions. Most messages (about 70%) should be type "answer".
+
+WHEN returning proposed_update, you MUST include a complete proposedAudienceMap with ALL of these fields:
+- productSummary: string
+- region: string (copy from current map)
+- category: string (copy from current map)
+- confidence: "Low" | "Medium" | "High"
+- reachableAudience: { min: number, max: number, label: string }
+- coverage: { percent: number, people: number }
+- untapped: { percent: number, min: number, max: number }
+- segments: exactly 5 items, percentages summing to exactly 100, colors MUST be in order: "purple", "blue", "green", "orange", "pink". Each segment needs: id, name, percent, audienceMin, audienceMax, color, painPoints (array), platforms (array), whyThisSegment, acquisitionAngle.
+- insights: array of 1–3 { title, description } objects
+
+Return ONLY valid JSON, no markdown, no explanation outside the JSON:
 {
   "type": "answer" | "proposed_update",
-  "message": "Your response to the founder. Be specific and grounded in their context.",
-  "proposedAudienceMap": null | { ...full AudienceMapResult },
-  "suggestedActions": ["action 1", "action 2", "action 3"]
+  "message": "Your response to the founder (1–4 sentences, specific and grounded in their context, no vague platitudes).",
+  "proposedAudienceMap": null,
+  "suggestedActions": ["specific action 1", "specific action 2", "specific action 3"]
 }`;
 
     const response = await client.chat.completions.create({
