@@ -165,7 +165,7 @@ function buildDynamicDots(segments: Segment[]): { feathered: string[]; raw: stri
   segments.forEach((seg, i) => {
     if (i >= CLUSTERS.length) return;
     const { color, cx, cy, baseRx, baseRy } = CLUSTERS[i];
-    const scale = clampN(0.75 + seg.pct / 40, 0.8, 1.45);
+    const scale = clampN(0.55 + seg.pct / 25, 0.7, 1.7);
     const rx = baseRx * scale;
     const ry = baseRy * scale;
     for (let r = 0; r < ROWS; r++) {
@@ -698,13 +698,22 @@ export default function Dashboard() {
   const handleConfirm = () => {
     setAwaitingConfirm(false);
     setSegments((prev) => {
-      const delta = 2;
-      const first = { ...prev[0], pct: Math.min(prev[0].pct + delta, 40) };
-      const rest = prev.slice(1).map((s, i) => ({
-        ...s,
-        pct: Math.max(s.pct - Math.floor(delta / (prev.length - 1)), 5),
-      }));
-      return [first, ...rest];
+      const BOOST = 6;
+      const newFirstPct = Math.min(prev[0].pct + BOOST, 45);
+      const actualGain = newFirstPct - prev[0].pct;
+      /* Distribute the gain proportionally across the remaining segments,
+         rounding per-segment so the total stays close to 100 */
+      const others = prev.slice(1);
+      const totalOther = others.reduce((s, x) => s + x.pct, 0);
+      let remaining = actualGain;
+      const rest = others.map((s, i) => {
+        const share = i < others.length - 1
+          ? Math.round(actualGain * (s.pct / totalOther))
+          : remaining;
+        remaining -= share;
+        return { ...s, pct: Math.max(s.pct - share, 5) };
+      });
+      return [{ ...prev[0], pct: newFirstPct }, ...rest];
     });
     const successMsg: Message = { id: ++msgId.current, role: "success", text: "✓ Audience map updated." };
     setMessages((prev) => [...prev, successMsg]);

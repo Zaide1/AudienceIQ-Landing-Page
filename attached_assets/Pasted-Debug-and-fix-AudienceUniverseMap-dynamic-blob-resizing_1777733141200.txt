@@ -1,0 +1,61 @@
+Debug and fix AudienceUniverseMap dynamic blob resizing.
+
+Important:
+- Only edit AudienceUniverseMap and the dashboard segment update wiring if needed.
+- Do not change landing.
+- Do not change onboarding UI.
+- Do not change dashboard layout.
+- Do not add backend/OpenAI/auth.
+- Preserve the current visual style.
+
+Current issue:
+I saw the dot-map blob sizes change once, but after that they do not visibly increase/decrease when segment percentages change.
+
+Please inspect and fix the update flow.
+
+Check these likely causes:
+
+1. Dot generation dependencies
+- If dots are created with useState(() => buildDots(...)), replace with useMemo.
+- Dot generation must recompute whenever segment percentages change.
+- useMemo dependencies should include the relevant segment ids/percentages.
+- Do not compute dynamic blob sizes only once on mount.
+
+2. Static percentages inside AudienceUniverseMap
+- Ensure AudienceUniverseMap uses the `segments` prop percentages.
+- Do not use hardcoded/default percentages inside the map if real segment props exist.
+- Remove or bypass static percentage constants that prevent updates.
+
+3. Dashboard update wiring
+- Confirm chat “Confirm update” updates the same segment state that is passed into AudienceUniverseMap.
+- If the dashboard has both `audienceMap.segments` and local `segments` state, make sure the map receives the updated local `segments` state.
+- Segment cards and AudienceUniverseMap should be driven from the same current segment array.
+
+4. Scaling strength
+- Make the visual difference stronger.
+- Use a more noticeable radius scale formula, for example:
+  scale = clamp(0.55 + segment.percent / 25, 0.7, 1.7)
+- A 30% segment should be clearly larger than a 10% segment.
+- A +5% update should be visibly noticeable.
+- Keep blobs polished and not oversized.
+
+5. Validation logs temporarily if helpful
+- Add temporary console logs during development only:
+  - segment id
+  - percent
+  - calculated scale
+- Remove noisy logs after confirming, or keep them minimal.
+
+Required behaviour:
+- Initial onboarding-generated percentages affect blob sizes.
+- Chat Confirm update changes segment percentages.
+- The dot map immediately reflects the new blob sizes.
+- Segment cards and map always agree.
+- Hover/click/deselect behaviour still works.
+- The same data should produce the same map.
+
+After implementing, explain:
+- Why the map was not updating after the first change
+- Whether the issue was useState/useMemo dependencies, stale props, or dashboard wiring
+- The final scale formula used
+- How segment cards and map now share the same updated segment data
