@@ -1,6 +1,7 @@
 import { DashboardPreview } from "@/components/landing/DashboardPreview";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 const ROWS: { title: string; body: string }[] = [
   {
@@ -370,6 +371,7 @@ function FAQSection() {
 
 /* ─── Section 4: Footer ────────────────────────────────────────────── */
 function Footer() {
+  const [, navigate] = useLocation();
   return (
     <footer
       style={{
@@ -469,12 +471,17 @@ function Footer() {
               <a
                 key={l.label}
                 href={l.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(l.href);
+                }}
                 style={{
                   fontSize: 15,
                   fontWeight: 600,
                   color: "#374151",
                   textDecoration: "none",
                   letterSpacing: "-0.01em",
+                  cursor: "pointer",
                 }}
               >
                 {l.label}
