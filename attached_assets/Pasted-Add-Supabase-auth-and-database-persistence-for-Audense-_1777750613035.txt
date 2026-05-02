@@ -1,0 +1,174 @@
+Add Supabase auth and database persistence for Audense in a safe staged way.
+
+Important:
+- Do not change landing page design.
+- Do not change onboarding design.
+- Do not change dashboard layout.
+- Do not change Audience Universe visuals.
+- Do not change chat/refinement behaviour.
+- Do not remove localStorage fallback.
+- Do not force login before the demo can run.
+- Do not add WhatsApp.
+- Do not add payments.
+- Keep the app working exactly as before if Supabase env vars are missing.
+
+Goal:
+Turn Audense from localStorage-only into a persisted product with users and saved research sessions.
+
+Use Supabase environment variables:
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
+
+Implementation order:
+1. Add Supabase schema SQL.
+2. Add Supabase frontend client.
+3. Add auth helpers.
+4. Add research session persistence helpers.
+5. Wire onboarding generation to save session if signed in.
+6. Wire dashboard load/history/chat/map update persistence.
+7. Keep localStorage fallback throughout.
+
+Database schema:
+Create SQL migration/schema for:
+
+profiles:
+- id uuid primary key references auth.users(id) on delete cascade
+- email text
+- display_name text
+- created_at timestamptz default now()
+- updated_at timestamptz default now()
+
+research_sessions:
+- id uuid primary key default gen_random_uuid()
+- user_id uuid references auth.users(id) on delete cascade
+- title text not null
+- product_summary text
+- category text
+- region text
+- onboarding_data jsonb
+- created_at timestamptz default now()
+- updated_at timestamptz default now()
+
+audience_maps:
+- id uuid primary key default gen_random_uuid()
+- session_id uuid references research_sessions(id) on delete cascade
+- audience_map_json jsonb not null
+- source_mode text default 'ai_hypothesis'
+- created_at timestamptz default now()
+- updated_at timestamptz default now()
+
+chat_messages:
+- id uuid primary key default gen_random_uuid()
+- session_id uuid references research_sessions(id) on delete cascade
+- role text not null check (role in ('user', 'ai', 'system'))
+- content text not null
+- created_at timestamptz default now()
+
+research_signals:
+- id uuid primary key default gen_random_uuid()
+- session_id uuid references research_sessions(id) on delete cascade
+- segment_id text
+- source text
+- title text
+- url text
+- snippet text
+- signal_type text
+- created_at timestamptz default now()
+
+Security:
+- Enable RLS on all tables.
+- Users can only access their own rows.
+- profiles.id must equal auth.uid().
+- research_sessions.user_id must equal auth.uid().
+- audience_maps, chat_messages, and research_signals are accessible only through sessions owned by auth.uid().
+- Add select/insert/update/delete policies where appropriate.
+
+Frontend architecture:
+Create:
+- src/lib/supabase.ts
+- src/lib/auth.ts or equivalent
+- src/lib/researchSessions.ts or equivalent
+
+Auth behaviour:
+- Add simple auth modal:
+  - sign up
+  - sign in
+  - sign out
+- Do not force auth.
+- Users can continue in local demo mode.
+- If signed in, save to Supabase.
+- If not signed in, continue using localStorage.
+
+Research session behaviour:
+1. Onboarding completion / Generate audience map:
+   - generate AudienceMapResult as now
+   - if signed in:
+     - create research_session
+     - save onboarding_data
+     - save audience_map_json
+     - save initial chat messages if available
+   - always update localStorage compatibility keys:
+     - audense_onboarding
+     - audense-audience-map
+     - audense-chat-messages
+     - audense-active-session-id if applicable
+
+2. Dashboard load:
+   - if signed in and active Supabase session id exists:
+     - load research_session
+     - load latest audience_map
+     - load chat_messages
+   - otherwise use localStorage fallback
+
+3. Chat:
+   - append messages locally as now
+   - if signed in and active session exists, also insert chat_messages into Supabase
+   - if Supabase insert fails, keep local chat working
+
+4. Confirm map update:
+   - update localStorage as now
+   - if signed in, update audience_maps.audience_map_json for active session
+
+5. Live research:
+   - update localStorage as now
+   - if signed in, update audience map and optionally research_signals
+
+6. New Research:
+   - starts a fresh onboarding flow
+   - does not delete old sessions
+   - once generation completes, creates a new session if signed in
+
+7. History:
+   - if signed in, list research_sessions from Supabase ordered by updated_at desc
+   - if not signed in, list local audense-research-sessions if available
+   - clicking a session loads the correct map and chat
+
+Fallback requirements:
+- If Supabase env vars are missing, the app should behave exactly as before.
+- If Supabase request fails, show a small non-blocking message and continue with localStorage.
+- Never block the hackathon demo.
+
+Validation:
+1. App works with no Supabase env vars.
+2. User can sign up.
+3. User can sign in.
+4. User can sign out.
+5. Signed-in user can generate a map and it saves to Supabase.
+6. Refresh reloads saved map.
+7. Chat messages persist after refresh.
+8. Confirmed map update persists after refresh.
+9. New Research creates separate session.
+10. History lists previous Supabase sessions.
+11. Switching sessions loads correct map/chat.
+12. Local demo history still works when signed out.
+13. RLS prevents one user from accessing another user’s sessions.
+
+After implementing, explain:
+- Files changed
+- SQL schema added
+- RLS policies added
+- Supabase env vars needed
+- What happens when user is signed in
+- What happens when user is signed out
+- What still uses localStorage
+- How History works in signed-in vs local demo mode
