@@ -397,7 +397,7 @@ function DashboardPanel() {
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#FAFAFA", overflow: "hidden" }}>
       {/* Header */}
-      <div style={{ padding: "10px 18px", borderBottom: "1px solid #F3F4F6", background: "#fff", flexShrink: 0 }}>
+      <div style={{ padding: "10px 18px", borderBottom: "1px solid #EBEBEB", flexShrink: 0 }}>
         <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>Your Audience</div>
         <div style={{ fontSize: 10.5, color: "#6B7280", marginTop: 2 }}>Market insights for AI Calorie Tracker · UK</div>
       </div>
