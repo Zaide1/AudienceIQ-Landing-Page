@@ -314,14 +314,12 @@ function StatCards() {
           key={s.label}
           style={{
             background: "#fff",
-            border: s.accent ? "1.5px solid #7C3AED" : `1px solid ${s.border}`,
+            border: s.accent ? "1px solid #C4B5FD" : `1px solid ${s.border}`,
             borderRadius: 10,
             padding: "10px 12px",
             position: "relative",
             overflow: "hidden",
-            boxShadow: s.accent
-              ? "0 0 0 3px rgba(124,58,237,0.08)"
-              : "0 1px 3px rgba(0,0,0,0.04)",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
@@ -397,7 +395,7 @@ function DashboardPanel() {
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#FAFAFA", overflow: "hidden" }}>
       {/* Header */}
-      <div style={{ padding: "10px 18px", borderBottom: "1px solid #EBEBEB", flexShrink: 0 }}>
+      <div style={{ padding: "10px 18px", flexShrink: 0 }}>
         <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>Your Audience</div>
         <div style={{ fontSize: 10.5, color: "#6B7280", marginTop: 2 }}>Market insights for AI Calorie Tracker · UK</div>
       </div>
