@@ -1,0 +1,98 @@
+Refine the `/dashboard` layout. It is close, but the proportions and header need adjustment.
+
+Important:
+- Do not redesign the whole dashboard.
+- Do not change onboarding.
+- Do not change landing.
+- Do not change the AudienceUniverseMap visual logic.
+- Do not add backend/auth/OpenAI.
+- Keep all behaviour working.
+
+Current issues:
+- On large desktop, the Audience Universe map is too tall/large and dominates the page.
+- The left Audense chat panel is too cramped.
+- The dashboard header has unnecessary “Generated just now” text.
+- The Share button is not needed for MVP.
+- The title/subtitle area should use cleaner spacing like the Jack & Jill reference: contained, balanced, and not stretched too far.
+- The main content should not feel like it stretches endlessly across the viewport.
+
+Make these exact layout refinements:
+
+1. Remove unused top header elements
+- Remove the “Generated just now” pill.
+- Remove the “Share” button.
+- Keep only:
+  - Page title
+  - Subtitle
+  - “+ New Research” button
+
+2. Header copy
+Change:
+- “Your Audience Overview”
+To:
+- “Your Audience”
+
+Subtitle should be:
+“Market insights for [productIdea] in [finalRegion]”
+
+If productIdea is very long, truncate it nicely or use a shortened display version.
+
+3. Main content width and padding
+- Add a max-width to the main dashboard content so it does not stretch endlessly on very large screens.
+- Use something around max-width: 1440px or 1500px.
+- Center the main content within the available right panel.
+- Use comfortable page padding around 32px to 40px.
+- Keep the layout similar to Jack & Jill’s contained main panel spacing.
+
+4. Left chat panel width
+- Increase the left chat/sidebar width.
+- Target width: around 420px to 460px on large desktop.
+- The chat messages should have more breathing room.
+- The bottom chat input should not feel squeezed.
+
+5. Remove/soften left nav if present
+The current left side has navigation items like Home/Projects/History/Audience/Insights.
+The reference dashboard for Audense is chat-first, not nav-first.
+
+For MVP:
+- Remove those nav items, OR make them much less dominant.
+- The left panel should primarily show:
+  - Audense logo
+  - chat history
+  - suggested chips
+  - input
+  - disclaimer
+- Keep Settings/Help only if they are subtle at the bottom.
+- Do not let nav take space away from the chat.
+
+6. Audience Universe sizing
+- Reduce the Audience Universe card height on large desktop.
+- The map should be prominent but not consume the whole screen.
+- Suggested card height: around 360px to 430px on large desktop.
+- Dot size/gap may scale down slightly if needed.
+- Keep the map visually similar, just less oversized.
+- Do not change the cluster algorithm/style.
+
+7. Metric cards
+- Keep four cards in a row.
+- They should align with the main content max-width.
+- They should not stretch into overly wide cards on huge screens.
+
+8. Segment cards
+- Keep five segment cards in one row on desktop.
+- Keep their current visual design.
+- They should align with the map/card width.
+- Do not make them massive on very large screens.
+
+9. Overall proportions
+Target large desktop layout:
+- Left chat panel: ~440px
+- Right content area: fills rest but content capped at ~1440–1500px
+- Audience map: visually important, but not taller than necessary
+- More balanced whitespace like the Jack & Jill reference
+
+After changes, explain:
+- What width was set for the chat panel
+- What max-width was set for main content
+- What height was set for the Audience Universe card
+- What header elements were removed

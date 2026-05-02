@@ -1,9 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
-  Home, FolderOpen, Clock, Users, BarChart2,
-  Settings, HelpCircle, Send, Share2, Plus, Info,
-  Paperclip, ChevronRight,
+  Settings, HelpCircle, Send, Plus, Info, Paperclip,
 } from "lucide-react";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 
@@ -122,7 +120,7 @@ const BASE_SEGMENTS: Segment[] = [
     icon: "🏋️",
     pain: ["Tracking is tedious", "Forget to log meals"],
     platforms: ["Instagram", "TikTok", "YouTube"],
-    tooltipLeft: "6%",
+    tooltipLeft: "14%",
     color: "#7C3AED",
   },
   {
@@ -205,22 +203,24 @@ function AudienceMap({
         background: "#fff",
         border: "1px solid #F0EDF9",
         borderRadius: 12,
-        padding: "14px 16px 12px",
-        overflow: "hidden",
+        padding: "14px 16px 40px",
       }}
     >
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${COLS}, 1fr)`,
+          gridTemplateColumns: `repeat(${COLS}, 10px)`,
+          gridTemplateRows: `repeat(${ROWS}, 10px)`,
           gap: 5,
+          width: "fit-content",
         }}
       >
         {BASE_DOTS.map((color, i) => (
           <div
             key={i}
             style={{
-              aspectRatio: "1",
+              width: 10,
+              height: 10,
               borderRadius: "50%",
               background: color,
               flexShrink: 0,
@@ -537,7 +537,7 @@ export default function Dashboard() {
       {/* ── Left panel ─────────────────────────────────────── */}
       <div
         style={{
-          width: 400,
+          width: 440,
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
@@ -552,7 +552,7 @@ export default function Dashboard() {
             display: "flex",
             alignItems: "center",
             gap: 9,
-            padding: "16px 18px 12px",
+            padding: "18px 20px 14px",
             borderBottom: "1px solid #F3F4F6",
             flexShrink: 0,
           }}
@@ -571,19 +571,8 @@ export default function Dashboard() {
           </span>
         </div>
 
-        {/* Nav */}
-        <div style={{ padding: "10px 8px 6px", flexShrink: 0 }}>
-          <NavItem icon={<Home size={15} />} label="Home" active />
-          <NavItem icon={<FolderOpen size={15} />} label="Projects" />
-          <NavItem icon={<Clock size={15} />} label="History" />
-          <NavItem icon={<Users size={15} />} label="Audience" />
-          <NavItem icon={<BarChart2 size={15} />} label="Insights" />
-        </div>
-
-        <div style={{ height: 1, background: "#F3F4F6", margin: "4px 18px 8px" }} />
-
         {/* "Today" label */}
-        <div style={{ padding: "0 18px 6px", flexShrink: 0 }}>
+        <div style={{ padding: "14px 20px 6px", flexShrink: 0 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Today
           </span>
@@ -594,10 +583,10 @@ export default function Dashboard() {
           style={{
             flex: 1,
             overflowY: "auto",
-            padding: "4px 14px 8px",
+            padding: "6px 20px 8px",
             display: "flex",
             flexDirection: "column",
-            gap: 12,
+            gap: 14,
           }}
         >
           {messages.map((msg) => (
@@ -609,7 +598,7 @@ export default function Dashboard() {
         {/* Prompt chips */}
         <div
           style={{
-            padding: "6px 14px 8px",
+            padding: "6px 20px 8px",
             display: "flex",
             gap: 6,
             flexWrap: "wrap",
@@ -641,7 +630,7 @@ export default function Dashboard() {
         {/* Chat input */}
         <div
           style={{
-            padding: "8px 14px 6px",
+            padding: "10px 20px 8px",
             flexShrink: 0,
             borderTop: "1px solid #F3F4F6",
           }}
@@ -716,7 +705,7 @@ export default function Dashboard() {
         </div>
 
         {/* Bottom nav */}
-        <div style={{ padding: "6px 8px 12px", borderTop: "1px solid #F3F4F6", flexShrink: 0 }}>
+        <div style={{ padding: "6px 12px 14px", borderTop: "1px solid #F3F4F6", flexShrink: 0 }}>
           <NavItem icon={<Settings size={15} />} label="Settings" />
           <NavItem icon={<HelpCircle size={15} />} label="Need help? Chat with us" />
         </div>
@@ -735,58 +724,31 @@ export default function Dashboard() {
         {/* Dashboard header */}
         <div
           style={{
-            padding: "16px 28px 14px",
             borderBottom: "1px solid #E5E7EB",
             background: "#fff",
             flexShrink: 0,
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
           }}
         >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{
+              maxWidth: 1440,
+              margin: "0 auto",
+              padding: "16px 36px 14px",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
               <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: 0, letterSpacing: -0.4 }}>
-                Your Audience Overview
+                Your Audience
               </h1>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: "#9CA3AF",
-                  background: "#F9FAFB",
-                  border: "1px solid #E5E7EB",
-                  borderRadius: 20,
-                  padding: "2px 9px",
-                }}
-              >
-                Generated just now
-              </span>
+              <div style={{ fontSize: 13, color: "#6B7280", marginTop: 3 }}>
+                Market insights for{" "}
+                <strong style={{ color: "#374151" }}>{shortIdea}</strong> in{" "}
+                <strong style={{ color: "#374151" }}>{shortRegion}</strong>
+              </div>
             </div>
-            <div style={{ fontSize: 13, color: "#6B7280", marginTop: 3 }}>
-              Market insights for <strong style={{ color: "#374151" }}>{shortIdea}</strong> in{" "}
-              <strong style={{ color: "#374151" }}>{shortRegion}</strong>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                background: "#fff",
-                border: "1.5px solid #E5E7EB",
-                borderRadius: 10,
-                padding: "8px 16px",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#374151",
-                cursor: "pointer",
-              }}
-            >
-              <Share2 size={14} />
-              Share
-            </button>
             <button
               onClick={() => navigate("/onboarding")}
               style={{
@@ -796,11 +758,12 @@ export default function Dashboard() {
                 background: "#7C3AED",
                 border: "none",
                 borderRadius: 10,
-                padding: "8px 16px",
+                padding: "9px 18px",
                 fontSize: 13,
                 fontWeight: 600,
                 color: "#fff",
                 cursor: "pointer",
+                flexShrink: 0,
               }}
             >
               <Plus size={14} />
@@ -814,7 +777,13 @@ export default function Dashboard() {
           style={{
             flex: 1,
             overflowY: "auto",
-            padding: "20px 28px 24px",
+          }}
+        >
+        <div
+          style={{
+            maxWidth: 1440,
+            margin: "0 auto",
+            padding: "24px 36px 32px",
             display: "flex",
             flexDirection: "column",
             gap: 18,
@@ -1101,6 +1070,7 @@ export default function Dashboard() {
               })}
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
