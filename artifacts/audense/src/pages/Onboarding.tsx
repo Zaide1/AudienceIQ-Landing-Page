@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
-import { generateMockAudienceMap } from "../lib/audienceMap";
+import { generateMockAudienceMap, saveAudienceMap } from "../lib/audienceMap";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 interface OnboardingState {
@@ -124,14 +124,17 @@ function NavButtons({
   onNext,
   nextLabel = "Next →",
   nextDisabled,
+  nextLoading,
   showBack = true,
 }: {
   onBack?: () => void;
   onNext: () => void;
   nextLabel?: string;
   nextDisabled?: boolean;
+  nextLoading?: boolean;
   showBack?: boolean;
 }) {
+  const disabled = nextDisabled || nextLoading;
   return (
     <div className="flex items-center justify-between" style={{ marginTop: 24 }}>
       <div>
@@ -151,21 +154,31 @@ function NavButtons({
       </div>
       <button
         onClick={onNext}
-        disabled={nextDisabled}
+        disabled={disabled}
         style={{
-          background: nextDisabled ? "#C4B5FD" : "#7C3AED",
+          background: disabled ? "#C4B5FD" : "#7C3AED",
           color: "#fff",
           border: "none",
           borderRadius: 10,
           padding: "13px 28px",
           fontSize: 15,
           fontWeight: 600,
-          cursor: nextDisabled ? "not-allowed" : "pointer",
+          cursor: disabled ? "not-allowed" : "pointer",
           transition: "background 0.2s",
           whiteSpace: "nowrap",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
         }}
       >
-        {nextLabel}
+        {nextLoading && (
+          <span style={{
+            width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)",
+            borderTopColor: "#fff", borderRadius: "50%",
+            display: "inline-block", animation: "spin 0.7s linear infinite",
+          }} />
+        )}
+        {nextLoading ? "Generating…" : nextLabel}
       </button>
     </div>
   );
@@ -410,11 +423,12 @@ function Step3({ data, onChange, onNext, onBack }: {
 }
 
 /* ─── Step 4 ─────────────────────────────────────────────────────────── */
-function Step4({ data, onChange, onNext, onBack }: {
+function Step4({ data, onChange, onNext, onBack, generating }: {
   data: OnboardingState;
   onChange: (k: keyof OnboardingState, v: string) => void;
   onNext: () => void;
   onBack: () => void;
+  generating?: boolean;
 }) {
   const [search, setSearch] = useState("");
 
@@ -525,6 +539,7 @@ function Step4({ data, onChange, onNext, onBack }: {
         onBack={onBack}
         onNext={onNext}
         nextLabel="Generate my audience map ✨"
+        nextLoading={generating}
         nextDisabled={!data.region || (data.region === "other" && !data.customRegion.trim())}
       />
     </div>
@@ -553,18 +568,40 @@ export default function Onboarding() {
   const nextStep = () => setStep((s) => Math.min(s + 1, 4));
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
-  const handleGenerate = () => {
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    if (generating) return;
     const finalCategory = data.category === "other" ? data.customCategory.trim() : data.category;
     const finalRegion   = data.region   === "other" ? data.customRegion.trim()   : data.region;
     const onboardingData = { ...data, finalCategory, finalRegion };
 
     localStorage.setItem("audense_onboarding", JSON.stringify(onboardingData));
-
-    /* Force a fresh audience map from the latest onboarding data */
-    generateMockAudienceMap(onboardingData);
-
-    /* Clear stale chat so dashboard opens with a fresh greeting */
     try { localStorage.removeItem("audense-chat-messages"); } catch {}
+
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/audience/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productIdea:   onboardingData.productIdea,
+          targetUsers:   onboardingData.targetUsers,
+          problem:       onboardingData.problem,
+          goal:          onboardingData.goal,
+          finalCategory: onboardingData.finalCategory,
+          finalRegion:   onboardingData.finalRegion,
+        }),
+      });
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const map = await res.json();
+      saveAudienceMap(map);
+    } catch {
+      /* Backend unavailable — fall back to local mock so demo never breaks */
+      generateMockAudienceMap(onboardingData);
+    } finally {
+      setGenerating(false);
+    }
 
     navigate("/dashboard");
   };
@@ -619,7 +656,7 @@ export default function Onboarding() {
           {step === 1 && <Step1 data={data} onChange={onChange} onNext={nextStep} />}
           {step === 2 && <Step2 data={data} onChange={onChange} onNext={nextStep} onBack={prevStep} />}
           {step === 3 && <Step3 data={data} onChange={onChange} onNext={nextStep} onBack={prevStep} />}
-          {step === 4 && <Step4 data={data} onChange={onChange} onNext={handleGenerate} onBack={prevStep} />}
+          {step === 4 && <Step4 data={data} onChange={onChange} onNext={handleGenerate} onBack={prevStep} generating={generating} />}
         </div>
       </div>
 

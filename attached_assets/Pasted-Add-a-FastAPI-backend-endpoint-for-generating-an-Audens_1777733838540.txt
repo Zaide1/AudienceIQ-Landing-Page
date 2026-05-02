@@ -1,0 +1,85 @@
+Add a FastAPI backend endpoint for generating an Audense audience map.
+
+Important:
+- Do not add OpenAI yet.
+- Do not add Supabase/auth yet.
+- Do not change the frontend UI design.
+- Do not change landing, onboarding layout, dashboard layout, or dot-map visuals.
+- Keep the existing AudienceMapResult response shape exactly the same as the frontend contract.
+- Use deterministic mock logic on the backend for now.
+
+Goal:
+Create a backend endpoint that receives onboarding data and returns an AudienceMapResult. The frontend should call this endpoint when the user clicks “Generate my audience map”.
+
+Endpoint:
+POST /api/audience/generate
+
+Request body:
+- productIdea: string
+- targetUsers: string
+- problem: string
+- goal: string
+- finalCategory: string
+- finalRegion: string
+
+Response:
+Return the same AudienceMapResult shape already used by the frontend:
+- productSummary
+- region
+- category
+- confidence
+- reachableAudience
+- coverage
+- untapped
+- segments
+- insights
+
+Backend requirements:
+1. Add Pydantic models for:
+   - AudienceGenerateRequest
+   - AudienceSegment
+   - AudienceInsight
+   - AudienceMapResult
+2. Implement deterministic mock generation for now.
+3. The backend mock should use the request data to personalise:
+   - productSummary
+   - region
+   - category
+   - segment names if simple
+   - audience size ranges
+4. Always return exactly 5 segments.
+5. Segment percentages must sum to 100.
+6. Segment colours must be exactly:
+   - purple
+   - blue
+   - green
+   - orange
+   - pink
+7. Keep confidence as “Medium” for now unless there is a clear reason to use Low.
+8. Ensure CORS works for the Vite frontend.
+
+Frontend requirements:
+1. Replace the onboarding Generate local-only generation with a call to:
+   POST /api/audience/generate
+2. On success:
+   - Save the backend response to localStorage as `audense-audience-map`
+   - Save latest onboarding data to `audense_onboarding`
+   - Clear `audense-chat-messages`
+   - Navigate to `/dashboard`
+3. On failure:
+   - Fall back to the existing local `generateMockAudienceMap(onboardingData)`
+   - Save fallback result to `audense-audience-map`
+   - Navigate to `/dashboard`
+   - Do not break the demo.
+4. Keep the dashboard reading from `audense-audience-map` as it currently does.
+
+Do not remove the frontend mock generator yet.
+It should remain as the fallback for demo safety.
+
+After implementing, explain:
+- Backend files added/changed
+- Frontend files changed
+- Exact endpoint request shape
+- Exact endpoint response shape
+- How frontend fallback works if backend fails
+- How to run/test the backend and frontend together
