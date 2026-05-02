@@ -337,3 +337,40 @@
     inset: -1px;
   }
 }
+
+/* ── Landing page responsive layout ─────────────────────────────── */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+  align-items: center;
+  padding-left: clamp(24px, 5vw, 72px);
+  padding-right: clamp(24px, 5vw, 72px);
+  padding-top: 56px;
+  padding-bottom: 56px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - 80px);
+}
+
+@media (min-width: 1200px) {
+  .hero-grid {
+    grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
+    gap: clamp(36px, 4vw, 64px);
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+}
+
+.mockup-outer {
+  width: min(92vw, 860px);
+  margin: 0 auto;
+}
+
+@media (min-width: 1200px) {
+  .mockup-outer {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+}

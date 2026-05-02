@@ -3,26 +3,12 @@ import { DashboardPreview } from "@/components/landing/DashboardPreview";
 
 export function Hero() {
   return (
-    <section
-      style={{
-        width: "100%",
-        minHeight: "calc(100vh - 88px)",
-        display: "grid",
-        gridTemplateColumns: "minmax(420px, 0.40fr) minmax(680px, 0.60fr)",
-        gap: "clamp(32px, 4vw, 64px)",
-        alignItems: "center",
-        paddingLeft: "clamp(32px, 5vw, 72px)",
-        paddingRight: "clamp(32px, 4vw, 56px)",
-        paddingTop: 40,
-        paddingBottom: 40,
-        boxSizing: "border-box",
-      }}
-    >
-      {/* ── Left column ───────────────────────────────────────────────── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+    <section className="hero-grid">
+      {/* ── Left column ─────────────────────────────────────────────── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         <h1
           style={{
-            fontSize: "clamp(72px, 5.4vw, 104px)",
+            fontSize: "clamp(56px, 5vw, 88px)",
             fontWeight: 900,
             lineHeight: 0.95,
             letterSpacing: "-0.04em",
@@ -38,7 +24,7 @@ export function Hero() {
 
         <p
           style={{
-            fontSize: "clamp(20px, 1.6vw, 28px)",
+            fontSize: "clamp(20px, 1.5vw, 26px)",
             lineHeight: 1.55,
             color: "#6B7280",
             maxWidth: 520,
@@ -53,14 +39,14 @@ export function Hero() {
           <Button
             data-testid="button-map-audience-hero"
             style={{
-              width: 420,
-              height: 76,
-              fontSize: 26,
+              width: 340,
+              height: 64,
+              fontSize: 22,
               fontWeight: 700,
-              borderRadius: 16,
+              borderRadius: 14,
               background: "#7C3AED",
               color: "#fff",
-              boxShadow: "0 8px 30px rgba(124,58,237,0.35)",
+              boxShadow: "0 8px 28px rgba(124,58,237,0.30)",
               letterSpacing: "-0.01em",
             }}
             className="transition-all hover:scale-[1.03] hover:brightness-110 active:scale-[0.98]"
@@ -69,7 +55,7 @@ export function Hero() {
           </Button>
 
           {/* Social proof */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, paddingLeft: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, paddingLeft: 2 }}>
             <div style={{ display: "flex" }}>
               {[
                 { init: "AJ", a: "#9333ea", b: "#6366f1" },
@@ -79,15 +65,15 @@ export function Hero() {
                 <div
                   key={init}
                   style={{
-                    width: 40,
-                    height: 40,
+                    width: 38,
+                    height: 38,
                     borderRadius: "50%",
                     border: "2.5px solid #fff",
                     background: `linear-gradient(135deg, ${a}, ${b})`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: 700,
                     color: "#fff",
                     marginLeft: i === 0 ? 0 : -12,
@@ -100,7 +86,7 @@ export function Hero() {
                 </div>
               ))}
             </div>
-            <span style={{ fontSize: 17, fontWeight: 500, color: "#6B7280" }}>
+            <span style={{ fontSize: 16, fontWeight: 500, color: "#6B7280" }}>
               Join{" "}
               <span style={{ fontWeight: 700, color: "#7C3AED" }}>1,200+</span>{" "}
               founders
@@ -109,17 +95,9 @@ export function Hero() {
         </div>
       </div>
 
-      {/* ── Right column — dashboard mockup ───────────────────────────── */}
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          width: "100%",
-        }}
-      >
-        {/* Purple glow behind mockup */}
+      {/* ── Right column — dashboard mockup ─────────────────────────── */}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* Subtle purple glow */}
         <div
           aria-hidden="true"
           style={{
@@ -127,16 +105,15 @@ export function Hero() {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "75%",
-            height: "65%",
-            background: "radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%)",
-            borderRadius: "50%",
-            filter: "blur(40px)",
+            width: "80%",
+            height: "70%",
+            background: "radial-gradient(ellipse, rgba(124,58,237,0.11) 0%, transparent 70%)",
+            filter: "blur(48px)",
             pointerEvents: "none",
             zIndex: 0,
           }}
         />
-        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
+        <div className="mockup-outer" style={{ position: "relative", zIndex: 1 }}>
           <DashboardPreview />
         </div>
       </div>

@@ -1,0 +1,102 @@
+The latest landing page overcorrected the layout. The dashboard preview content is closer, but the responsive layout and sizing are now wrong.
+
+Problems:
+- On medium/narrow widths, the dashboard preview stays beside the text and gets cropped. It should move below the text.
+- The hero text is too large on medium widths.
+- On large desktop, the dashboard mockup is too big and too far right.
+- The CTA is too large.
+- The reference layout is large and polished, but not oversized.
+
+Please fix ONLY landing page layout sizing and responsive breakpoints.
+Do not change the dashboard preview content/design.
+Do not turn the segment cards back into list rows.
+Do not add animations.
+Do not change routes, onboarding, backend, auth, or dashboard functionality.
+
+Target:
+Match the reference image:
+- Desktop wide: text left, dashboard mockup right.
+- Medium/narrow: text on top, dashboard mockup below.
+- Keep everything readable and not cropped.
+
+Specific fixes:
+
+1. Main breakpoint
+- Use side-by-side layout only when viewport width is at least 1200px.
+- Below 1200px, stack the hero:
+  - text block on top
+  - dashboard mockup below
+  - centered or slightly left-aligned
+- Do not keep the dashboard beside the text on narrow widths.
+
+2. Desktop layout
+For min-width 1200px:
+- Hero should be a two-column grid.
+- Left column around 36–40%.
+- Right column around 60–64%.
+- Page horizontal padding around clamp(40px, 4vw, 72px).
+- Gap around clamp(36px, 4vw, 72px).
+- Dashboard mockup width should be controlled:
+  width: min(58vw, 1080px)
+  max-width: 1080px
+- Do not exceed 1080px mockup width on normal desktop.
+- Keep the mockup fully visible, not cropped.
+
+3. Medium/tablet layout
+For widths below 1200px:
+- Change to one-column layout.
+- Text block should be above.
+- Dashboard mockup should sit below the CTA/founder row with margin-top around 48px.
+- Dashboard width:
+  width: min(92vw, 900px)
+- Center the mockup.
+- No horizontal cropping.
+
+4. Typography sizing
+Tone down the oversized text.
+Use:
+- Headline font-size: clamp(56px, 5vw, 88px)
+- line-height: 0.95
+- letter-spacing: -0.04em
+- Subtitle font-size: clamp(20px, 1.5vw, 26px)
+- Subtitle max-width: 560px
+Do not use 104px headline max anymore.
+
+5. CTA sizing
+Reduce CTA size.
+Use:
+- desktop width around 330px to 360px
+- height around 64px
+- font-size around 22px
+For medium widths, keep similar size.
+Do not use 420px wide / 76px high anymore.
+
+6. Header sizing
+- Logo should be prominent but not huge:
+  icon 28–32px
+  text 28–30px
+- Header CTA should be around 210px x 52px
+- Header padding should align with page padding.
+
+7. Vertical spacing
+- Hero should not start too low.
+- Avoid huge blank space above the hero.
+- Main hero should align around center vertically on desktop.
+- On medium layout, use normal top spacing around 72px below header.
+
+8. Background
+Keep:
+- subtle lavender wash bottom-left
+- dotted halftone bottom-left
+- subtle glow behind mockup
+But do not let background effects affect layout sizing.
+
+9. Preserve preview content
+Important:
+- Keep the improved dashboard preview content.
+- Keep five vertical segment cards.
+- Keep dot map.
+- Keep stat cards.
+- Do not reintroduce scrollbars.
+
+After changes, explain the final breakpoints and exact max widths used.
