@@ -1,0 +1,59 @@
+The hero overlap is still not fixed.
+
+Important:
+- Do not change the CTA button styling.
+- Do not change the CTA chips styling.
+- Do not change the dashboard preview styling.
+- Do not change the hero copy.
+- Do not redesign the section.
+- Only fix the hero layout so text and preview cannot overlap.
+
+Current issue:
+At large desktop width, the dashboard preview is still covering the headline. The word “audience” is partially hidden behind the preview.
+
+Required fix:
+Refactor the hero inner layout into a real two-column layout, not overlapping/absolute positioning.
+
+Use this structure:
+- Hero section
+  - max-width container
+  - grid/flex row with two children:
+    1. hero copy column
+    2. dashboard preview column
+
+Rules:
+1. The hero copy column must have:
+   - max-width: 520px
+   - flex: 0 0 520px or equivalent
+   - z-index only if needed, but do not rely on z-index as the main fix
+
+2. The dashboard preview column must:
+   - not be position:absolute over the text
+   - not use negative margin-left that can cover the headline
+   - sit in its own column
+   - have max-width around 680–760px
+   - scale down with width: min(100%, ...)
+
+3. The parent layout must have:
+   - display: grid or flex
+   - column gap around 72px
+   - align-items: center
+   - justify-content: center
+
+4. Remove or override any:
+   - position:absolute on the dashboard preview inside the hero
+   - negative translateX that moves it over the text
+   - negative margins causing overlap
+   - large fixed widths that ignore the available column
+
+5. On widths below around 1100px:
+   - reduce dashboard preview scale/width
+   - or stack below text
+   - never allow overlap
+
+Validation:
+- At 1920px/large desktop, the full headline “Your audience, found.” must be visible.
+- Dashboard preview must start to the right of the headline, with visible whitespace between them.
+- No text sits underneath the dashboard preview.
+- CTA button and chips remain unchanged.
+- Dashboard preview remains visually the same, just positioned safely.

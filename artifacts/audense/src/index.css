@@ -349,10 +349,11 @@
 
 /* ── Landing page responsive layout ─────────────────────────────── */
 .hero-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 48px;
-  align-items: center;
+  align-items: stretch;
+  justify-content: center;
   padding-left: clamp(24px, 5vw, 72px);
   padding-right: clamp(24px, 5vw, 72px);
   padding-top: 56px;
@@ -364,13 +365,30 @@
   min-height: calc(100vh - 80px);
 }
 
-@media (min-width: 1200px) {
+.hero-grid > * {
+  min-width: 0;
+}
+
+@media (min-width: 1100px) {
   .hero-grid {
-    grid-template-columns: minmax(420px, 0.42fr) minmax(0, 0.58fr);
-    gap: clamp(24px, 2.5vw, 40px);
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 72px;
     padding-top: 16px;
     padding-bottom: 24px;
     min-height: calc(100vh - 96px);
+  }
+
+  .hero-grid > :first-child {
+    flex: 0 0 520px;
+    max-width: 520px;
+  }
+
+  .hero-grid > :last-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 760px;
   }
 }
 
@@ -379,22 +397,10 @@
   margin: 0 auto;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   .mockup-outer {
     width: 100%;
-    max-width: 780px;
+    max-width: 760px;
     margin: 0;
   }
-}
-
-@media (min-width: 1600px) {
-  .mockup-outer {
-    width: 100%;
-    max-width: 780px;
-  }
-}
-
-/* Prevent grid items from forcing each other to overflow */
-.hero-grid > * {
-  min-width: 0;
 }
