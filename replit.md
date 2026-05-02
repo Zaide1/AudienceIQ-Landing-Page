@@ -25,3 +25,22 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+
+## Versions
+
+### v2 — Landing & docs polish (May 2026)
+
+Working build saved at this checkpoint. Verified by:
+
+- `pnpm --filter @workspace/audense exec tsc --noEmit` — clean
+- `pnpm --filter @workspace/api-server exec tsc --noEmit` — clean
+- `PORT=5173 BASE_PATH=/ pnpm --filter @workspace/audense run build` — succeeds (~672 KB JS / ~99 KB CSS gzipped 198 KB / 16 KB)
+
+Highlights since v1:
+
+- Landing hero: responsive grid (`.hero-grid`) with stable two-column layout ≥1100px and widened spacing rhythm at ≥1600px (`max-width: 1560px`, `column-gap: clamp(140px, 10vw, 200px)`).
+- Landing `ProductValueSection`: white background with mask-feathered radial glow; "Where to test" row uses 36×36 white chips with brand-coloured X / LinkedIn / Reddit icons.
+- Landing FAQ: chevron-down SVG (rotates on open), lavender focus-visible state, hover tint.
+- Help, Privacy, Terms restyled via shared `src/components/DocPage.tsx` (gradient hero, centered 760px reading column, `DocSection` / `DocParagraph` / `DocBulletList` / `DocDefinition` primitives). Privacy/Terms legal copy preserved verbatim; Help regrouped into the five spec sections.
+
+Untouched: routing, auth, onboarding, dashboard, navbar, hero copy/CTA, and the dashboard preview component.
