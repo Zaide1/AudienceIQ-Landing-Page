@@ -1,0 +1,59 @@
+Hero layout still needs one final positioning fix.
+
+Important:
+- Do not change copy.
+- Do not change CTA styling.
+- Do not change chip styling.
+- Do not change dashboard preview styling.
+- Do not redesign the hero.
+- Only fix desktop positioning.
+
+Current issue:
+The hero text and dashboard preview no longer fully overlap, but the text column is still too centered on the page. At large desktop width, the headline sits too close to the dashboard preview and the whole hero feels cramped in the middle despite lots of empty page space.
+
+Required fix:
+On desktop, anchor the hero content to a wider max-width container and move the text column left.
+
+Implementation requirements:
+1. Hero inner container:
+   - max-width: 1440px or 1500px
+   - width: 100%
+   - margin: 0 auto
+   - padding-left/right: clamp(40px, 6vw, 96px)
+
+2. Desktop layout:
+   - display: grid
+   - grid-template-columns: minmax(420px, 520px) minmax(560px, 760px)
+   - column-gap: clamp(72px, 8vw, 140px)
+   - align-items: center
+   - justify-content: center
+
+3. Text column:
+   - max-width: 520px
+   - justify-self: start
+   - text-align: left
+   - remove any margin-left:auto / margin:auto / translate that centres it too much
+
+4. Preview column:
+   - justify-self: start
+   - width: min(100%, 720px)
+   - do not use position:absolute
+   - do not use negative margin
+   - do not translate left over the text
+
+5. Large desktop:
+   - At 1920px, headline should start much further left than it does now.
+   - There should be clear whitespace between the headline and preview.
+   - The preview should sit to the right, not over the headline.
+   - The whole section should feel intentionally balanced, not squeezed into the centre.
+
+6. Responsive:
+   - Below 1100px, stack text above preview or reduce preview size.
+   - Never allow preview to cover text.
+
+Validation:
+- At 1920px, “Your audience, found.” is fully visible.
+- Dashboard preview begins clearly to the right of the text block.
+- Text is no longer centered in the page.
+- CTA/chips stay directly under the text.
+- No overlap at 1440px, 1600px, 1920px.
