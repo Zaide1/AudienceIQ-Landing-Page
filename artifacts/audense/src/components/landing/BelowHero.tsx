@@ -89,7 +89,7 @@ function ProductValueSection() {
         width: "100%",
         padding: "clamp(96px, 12vw, 160px) clamp(24px, 5vw, 72px)",
         background:
-          "linear-gradient(180deg, #FFFFFF 0%, #FBFAFE 14%, #F1ECF9 50%, #FBFAFE 88%, #FFFFFF 100%)",
+          "radial-gradient(ellipse 70% 50% at 78% 0%, rgba(167,139,250,0.18) 0%, rgba(167,139,250,0.05) 45%, transparent 75%), linear-gradient(180deg, #FBFAFE 0%, #F1ECF9 50%, #FBFAFE 88%, #FFFFFF 100%)",
       }}
     >
       <div style={{ maxWidth: 1180, margin: "0 auto", textAlign: "center" }}>
