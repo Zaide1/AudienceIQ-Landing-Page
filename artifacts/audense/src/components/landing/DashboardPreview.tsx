@@ -4,7 +4,7 @@ import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 
 /* ─── Fixed design dimensions ─────────────────────────────────────── */
 const DESIGN_WIDTH  = 980;
-const DESIGN_HEIGHT = 660;
+const DESIGN_HEIGHT = 730;
 
 /* ─── Dot-grid ─────────────────────────────────────────────────────── */
 const COLS = 28;

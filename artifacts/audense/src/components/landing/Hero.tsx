@@ -17,7 +17,7 @@ export function Hero() {
             margin: 0,
           }}
         >
-          Your audience,
+          <span style={{ whiteSpace: "nowrap" }}>Your audience,</span>
           <br />
           <span style={{ color: "#7C3AED" }}>found.</span>
         </h1>
