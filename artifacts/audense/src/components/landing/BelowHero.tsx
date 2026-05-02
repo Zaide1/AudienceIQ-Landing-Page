@@ -18,18 +18,18 @@ function PlatformChip({ name, Icon, color }: { name: string; Icon: React.Compone
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        width: 26,
-        height: 26,
-        borderRadius: "50%",
+        width: 36,
+        height: 36,
+        borderRadius: 10,
         background: "#fff",
-        border: "1px solid #E5E7EB",
+        border: "1px solid #ECE9F5",
         color,
-        fontSize: 13,
         flexShrink: 0,
-        boxShadow: "0 1px 2px rgba(15,23,42,0.06)",
+        boxShadow:
+          "0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(124,58,237,0.06)",
       }}
     >
-      <Icon />
+      <Icon size={17} />
     </span>
   );
 }
@@ -280,7 +280,7 @@ function ProductValueSection() {
                       {r.label}
                     </span>
                     {r.label === "Where to test" ? (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
                         {WHERE_TO_TEST_PLATFORMS.map((p) => (
                           <PlatformChip key={p.name} name={p.name} Icon={p.Icon} color={p.color} />
                         ))}
