@@ -408,3 +408,13 @@
     margin: 0;
   }
 }
+
+@media (min-width: 1600px) {
+  .hero-grid {
+    max-width: 1560px;
+    grid-template-columns: minmax(460px, 560px) minmax(620px, 760px);
+    column-gap: clamp(140px, 10vw, 200px);
+    padding-left: clamp(64px, 7vw, 120px);
+    padding-right: clamp(64px, 7vw, 120px);
+  }
+}
