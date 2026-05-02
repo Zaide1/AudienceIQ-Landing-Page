@@ -349,14 +349,6 @@ const MESSAGES = [
 function ChatPanel() {
   return (
     <div style={{ width: 268, borderRight: "1px solid #F3F4F6", display: "flex", flexDirection: "column", background: "#fff", flexShrink: 0 }}>
-      {/* Header */}
-      <div style={{ padding: "9px 14px", borderBottom: "1px solid #F3F4F6", background: "#fff", display: "flex", alignItems: "center", gap: 7 }}>
-        <div style={{ background: "#EDE9FE", padding: 4, borderRadius: 6, display: "flex" }}>
-          <Sparkles style={{ width: 11, height: 11, color: "#7C3AED" }} />
-        </div>
-        <span style={{ fontWeight: 700, fontSize: 12 }}>Audense AI</span>
-      </div>
-
       {/* Messages */}
       <div style={{ flex: 1, overflow: "hidden", padding: "10px 10px", display: "flex", flexDirection: "column", gap: 10 }}>
         {MESSAGES.map((m, i) => (
