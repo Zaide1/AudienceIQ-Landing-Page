@@ -1,0 +1,56 @@
+Fix chat Confirm update so each proposed audience-map update can only be applied once.
+
+Important:
+- Only edit dashboard chat/update state logic.
+- Do not change landing.
+- Do not change onboarding.
+- Do not change dashboard layout.
+- Do not add backend/OpenAI/auth yet.
+- Keep current visual styling.
+
+Current issue:
+The “Confirm update” button can be spam-clicked. Each click applies the same update again, repeatedly increases segment percentages, and adds duplicate “Audience map updated” messages.
+
+Required behaviour:
+1. A proposed update should be represented as a single pending update state.
+2. The Confirm update button should only show when there is an active pending update.
+3. When the user clicks Confirm update:
+   - Immediately disable the button or clear the pending update so it cannot be clicked twice.
+   - Apply the map/segment update exactly once.
+   - Save the updated audience map to localStorage.
+   - Add exactly one AI confirmation message:
+     “Done — I’ve updated your audience map based on that.”
+   - Hide/remove the Confirm update button.
+4. Re-clicking or double-clicking should not apply the same update again.
+5. If the user sends another chat message that creates a new proposed update, then a new pending update can be created and confirmed once.
+6. Do not add multiple green “Audience map updated” bubbles.
+7. Segment percentages should remain valid:
+   - exactly 5 segments
+   - percentages sum to 100
+   - no segment below 5%
+   - no segment above 45%
+
+Implementation guidance:
+- Add something like:
+  pendingUpdate: AudienceMapResult | null
+  or pendingUpdateId/currentPendingUpdateId
+- On confirm:
+  if (!pendingUpdate) return;
+  const updateToApply = pendingUpdate;
+  setPendingUpdate(null);
+  apply updateToApply once.
+- If using async state, guard with an isApplyingUpdate boolean or clear pendingUpdate before applying.
+- Avoid direct repeated percentage increment logic on every click.
+- Prefer calculating a full next segment distribution once, then applying it.
+
+Validation:
+- Click Confirm update once: map updates once, button disappears.
+- Double-click Confirm update: update still applies only once.
+- Spam click: no repeated percentage growth.
+- Chat shows one confirmation message, not repeated green bubbles.
+- Ask another chip/question: a new pending update can be proposed.
+
+After implementing, explain:
+- What state now controls pending updates
+- How duplicate confirms are prevented
+- How percentage totals are kept valid

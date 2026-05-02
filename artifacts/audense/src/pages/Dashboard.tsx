@@ -466,7 +466,15 @@ function NavItem({
 }
 
 /* ─── Chat message bubble ─────────────────────────────────────────── */
-function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
+function Bubble({
+  msg,
+  onConfirm,
+  isPending = false,
+}: {
+  msg: Message;
+  onConfirm: () => void;
+  isPending?: boolean;
+}) {
   if (msg.role === "confirm") {
     return (
       <div style={{ display: "flex", gap: 9, alignItems: "flex-start", minWidth: 0 }}>
@@ -496,22 +504,25 @@ function Bubble({ msg, onConfirm }: { msg: Message; onConfirm: () => void }) {
           >
             {msg.text}
           </div>
-          <button
-            onClick={onConfirm}
-            style={{
-              alignSelf: "flex-start",
-              background: "#7C3AED",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "7px 14px",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Confirm update →
-          </button>
+          {/* Button only rendered for the currently pending update */}
+          {isPending && (
+            <button
+              onClick={onConfirm}
+              style={{
+                alignSelf: "flex-start",
+                background: "#7C3AED",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "7px 14px",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Confirm update →
+            </button>
+          )}
         </div>
       </div>
     );
@@ -670,7 +681,10 @@ export default function Dashboard() {
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>("gym");
   const [hoveredSegmentId, setHoveredSegmentId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
-  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
+  /* pendingUpdateId: the msg.id of the one active confirm bubble, or null */
+  const [pendingUpdateId, setPendingUpdateId] = useState<number | null>(null);
+  /* Synchronous ref guard — prevents stale-closure double-fires before re-render */
+  const pendingUpdateRef = useRef<number | null>(null);
   const msgId = useRef(100);
 
   const [messages, setMessages] = useState<Message[]>(() => loadChatMessages(displayName));
@@ -683,26 +697,30 @@ export default function Dashboard() {
 
   const sendMessage = () => {
     const text = chatInput.trim();
-    if (!text || awaitingConfirm) return;
+    if (!text || pendingUpdateRef.current !== null) return;
     setChatInput("");
     const userMsg: Message = { id: ++msgId.current, role: "user", text };
+    const confirmId = ++msgId.current;
     const aiMsg: Message = {
-      id: ++msgId.current,
+      id: confirmId,
       role: "confirm",
       text: "I can refine the audience map based on that. Confirm this update?",
     };
+    pendingUpdateRef.current = confirmId;
+    setPendingUpdateId(confirmId);
     setMessages((prev) => [...prev, userMsg, aiMsg]);
-    setAwaitingConfirm(true);
   };
 
   const handleConfirm = () => {
-    setAwaitingConfirm(false);
+    /* Synchronous ref check — fires before any re-render, prevents double-apply */
+    if (pendingUpdateRef.current === null) return;
+    pendingUpdateRef.current = null;
+    setPendingUpdateId(null);
+
     setSegments((prev) => {
       const BOOST = 6;
       const newFirstPct = Math.min(prev[0].pct + BOOST, 45);
       const actualGain = newFirstPct - prev[0].pct;
-      /* Distribute the gain proportionally across the remaining segments,
-         rounding per-segment so the total stays close to 100 */
       const others = prev.slice(1);
       const totalOther = others.reduce((s, x) => s + x.pct, 0);
       let remaining = actualGain;
@@ -715,7 +733,12 @@ export default function Dashboard() {
       });
       return [{ ...prev[0], pct: newFirstPct }, ...rest];
     });
-    const successMsg: Message = { id: ++msgId.current, role: "success", text: "✓ Audience map updated." };
+
+    const successMsg: Message = {
+      id: ++msgId.current,
+      role: "success",
+      text: "Done — I've updated your audience map based on that.",
+    };
     setMessages((prev) => [...prev, successMsg]);
   };
 
@@ -726,16 +749,18 @@ export default function Dashboard() {
   ];
 
   const sendChip = (chip: string) => {
-    if (awaitingConfirm) return;
+    if (pendingUpdateRef.current !== null) return;
     setChatInput("");
     const userMsg: Message = { id: ++msgId.current, role: "user", text: chip };
+    const confirmId = ++msgId.current;
     const aiMsg: Message = {
-      id: ++msgId.current,
+      id: confirmId,
       role: "confirm",
       text: "I can refine the audience map based on that. Confirm this update?",
     };
+    pendingUpdateRef.current = confirmId;
+    setPendingUpdateId(confirmId);
     setMessages((prev) => [...prev, userMsg, aiMsg]);
-    setAwaitingConfirm(true);
   };
 
   return (
@@ -806,7 +831,12 @@ export default function Dashboard() {
           }}
         >
           {messages.map((msg) => (
-            <Bubble key={msg.id} msg={msg} onConfirm={handleConfirm} />
+            <Bubble
+              key={msg.id}
+              msg={msg}
+              onConfirm={handleConfirm}
+              isPending={msg.id === pendingUpdateId}
+            />
           ))}
           <div ref={chatEndRef} />
         </div>
@@ -825,16 +855,16 @@ export default function Dashboard() {
             <button
               key={chip}
               onClick={() => sendChip(chip)}
-              disabled={awaitingConfirm}
+              disabled={pendingUpdateId !== null}
               style={{
-                background: awaitingConfirm ? "#F9FAFB" : "#F5F3FF",
+                background: pendingUpdateId !== null ? "#F9FAFB" : "#F5F3FF",
                 border: "1px solid #DDD6FE",
                 borderRadius: 20,
                 padding: "5px 11px",
                 fontSize: 11.5,
                 fontWeight: 500,
-                color: awaitingConfirm ? "#9CA3AF" : "#6D28D9",
-                cursor: awaitingConfirm ? "not-allowed" : "pointer",
+                color: pendingUpdateId !== null ? "#9CA3AF" : "#6D28D9",
+                cursor: pendingUpdateId !== null ? "not-allowed" : "pointer",
                 whiteSpace: "nowrap",
               }}
             >
@@ -879,7 +909,7 @@ export default function Dashboard() {
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              disabled={awaitingConfirm}
+              disabled={pendingUpdateId !== null}
               style={{
                 flex: 1,
                 border: "none",
@@ -892,17 +922,17 @@ export default function Dashboard() {
             />
             <button
               onClick={sendMessage}
-              disabled={!chatInput.trim() || awaitingConfirm}
+              disabled={!chatInput.trim() || pendingUpdateId !== null}
               style={{
                 width: 30,
                 height: 30,
                 borderRadius: "50%",
-                background: !chatInput.trim() || awaitingConfirm ? "#C4B5FD" : "#7C3AED",
+                background: !chatInput.trim() || pendingUpdateId !== null ? "#C4B5FD" : "#7C3AED",
                 border: "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                cursor: !chatInput.trim() || awaitingConfirm ? "not-allowed" : "pointer",
+                cursor: !chatInput.trim() || pendingUpdateId !== null ? "not-allowed" : "pointer",
                 flexShrink: 0,
                 transition: "background 0.2s",
               }}
