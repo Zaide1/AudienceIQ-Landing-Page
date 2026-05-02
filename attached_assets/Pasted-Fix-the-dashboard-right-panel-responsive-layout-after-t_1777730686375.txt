@@ -1,0 +1,62 @@
+Fix the `/dashboard` right panel responsive layout after the 50/50 split.
+
+Important:
+- Do not change the split layout behaviour.
+- Do not change landing.
+- Do not change onboarding.
+- Do not change AudienceUniverseMap cluster logic.
+- Do not add backend/auth/OpenAI.
+- Do not redesign the dashboard.
+- Only fix how the right audience panel lays out when it has limited width.
+
+Current problem:
+At the default 50/50 split, the right audience dashboard panel is too narrow, but its content still tries to use a wide desktop layout.
+This makes the metric cards, Audience Universe, and segment cards squashed and unreadable.
+
+Required fix:
+Make the right panel container-aware/responsive.
+
+1. Right panel scrolling
+- The right audience panel should have its own vertical scrolling if content is taller than the viewport.
+- Avoid horizontal overflow where possible.
+- Do not let cards get clipped by the panel edge.
+
+2. Metric cards
+- At wide right-panel widths, keep 4 cards in one row.
+- At medium/narrow right-panel widths, switch metric cards to 2 columns.
+- At very narrow widths, switch to 1 column.
+- Metric cards must never become tiny vertical slivers.
+- Use CSS grid with something like:
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))
+- Keep card min-width sensible.
+
+3. Audience Universe card
+- Make the map card responsive to the right panel width.
+- Do not let the dot map overflow horizontally.
+- If needed, scale the dot map down inside its card.
+- Keep the tooltip visible inside the map.
+- Keep the map readable.
+- Suggested compact map height: 260px to 340px when panel is narrow.
+
+4. Segment cards
+- Do not force all 5 segment cards into one row when the panel is narrow.
+- Use responsive grid:
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))
+- Alternatively, use horizontal scrolling cards if easier, but cards must stay readable.
+- Segment cards should not shrink below 180px.
+- Text should wrap normally and not become one word per line.
+
+5. Header
+- Keep title and + New Research button aligned nicely.
+- If the panel is narrow, allow the header to wrap instead of squeezing.
+
+6. CSS strategy
+- Prefer CSS grid with minmax() and auto-fit.
+- If possible, use container queries for the right panel.
+- If not, use responsive classes/media queries and min-widths.
+- Do not hard-code five cards in one row inside the split panel.
+
+After implementing, explain:
+- How metric cards respond to panel width
+- How segment cards avoid being squashed
+- How the map card avoids overflow

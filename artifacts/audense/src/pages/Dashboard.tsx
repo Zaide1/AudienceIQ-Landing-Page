@@ -790,10 +790,12 @@ export default function Dashboard() {
             style={{
               maxWidth: 1440,
               margin: "0 auto",
-              padding: "16px 36px 14px",
+              padding: "16px 20px 14px",
               display: "flex",
-              alignItems: "flex-start",
+              alignItems: "center",
               justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 10,
             }}
           >
             <div>
@@ -835,14 +837,14 @@ export default function Dashboard() {
           style={{
             maxWidth: 1440,
             margin: "0 auto",
-            padding: "24px 36px 32px",
+            padding: "20px 20px 32px",
             display: "flex",
             flexDirection: "column",
             gap: 18,
           }}
         >
           {/* Metric cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
             {[
               {
                 label: "Reachable Audience",
@@ -1006,7 +1008,7 @@ export default function Dashboard() {
             <div style={{ fontSize: 11.5, color: "#9CA3AF", marginBottom: 14 }}>
               Click a segment to explore deeper insights
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
               {segments.map((seg) => {
                 const isActive = selectedId === seg.id;
                 return (
@@ -1014,7 +1016,6 @@ export default function Dashboard() {
                     key={seg.id}
                     onClick={() => setSelectedId(seg.id)}
                     style={{
-                      flex: 1,
                       background: seg.bg,
                       border: `1.5px solid ${isActive ? seg.accent : seg.accent + "33"}`,
                       borderRadius: 12,
@@ -1039,9 +1040,7 @@ export default function Dashboard() {
                           fontSize: 11,
                           fontWeight: 700,
                           color: seg.accent,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          wordBreak: "break-word",
                         }}
                       >
                         {seg.name}
