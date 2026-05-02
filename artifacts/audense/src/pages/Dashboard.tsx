@@ -770,6 +770,10 @@ export default function Dashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    if (isSending) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [isSending]);
+
   const callRefineAPI = async (text: string) => {
     const userMsg: Message = { id: ++msgId.current, role: "user", text };
     setMessages((prev) => [...prev, userMsg]);
@@ -978,6 +982,7 @@ export default function Dashboard() {
               isPending={msg.id === pendingUpdateId}
             />
           ))}
+          {isSending && <ThinkingBubble />}
           <div ref={chatEndRef} />
         </div>
 
