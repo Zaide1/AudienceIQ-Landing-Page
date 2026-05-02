@@ -1,0 +1,116 @@
+Implement guest mode with a soft auth prompt and New Research auth wall.
+
+Important:
+- Do not add billing/pricing.
+- Do not add Stripe.
+- Do not change landing design.
+- Do not change onboarding design.
+- Do not change dashboard layout.
+- Do not change Audience Universe visuals.
+- Keep Supabase auth/persistence if already added.
+- Keep localStorage fallback.
+- Do not block the first research experience.
+
+Goal:
+Audense should let users experience value before signing up, then prompt them to save their research.
+
+Guest mode rules:
+1. Unauthenticated users can:
+   - complete onboarding
+   - generate one audience map
+   - use the dashboard
+   - chat/refine the map for a limited number of messages
+2. Unauthenticated users cannot:
+   - start a second New Research
+   - use History
+   - permanently save multiple research sessions
+   - upload files/evidence if file upload exists
+3. Signed-in users can:
+   - save research sessions to Supabase
+   - create multiple research sessions
+   - use History
+   - return later to previous maps/chats
+
+Local guest data:
+- Keep using localStorage for guest:
+  - audense_onboarding
+  - audense-audience-map
+  - audense-chat-messages
+  - audense-research-sessions if already implemented
+- Track:
+  - audense-guest-chat-count
+  - audense-auth-soft-prompt-dismissed
+  - audense-has-created-guest-research
+
+Soft auth prompt:
+- After an unauthenticated guest sends 3 chat messages, show a centered modal.
+- Modal title:
+  “Save your research”
+- Body:
+  “Your audience map is getting smarter. Create a free account to save this chat, research history, and future updates.”
+- Primary button:
+  “Create free account”
+- Secondary button:
+  “Keep exploring”
+- Clicking Create free account opens the existing Supabase auth modal.
+- Clicking Keep exploring dismisses the soft prompt once.
+- Do not show this prompt repeatedly every message.
+
+Optional stronger prompt:
+- After 6 chat messages, show the same modal again, but still do not break the demo unless you already have a hard continuation gate.
+- Keep this simple if time is short.
+
+New Research auth wall:
+- If user is unauthenticated and already has a guest research map/session:
+  - clicking New Research should NOT immediately start onboarding.
+  - show auth wall modal.
+- Modal title:
+  “Save this research before starting another”
+- Body:
+  “Create a free account to keep this audience map, chat, and insights. Then you can start a new research project without losing anything.”
+- Primary button:
+  “Create free account”
+- Secondary button:
+  “Cancel”
+- Create free account opens auth modal.
+- Cancel closes modal and keeps user on current dashboard.
+- After successful sign-in/sign-up, migrate/save the current guest research to Supabase if possible, then allow New Research.
+
+History auth wall:
+- If unauthenticated user clicks History:
+  - show modal:
+    Title: “Sign in to view research history”
+    Body: “History is available once your research is saved to an account.”
+    Primary: “Create free account”
+    Secondary: “Cancel”
+
+Guest-to-account migration:
+When a guest signs in or signs up:
+- If local guest research exists:
+  - create a Supabase research_session
+  - save onboardingData
+  - save audienceMap
+  - save chatMessages
+  - set it as active session
+- Do not duplicate the same guest session repeatedly.
+- Track migration using a local flag or session id.
+- If migration fails, keep local data and show a non-blocking message.
+
+Validation:
+- New user can generate first map without signing in.
+- After 3 chat messages, soft “Save your research” prompt appears.
+- Dismissing it allows continued exploration.
+- Clicking New Research as guest shows auth wall.
+- Clicking History as guest shows auth wall.
+- Signing in migrates current guest map/chat to Supabase.
+- Signed-in user can start New Research.
+- Signed-in user can access History.
+- Existing dashboard/chat/map still works.
+- No billing/pricing appears anywhere.
+
+After implementing, explain:
+- Guest localStorage keys used
+- When the soft prompt appears
+- How New Research is gated
+- How History is gated
+- How guest research migrates after sign-in

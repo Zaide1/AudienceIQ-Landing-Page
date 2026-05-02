@@ -4,6 +4,7 @@ import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { generateMockAudienceMap, saveAudienceMap } from "../lib/audienceMap";
 import { upsertSession, setActiveSessionId, makeSessionTitle, newSessionId } from "../lib/researchSessions";
 import { sbSaveSession } from "../lib/sbSessions";
+import { setHasGuestResearch } from "../lib/guestMode";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 interface OnboardingState {
@@ -665,6 +666,7 @@ export default function Onboarding() {
       };
       upsertSession(session1);
       setActiveSessionId(sessionId);
+      setHasGuestResearch();
       sbSaveSession(session1).catch(() => {});
     } catch {
       const fallback = generateMockAudienceMap(onboardingData);
@@ -682,6 +684,7 @@ export default function Onboarding() {
       };
       upsertSession(session2);
       setActiveSessionId(sessionId);
+      setHasGuestResearch();
       sbSaveSession(session2).catch(() => {});
     } finally {
       setGenerating(false);

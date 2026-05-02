@@ -22,8 +22,13 @@ import {
   type ResearchSession, type StoredMessage,
 } from "../lib/researchSessions";
 import { AuthModal } from "../components/AuthModal";
+import { SoftPromptModal, NewResearchAuthWall, HistoryAuthWall } from "../components/GuestModals";
 import { onAuthChange, signOut, type AuthUser } from "../lib/auth";
-import { sbAppendMessage, sbUpdateMap, sbLoadSessionList, sbLoadFullSession } from "../lib/sbSessions";
+import { sbAppendMessage, sbUpdateMap, sbLoadSessionList, sbLoadFullSession, sbSaveSession } from "../lib/sbSessions";
+import {
+  hasGuestResearch, isGuestMigrated, setGuestMigrated,
+  incGuestChatCount, getSoftPromptSeenAt, setSoftPromptSeenAt,
+} from "../lib/guestMode";
 
 /* ─── Platform icon map ───────────────────────────────────────────── */
 type IconComponent = React.ComponentType<{ size?: number | string }>;
@@ -1134,6 +1139,13 @@ export default function Dashboard() {
   const [sbSessionItems, setSbSessionItems] = useState<ResearchSession[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  /* ── Guest-mode modal state ─────────────────────────────────────── */
+  const [isSoftPromptOpen, setIsSoftPromptOpen] = useState(false);
+  const [isNewResearchAuthWall, setIsNewResearchAuthWall] = useState(false);
+  const [isHistoryAuthWall, setIsHistoryAuthWall] = useState(false);
+  const postAuthActionRef = useRef<"new-research" | "history" | null>(null);
+  const softPromptThresholdRef = useRef<number>(3);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpPopoverOpen, setIsHelpPopoverOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -1285,6 +1297,30 @@ export default function Dashboard() {
     });
   }, []);
 
+  /* ── Guest → account migration ──────────────────────────────────── */
+  const migrateGuestSession = useCallback(async () => {
+    if (!hasGuestResearch()) return;
+    const sid = getActiveSessionId();
+    if (!sid || isGuestMigrated(sid)) return;
+    const session = getActiveSession();
+    if (!session) return;
+    try {
+      await sbSaveSession(session);
+      setGuestMigrated(sid);
+    } catch { /* non-blocking — local data is still intact */ }
+  }, []);
+
+  /* ── Central auth handler (used by all modals) ──────────────────── */
+  const handleAuth = useCallback(async (user: AuthUser) => {
+    authUserRef.current = user;
+    setAuthUser(user);
+    await migrateGuestSession();
+    const action = postAuthActionRef.current;
+    postAuthActionRef.current = null;
+    if (action === "new-research") navigate("/onboarding");
+    else if (action === "history") setIsHistoryOpen(true);
+  }, [migrateGuestSession, navigate]);
+
   /* ── Load Supabase session list when history opens ──────────────── */
   useEffect(() => {
     if (!isHistoryOpen || !authUserRef.current) return;
@@ -1351,6 +1387,15 @@ export default function Dashboard() {
   }, []);
 
   const callRefineAPI = async (text: string) => {
+    /* Guest-mode: track message count + trigger soft prompt */
+    if (!authUserRef.current) {
+      const count = incGuestChatCount();
+      if ((count === 3 && !getSoftPromptSeenAt(3)) || (count === 6 && !getSoftPromptSeenAt(6))) {
+        softPromptThresholdRef.current = count;
+        setIsSoftPromptOpen(true);
+      }
+    }
+
     const userMsg: Message = { id: ++msgId.current, role: "user", text };
     setMessages((prev) => [...prev, userMsg]);
 
@@ -1386,6 +1431,15 @@ export default function Dashboard() {
 
   /* ── Attachment upload API ─────────────────────────────────────── */
   const callRefineWithAttachmentsAPI = async (text: string, files: File[]) => {
+    /* Guest-mode: also track attachment messages */
+    if (!authUserRef.current) {
+      const count = incGuestChatCount();
+      if ((count === 3 && !getSoftPromptSeenAt(3)) || (count === 6 && !getSoftPromptSeenAt(6))) {
+        softPromptThresholdRef.current = count;
+        setIsSoftPromptOpen(true);
+      }
+    }
+
     const displayText = text || "Use this as evidence for my audience research.";
     const suffix = files.length === 1 ? " [1 attachment]" : ` [${files.length} attachments]`;
     setMessages((prev) => [...prev, {
@@ -1661,7 +1715,13 @@ export default function Dashboard() {
             icon={<Layers size={18} />}
             label="Research history"
             active={isHistoryOpen}
-            onClick={() => setIsHistoryOpen((v) => !v)}
+            onClick={() => {
+              if (!authUserRef.current) {
+                setIsHistoryAuthWall(true);
+              } else {
+                setIsHistoryOpen((v) => !v);
+              }
+            }}
           />
           <RailIcon icon={<Database size={18} />} label="Sources (coming soon)" />
           {/* Spacer */}
@@ -2099,7 +2159,13 @@ export default function Dashboard() {
                 )}
               </button>
               <button
-                onClick={() => navigate("/onboarding")}
+                onClick={() => {
+                  if (!authUserRef.current && hasGuestResearch()) {
+                    setIsNewResearchAuthWall(true);
+                  } else {
+                    navigate("/onboarding");
+                  }
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -2457,10 +2523,39 @@ export default function Dashboard() {
     {isAuthModalOpen && (
       <AuthModal
         onClose={() => setIsAuthModalOpen(false)}
-        onAuth={(user) => {
-          authUserRef.current = user;
-          setAuthUser(user);
+        onAuth={handleAuth}
+      />
+    )}
+    {isSoftPromptOpen && (
+      <SoftPromptModal
+        onPrimary={() => {
+          setIsSoftPromptOpen(false);
+          setIsAuthModalOpen(true);
         }}
+        onSecondary={() => {
+          setSoftPromptSeenAt(softPromptThresholdRef.current);
+          setIsSoftPromptOpen(false);
+        }}
+      />
+    )}
+    {isNewResearchAuthWall && (
+      <NewResearchAuthWall
+        onPrimary={() => {
+          postAuthActionRef.current = "new-research";
+          setIsNewResearchAuthWall(false);
+          setIsAuthModalOpen(true);
+        }}
+        onSecondary={() => setIsNewResearchAuthWall(false)}
+      />
+    )}
+    {isHistoryAuthWall && (
+      <HistoryAuthWall
+        onPrimary={() => {
+          postAuthActionRef.current = "history";
+          setIsHistoryAuthWall(false);
+          setIsAuthModalOpen(true);
+        }}
+        onSecondary={() => setIsHistoryAuthWall(false)}
       />
     )}
     {showCompetitorDrawer && audienceMap.competitors && (
