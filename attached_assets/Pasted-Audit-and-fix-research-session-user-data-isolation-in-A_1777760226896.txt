@@ -1,0 +1,121 @@
+Audit and fix research session/user data isolation in Audense.
+
+Important:
+- Do not change UI design.
+- Do not change dashboard layout.
+- Do not change onboarding design.
+- Do not add billing/pricing.
+- Do not add new features.
+- First inspect and report. Only fix clear bugs.
+
+Concern:
+Research context may be bleeding between guest sessions, signed-in users, and new onboarding runs.
+
+We need to ensure:
+- Each new research idea creates its own independent research session.
+- Guest data does not overwrite signed-in user data incorrectly.
+- Signed-in users do not see stale guest data unless it is intentionally migrated.
+- A new onboarding run does not reuse an old audience map/chat.
+- Chat messages belong only to the active research session.
+- Audience maps belong only to the active research session.
+- Switching users does not show another user's previous data from localStorage.
+
+Please inspect:
+- localStorage keys:
+  - audense_onboarding
+  - audense-audience-map
+  - audense-chat-messages
+  - audense-research-sessions
+  - audense-active-session-id
+  - audense-current-research-chat-id if it exists
+  - audense-has-created-guest-research
+  - audense-guest-research-migrated
+- Supabase session loading logic
+- dashboard hydration logic
+- onboarding generate logic
+- New Research logic
+- sign in/sign out logic
+- guest-to-account migration logic
+- History/session switching logic
+
+Expected rules:
+
+1. New onboarding / Generate
+- Always creates a fresh research session.
+- Does not reuse an old audience map.
+- Does not reuse old chat messages.
+- Clears or replaces compatibility keys:
+  - audense_onboarding
+  - audense-audience-map
+  - audense-chat-messages
+- Sets the new active session id.
+
+2. Guest mode
+- Guest can have one local active research session.
+- Guest data stays local.
+- Guest data should not be mixed with signed-in Supabase sessions unless migration happens intentionally after sign-in.
+
+3. Guest-to-account migration
+- On sign-in/sign-up, if guest research exists and has not already been migrated:
+  - create a new Supabase research_session for that user
+  - save the guest onboarding, audience map, and chat messages
+  - mark it migrated
+- Do not migrate the same guest research multiple times.
+- Do not overwrite an existing Supabase session unless explicitly selected.
+
+4. Signed-in dashboard load
+- Prefer Supabase active session data.
+- Do not accidentally hydrate from stale localStorage if a valid Supabase session exists.
+- Only use localStorage fallback if Supabase is unavailable or no active Supabase session exists.
+
+5. Sign out
+- Clear active Supabase session pointers.
+- Do not show signed-in user's Supabase research after logout.
+- Returning to landing is okay.
+- Local guest demo data may remain, but it must not be mistaken for another signed-in user's data.
+
+6. Switching users
+- If User A signs out and User B signs in, User B must not see User A's local active map/chat.
+- Load User B's Supabase sessions only.
+- If localStorage compatibility keys exist from User A, they should not override User B's Supabase data.
+
+7. History
+- History should show:
+  - Supabase sessions for signed-in users
+  - local sessions for guests only
+- Clicking a session must set active session and hydrate map/chat from that exact session.
+- No cross-session chat bleed.
+
+8. Chat
+- Chat API request must include the current active session's onboardingData, currentAudienceMap, and messages only.
+- It should not pull messages from old sessions.
+
+Validation tests:
+A. Guest creates Research A, chats, then starts onboarding again if allowed:
+- Research B should have fresh chat/map.
+- No messages from Research A should appear in Research B.
+
+B. Guest creates Research A, signs up:
+- Research A migrates once to Supabase.
+- Refresh still shows Research A correctly.
+- No duplicate sessions.
+
+C. Signed-in user creates Research A then New Research B:
+- History shows A and B.
+- Opening A shows A chat/map.
+- Opening B shows B chat/map.
+
+D. User A signs out, User B signs in:
+- User B does not see User A's map/chat.
+- User B sees only their own Supabase sessions.
+
+E. Clear localStorage compatibility keys:
+- Signed-in user should still load Supabase sessions.
+
+Return:
+- Files inspected
+- Current data flow summary
+- Any bleed risks found
+- Any fixes made
+- Exact localStorage keys that remain
+- Whether each validation test passes

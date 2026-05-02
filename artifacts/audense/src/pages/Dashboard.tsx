@@ -1287,15 +1287,37 @@ export default function Dashboard() {
   });
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  /* ── Auth subscription ──────────────────────────────────────────── */
-  useEffect(() => {
-    return onAuthChange((user) => {
-      authUserRef.current = user;
-      setAuthUser(user);
-    });
+  /* ── User-isolation helpers ─────────────────────────────────────── */
+  /* Clears data keys that belong to the *active research session* only.
+     Guest tracking flags (audense-has-created-guest-research, guest counters,
+     soft-prompt seen list, display name, split-pct) are intentionally kept. */
+  const clearLocalSessionData = useCallback(() => {
+    try {
+      localStorage.removeItem("audense-active-session-id");
+      localStorage.removeItem("audense-research-sessions");
+      localStorage.removeItem("audense-audience-map");
+      localStorage.removeItem("audense-chat-messages");
+      localStorage.removeItem("audense_onboarding");
+    } catch {}
   }, []);
 
-  /* ── Guest → account migration ──────────────────────────────────── */
+  /* Resets Dashboard React state back to a fresh greeting + mock map. */
+  const resetDashboardState = useCallback(() => {
+    setActiveSessionIdState("");
+    setOb(null);
+    const fresh = generateMockAudienceMap(null);
+    setAudienceMap(fresh);
+    setSegments(buildSegmentsFromMap(fresh));
+    const greeting = buildGreeting("Founder");
+    setMessages([greeting]);
+    prevMsgCountRef.current = 1;
+    pendingUpdateRef.current = null;
+    pendingMapRef.current = null;
+    setPendingUpdateId(null);
+    setSuggestedChips([]);
+  }, []);
+
+  /* ── Guest → account migration (idempotent via isGuestMigrated) ─── */
   const migrateGuestSession = useCallback(async () => {
     if (!hasGuestResearch()) return;
     const sid = getActiveSessionId();
@@ -1307,6 +1329,54 @@ export default function Dashboard() {
       setGuestMigrated(sid);
     } catch { /* non-blocking — local data is still intact */ }
   }, []);
+
+  /* ── Auth subscription: handles sign-in, sign-out, and user switch ── */
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    return onAuthChange(async (user) => {
+      const prev = prevUserIdRef.current;
+      const next = user?.id ?? null;
+      authUserRef.current = user;
+      setAuthUser(user);
+
+      /* First fire from Supabase is the INITIAL_SESSION restore — seed only,
+         do not treat as a transition (otherwise we'd wipe a returning user's cache). */
+      if (prev === undefined) {
+        prevUserIdRef.current = next;
+        return;
+      }
+      if (prev === next) return;
+
+      if (next === null) {
+        /* Sign-out: clear active research data so the next user can't see it. */
+        clearLocalSessionData();
+        resetDashboardState();
+        setSbSessionItems([]);
+      } else if (prev === null) {
+        /* Guest → signed in. Migrate guest research if any, otherwise the
+           local cache belongs to a different prior user — clear it. */
+        const sid = getActiveSessionId();
+        const guestSess = sid && hasGuestResearch() ? getActiveSession() : null;
+        if (sid && guestSess && !isGuestMigrated(sid)) {
+          try {
+            await sbSaveSession(guestSess);
+            setGuestMigrated(sid);
+          } catch {}
+          /* Keep local data — it now belongs to this account. */
+        } else if (!guestSess) {
+          clearLocalSessionData();
+          resetDashboardState();
+        }
+      } else {
+        /* User A → User B switch: never inherit User A's cache. */
+        clearLocalSessionData();
+        resetDashboardState();
+        setSbSessionItems([]);
+      }
+
+      prevUserIdRef.current = next;
+    });
+  }, [clearLocalSessionData, resetDashboardState]);
 
   /* ── Central auth handler (used by all modals) ──────────────────── */
   const handleAuth = useCallback(async (user: AuthUser) => {
