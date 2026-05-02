@@ -635,6 +635,55 @@ function Bubble({
   );
 }
 
+/* ─── Thinking bubble ─────────────────────────────────────────────── */
+function ThinkingBubble() {
+  return (
+    <div style={{ display: "flex", gap: 9, alignItems: "flex-start", minWidth: 0 }}>
+      <div
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          flexShrink: 0,
+          background: `#EDE9FE url(${logoImg}) center/cover no-repeat`,
+        }}
+      />
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid #E5E7EB",
+          borderRadius: "12px 12px 12px 2px",
+          padding: "10px 14px",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          minWidth: 0,
+        }}
+      >
+        <span style={{ fontSize: 13, color: "#9CA3AF", lineHeight: 1 }}>
+          Audense is thinking
+        </span>
+        <span style={{ display: "flex", gap: 3, alignItems: "center" }}>
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                background: "#A78BFA",
+                display: "inline-block",
+                animation: `audense-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+              }}
+            />
+          ))}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Split layout constants ──────────────────────────────────────── */
 const SPLIT_KEY = "audense-dashboard-split";
 const SPLIT_MIN = 30;

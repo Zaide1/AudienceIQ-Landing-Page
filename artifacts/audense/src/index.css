@@ -4,6 +4,11 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+@keyframes audense-dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+  40%           { transform: translateY(-4px); opacity: 1; }
+}
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
