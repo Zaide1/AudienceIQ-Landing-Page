@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
+import { generateMockAudienceMap } from "../lib/audienceMap";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 interface OnboardingState {
@@ -554,12 +555,17 @@ export default function Onboarding() {
 
   const handleGenerate = () => {
     const finalCategory = data.category === "other" ? data.customCategory.trim() : data.category;
-    const finalRegion = data.region === "other" ? data.customRegion.trim() : data.region;
-    localStorage.setItem("audense_onboarding", JSON.stringify({
-      ...data,
-      finalCategory,
-      finalRegion,
-    }));
+    const finalRegion   = data.region   === "other" ? data.customRegion.trim()   : data.region;
+    const onboardingData = { ...data, finalCategory, finalRegion };
+
+    localStorage.setItem("audense_onboarding", JSON.stringify(onboardingData));
+
+    /* Force a fresh audience map from the latest onboarding data */
+    generateMockAudienceMap(onboardingData);
+
+    /* Clear stale chat so dashboard opens with a fresh greeting */
+    try { localStorage.removeItem("audense-chat-messages"); } catch {}
+
     navigate("/dashboard");
   };
 

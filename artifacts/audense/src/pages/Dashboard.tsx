@@ -615,8 +615,10 @@ export default function Dashboard() {
 
   const displayName = ob?.displayName ?? "Founder";
 
-  /* Load or generate the audience map once */
-  const audienceMap: AudienceMapResult = loadAudienceMap() ?? generateMockAudienceMap(ob);
+  /* Load or generate the audience map once — runs only on initial mount */
+  const [audienceMap] = useState<AudienceMapResult>(
+    () => loadAudienceMap() ?? generateMockAudienceMap(ob)
+  );
 
   const shortRegion = audienceMap.region.length > 20
     ? audienceMap.region.split(",")[0].trim()
