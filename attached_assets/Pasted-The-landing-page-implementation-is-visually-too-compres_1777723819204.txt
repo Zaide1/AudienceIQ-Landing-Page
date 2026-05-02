@@ -1,0 +1,66 @@
+The landing page implementation is visually too compressed and the logo/dashboard preview are squashed. Please fix only the landing page layout and proportions.
+
+Reference target:
+- Large spacious SaaS landing page.
+- Left side: big hero text "Your audience, found.", subtitle, CTA, founder proof.
+- Right side: wide desktop dashboard mockup, not a narrow/tall card.
+- Overall layout should look like a 1440px-wide marketing hero.
+
+Do not change routes.
+Do not add backend.
+Do not add auth.
+Do not rebuild unrelated pages.
+Do not overcomplicate.
+
+Specific fixes:
+
+1. Hero layout
+- Make the main hero a two-column layout on desktop.
+- Use a max-width container around 1440px.
+- Left column width around 42%.
+- Right column width around 58%.
+- Align content vertically centered.
+- Keep generous whitespace.
+- On desktop, the hero should fit within the viewport without clipping.
+
+2. Hero text
+- Make headline large and bold:
+  - desktop font-size around 72px to 88px
+  - line-height around 0.95 to 1.05
+  - max-width around 560px
+- "found." should be purple.
+- Subtitle should be around 22px to 26px with relaxed line-height.
+- CTA should be large, around 280px wide and 64px high.
+
+3. Dashboard mockup
+- Replace the current narrow/squashed preview with a wide mockup container.
+- Use width: 100%.
+- Give it a min-width feel on desktop, around 760px to 900px if space allows.
+- Use aspect-ratio around 16 / 10 or 16 / 9.
+- Do not let the internal dashboard content squeeze into tiny columns.
+- If needed, scale the entire mockup using transform: scale(...) from a fixed internal design width instead of shrinking each child independently.
+- The mockup should show:
+  - left chat panel around 280px wide
+  - main dashboard area taking the rest
+  - top stat cards in a row
+  - wide dot-map card
+  - segment cards along the bottom
+
+4. Prevent squashing
+- For the logo icon, remove any styling that distorts aspect ratio.
+- Use width and height equal values, e.g. 28px by 28px.
+- Add object-fit: contain if it is an img.
+- Do not stretch SVG/img logos with width: 100% and unrelated height.
+- Founder avatars should be circular and equal width/height.
+
+5. Visual polish
+- Add subtle purple glow behind the dashboard mockup.
+- Keep the bottom-left purple dotted pattern.
+- Use soft shadows and rounded corners.
+- Hide overflow only where needed, but do not clip important content.
+
+6. Responsiveness
+- On smaller screens, stack the columns vertically.
+- Do not shrink the dashboard into unreadable proportions on desktop.
+
+After changes, explain exactly which files were modified and what layout strategy you used.

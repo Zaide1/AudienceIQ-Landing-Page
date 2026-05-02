@@ -1,65 +1,297 @@
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { 
-  Users, Focus, Target, CheckCircle2, 
-  Send, Sparkles, Plus
-} from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { Users, Focus, Target, CheckCircle2, Send, Sparkles, Plus } from "lucide-react";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 
-function DotGrid() {
-  const dots = [];
-  for (let i = 0; i < 400; i++) {
-    // Generate cluster-like distribution
-    let colorClass = "bg-muted";
-    
-    // Bottom-left cluster (purple)
-    if (i % 20 < 8 && Math.floor(i / 20) > 12) {
-      if (Math.random() > 0.3) colorClass = "bg-primary";
-    } 
-    // Yellow cluster
-    else if (i % 20 > 10 && i % 20 < 15 && Math.floor(i / 20) > 10 && Math.floor(i / 20) < 15) {
-      if (Math.random() > 0.4) colorClass = "bg-yellow-400";
-    }
-    // Green cluster
-    else if (i % 20 > 4 && i % 20 < 10 && Math.floor(i / 20) > 4 && Math.floor(i / 20) < 9) {
-      if (Math.random() > 0.4) colorClass = "bg-emerald-400";
-    }
-    // Orange cluster
-    else if (i % 20 > 14 && Math.floor(i / 20) < 6) {
-      if (Math.random() > 0.4) colorClass = "bg-orange-400";
-    }
+const DESIGN_WIDTH = 980;
+const DESIGN_HEIGHT = 620;
 
-    dots.push(
-      <div 
-        key={i} 
-        className={`w-[5px] h-[5px] rounded-full ${colorClass} transition-all duration-300 hover:scale-150 hover:bg-primary cursor-pointer`}
-      />
-    );
+function DotGrid() {
+  const dots: { color: string }[] = [];
+  const COLS = 22;
+  const ROWS = 16;
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      let color = "#E5E7EB";
+      // Purple cluster — bottom-left
+      if (col < 7 && row > 9) {
+        color = Math.random() > 0.25 ? "#7C3AED" : "#A78BFA";
+      }
+      // Blue/teal cluster — middle-left
+      else if (col >= 7 && col < 11 && row >= 5 && row < 10) {
+        color = Math.random() > 0.3 ? "#60A5FA" : "#93C5FD";
+      }
+      // Green cluster — center
+      else if (col >= 10 && col < 14 && row >= 6 && row < 12) {
+        color = Math.random() > 0.3 ? "#34D399" : "#6EE7B7";
+      }
+      // Yellow cluster — center-right
+      else if (col >= 13 && col < 17 && row >= 4 && row < 9) {
+        color = Math.random() > 0.35 ? "#FBBF24" : "#FDE68A";
+      }
+      // Orange cluster — right
+      else if (col >= 16 && row >= 2 && row < 8) {
+        color = Math.random() > 0.3 ? "#F97316" : "#FED7AA";
+      }
+      dots.push({ color });
+    }
   }
 
   return (
-    <div className="relative p-6 bg-white border border-border/60 rounded-xl w-full h-[220px] flex items-center justify-center overflow-hidden shadow-sm">
-      <div className="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-[7px]">
-        {dots}
+    <div className="relative rounded-xl border border-gray-100 overflow-hidden bg-white" style={{ height: 160 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${COLS}, 1fr)`,
+          gap: 5,
+          padding: "16px 20px",
+        }}
+      >
+        {dots.map((d, i) => (
+          <div
+            key={i}
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              backgroundColor: d.color,
+              flexShrink: 0,
+            }}
+          />
+        ))}
       </div>
-      
-      {/* Tooltip callout */}
-      <div className="absolute top-6 left-10 bg-white border shadow-lg rounded-xl p-3 text-xs z-10 min-w-[180px] animate-in fade-in slide-in-from-bottom-2">
-        <div className="font-bold text-foreground mb-0.5 text-[13px]">Gym Goers</div>
-        <div className="text-muted-foreground mb-1 text-[11px] font-medium">25% of audience</div>
-        <div className="font-semibold text-primary text-[13px]">~210K – 350K people</div>
+
+      {/* Tooltip */}
+      <div
+        className="absolute bg-white border border-gray-200 shadow-lg rounded-xl"
+        style={{ top: 20, left: 48, padding: "8px 12px", minWidth: 160 }}
+      >
+        <div className="font-bold text-gray-900" style={{ fontSize: 12 }}>Gym Goers</div>
+        <div className="text-gray-500 font-medium" style={{ fontSize: 11, marginTop: 2 }}>25% of audience</div>
+        <div className="font-semibold text-[#7C3AED]" style={{ fontSize: 12, marginTop: 2 }}>~210K – 350K people</div>
       </div>
-      
+
       {/* Legend */}
-      <div className="absolute bottom-4 right-4 flex items-center gap-3 bg-white/90 backdrop-blur-sm border shadow-sm rounded-full px-3 py-1.5 text-[10px] font-medium">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-primary" />
-          <span className="text-foreground">Covered 7%</span>
+      <div
+        className="absolute bottom-3 right-3 flex items-center gap-3 bg-white/95 border border-gray-100 shadow-sm rounded-full"
+        style={{ padding: "4px 10px", fontSize: 10, fontWeight: 600 }}
+      >
+        <span className="flex items-center gap-1">
+          <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#7C3AED", display: "inline-block" }} />
+          Covered 7%
+        </span>
+        <span className="flex items-center gap-1 text-gray-400">
+          <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#E5E7EB", display: "inline-block" }} />
+          Untapped 93%
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const segments = [
+  { name: "Gym Goers",            pct: "25%", range: "~210K–350K", color: "#7C3AED", platforms: ["Insta", "TikTok", "YouTube"] },
+  { name: "Busy Professionals",   pct: "30%", range: "~255K–420K", color: "#3B82F6", platforms: ["LinkedIn", "X"] },
+  { name: "Health Conscious",     pct: "20%", range: "~170K–280K", color: "#10B981", platforms: ["Insta", "Facebook"] },
+  { name: "Weight Loss Beginners",pct: "15%", range: "~125K–210K", color: "#F59E0B", platforms: ["TikTok", "Reddit"] },
+  { name: "Nutrition Optimisers", pct: "10%", range: "~85K–140K",  color: "#F97316", platforms: ["YouTube", "Reddit"] },
+];
+
+function DashboardInner() {
+  return (
+    <div
+      style={{
+        width: DESIGN_WIDTH,
+        height: DESIGN_HEIGHT,
+        display: "flex",
+        flexDirection: "column",
+        background: "#fff",
+        borderRadius: 16,
+        overflow: "hidden",
+        boxShadow: "0 25px 60px -12px rgba(124,58,237,0.18), 0 8px 24px -8px rgba(0,0,0,0.1)",
+        border: "1px solid #EDE9FE",
+      }}
+    >
+      {/* Title bar */}
+      <div style={{ height: 44, borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", padding: "0 16px", justifyContent: "space-between", background: "#fff", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <img src={logoImg} alt="logo" style={{ width: 20, height: 20, objectFit: "contain", borderRadius: 4 }} />
+          <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: -0.3 }}>Audense</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-muted" />
-          <span className="text-muted-foreground">Untapped 93%</span>
+        <div style={{ display: "flex", gap: 6 }}>
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#FC615D", display: "inline-block" }} />
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#FDBC40", display: "inline-block" }} />
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#35CD4B", display: "inline-block" }} />
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+
+        {/* LEFT: Chat panel */}
+        <div style={{ width: 280, borderRight: "1px solid #F3F4F6", display: "flex", flexDirection: "column", background: "#F9FAFB", flexShrink: 0 }}>
+          {/* Chat header */}
+          <div style={{ padding: "10px 14px", borderBottom: "1px solid #F3F4F6", background: "#fff", display: "flex", alignItems: "center", gap: 7 }}>
+            <div style={{ background: "#EDE9FE", padding: 4, borderRadius: 6, display: "flex" }}>
+              <Sparkles style={{ width: 12, height: 12, color: "#7C3AED" }} />
+            </div>
+            <span style={{ fontWeight: 600, fontSize: 12 }}>Audense AI</span>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "12px 12px", display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* AI */}
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Sparkles style={{ width: 11, height: 11, color: "#7C3AED" }} />
+              </div>
+              <div style={{ background: "#fff", border: "1px solid #F3F4F6", borderRadius: "12px 12px 12px 2px", padding: "9px 11px", fontSize: 11.5, lineHeight: 1.55, color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+                Hi Zaide 👋 I'm Audense, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them.
+              </div>
+            </div>
+            {/* User */}
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexDirection: "row-reverse" }}>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 9, fontWeight: 700, color: "#7C3AED" }}>Z</div>
+              <div style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: "12px 12px 2px 12px", padding: "9px 11px", fontSize: 11.5, lineHeight: 1.55, color: "#4C1D95" }}>
+                I'm building an AI calorie tracking app using photo recognition for people who want to lose weight but hate manual tracking.
+              </div>
+            </div>
+            {/* AI */}
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Sparkles style={{ width: 11, height: 11, color: "#7C3AED" }} />
+              </div>
+              <div style={{ background: "#fff", border: "1px solid #F3F4F6", borderRadius: "12px 12px 12px 2px", padding: "9px 11px", fontSize: 11.5, lineHeight: 1.55, color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+                Got it. Who do you think your primary users are?
+              </div>
+            </div>
+            {/* User */}
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexDirection: "row-reverse" }}>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 9, fontWeight: 700, color: "#7C3AED" }}>Z</div>
+              <div style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: "12px 12px 2px 12px", padding: "9px 11px", fontSize: 11.5, lineHeight: 1.55, color: "#4C1D95" }}>
+                Busy professionals, 20–35, who go to the gym but don't have time to track everything.
+              </div>
+            </div>
+            {/* AI */}
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Sparkles style={{ width: 11, height: 11, color: "#7C3AED" }} />
+              </div>
+              <div style={{ background: "#fff", border: "1px solid #F3F4F6", borderRadius: "12px 12px 12px 2px", padding: "9px 11px", fontSize: 11.5, lineHeight: 1.55, color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+                Perfect. Are you targeting any specific country or region first?
+              </div>
+            </div>
+            {/* User */}
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexDirection: "row-reverse" }}>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 9, fontWeight: 700, color: "#7C3AED" }}>Z</div>
+              <div style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: "12px 12px 2px 12px", padding: "9px 11px", fontSize: 11.5, lineHeight: 1.55, color: "#4C1D95" }}>
+                Let's start with the UK.
+              </div>
+            </div>
+          </div>
+
+          {/* Input */}
+          <div style={{ padding: "10px 12px", background: "#fff", borderTop: "1px solid #F3F4F6" }}>
+            <div style={{ display: "flex", alignItems: "center", background: "#F3F4F6", borderRadius: 999, padding: "6px 10px 6px 14px", gap: 6 }}>
+              <span style={{ flex: 1, fontSize: 11, color: "#9CA3AF" }}>Ask anything about your audience...</span>
+              <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#7C3AED", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Send style={{ width: 11, height: 11, color: "#fff", marginLeft: 1 }} />
+              </div>
+            </div>
+            <div style={{ textAlign: "center", fontSize: 9.5, color: "#9CA3AF", marginTop: 6, fontWeight: 500 }}>
+              Audense can make mistakes. Verify important insights.
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT: Dashboard */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#FAFAFA", overflowY: "auto" }}>
+          {/* Dashboard header */}
+          <div style={{ padding: "12px 20px", borderBottom: "1px solid #F3F4F6", background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: "#111827" }}>Your Audience</div>
+              <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>Market insights for AI Calorie Tracker · UK</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#fff", border: "1px solid #E5E7EB", borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 600, color: "#374151", cursor: "default" }}>
+              <Plus style={{ width: 11, height: 11 }} /> Export
+            </div>
+          </div>
+
+          <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* 4 stat cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+              {[
+                { icon: <Users style={{ width: 13, height: 13 }} />, label: "Reachable Audience", value: "850K–1.4M", sub: "people in the UK", color: "#6B7280", accent: false },
+                { icon: <Focus style={{ width: 13, height: 13 }} />, label: "Coverage", value: "7%", sub: "~60K people", color: "#7C3AED", accent: true },
+                { icon: <Target style={{ width: 13, height: 13 }} />, label: "Untapped Opportunity", value: "93%", sub: "~790K–1.34M", color: "#F59E0B", accent: false },
+                { icon: <CheckCircle2 style={{ width: 13, height: 13 }} />, label: "Confidence", value: "Medium", sub: "Based on available data", color: "#10B981", accent: false },
+              ].map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: "#fff",
+                    border: c.accent ? "1px solid #DDD6FE" : "1px solid #F3F4F6",
+                    borderRadius: 10,
+                    padding: "11px 13px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  {c.accent && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "#7C3AED" }} />}
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, color: c.color, marginBottom: 7 }}>
+                    {c.icon}
+                    <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{c.label}</span>
+                  </div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: c.accent ? c.color : "#111827", letterSpacing: -0.5 }}>{c.value}</div>
+                  <div style={{ fontSize: 10, color: "#9CA3AF", marginTop: 3, fontWeight: 500 }}>{c.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Dot grid */}
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 13, color: "#111827", marginBottom: 8 }}>Audience Universe</div>
+              <DotGrid />
+            </div>
+
+            {/* Segment cards */}
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 13, color: "#111827", marginBottom: 8 }}>Top Audience Segments</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                {segments.map((s, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      background: "#fff",
+                      border: "1px solid #F3F4F6",
+                      borderRadius: 10,
+                      padding: "9px 14px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.color, flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 12, color: "#111827" }}>{s.name}</div>
+                        <div style={{ fontSize: 10.5, color: "#6B7280", marginTop: 1 }}>{s.range} people</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ background: "#F5F3FF", color: "#7C3AED", borderRadius: 5, padding: "2px 7px", fontSize: 10.5, fontWeight: 700 }}>{s.pct}</span>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        {s.platforms.map(p => (
+                          <span key={p} style={{ background: "#F3F4F6", color: "#374151", borderRadius: 5, padding: "2px 6px", fontSize: 9.5, fontWeight: 600 }}>{p}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -67,198 +299,41 @@ function DotGrid() {
 }
 
 export function DashboardPreview() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.offsetWidth;
+      setScale(w / DESIGN_WIDTH);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <Card className="w-full max-w-[940px] h-[740px] rounded-2xl shadow-2xl shadow-primary/10 overflow-hidden flex flex-col bg-background border-border/50 -rotate-1 transition-all duration-700 hover:rotate-0 hover:-translate-y-2 hover:shadow-primary/20">
-      {/* Top Bar */}
-      <div className="h-12 border-b flex items-center px-4 justify-between bg-white shrink-0">
-        <div className="flex items-center gap-2.5">
-          <img src={logoImg} alt="Logo" className="w-5 h-5 rounded" />
-          <span className="font-bold text-sm tracking-tight">Audense</span>
-        </div>
-        <div className="flex items-center gap-2 opacity-60">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-          <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-        </div>
+    <div
+      ref={containerRef}
+      className="w-full"
+      style={{ height: DESIGN_HEIGHT * scale, position: "relative" }}
+    >
+      <div
+        style={{
+          width: DESIGN_WIDTH,
+          height: DESIGN_HEIGHT,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          position: "absolute",
+          top: 0,
+          left: 0,
+        }}
+      >
+        <DashboardInner />
       </div>
-
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel: Chat Interface */}
-        <div className="w-[340px] border-r flex flex-col bg-[#F9FAFB] shrink-0">
-          <div className="px-4 py-3 border-b bg-white flex items-center gap-2">
-            <div className="bg-primary/10 p-1 rounded">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-            </div>
-            <span className="font-semibold text-sm">Audense AI</span>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5 scrollbar-none">
-            {/* AI Msg */}
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <div className="bg-white border shadow-sm text-[13px] leading-relaxed p-3.5 rounded-2xl rounded-tl-sm text-foreground">
-                Hi Zaide 👋 I'm Audense, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them. Let's start with your product.
-              </div>
-            </div>
-
-            {/* User Msg */}
-            <div className="flex items-start gap-2.5 flex-row-reverse">
-              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-[10px] font-bold text-primary mt-0.5">Z</div>
-              <div className="bg-[#F5F3FF] text-[#4C1D95] font-medium border border-primary/10 text-[13px] leading-relaxed p-3.5 rounded-2xl rounded-tr-sm">
-                I'm building an AI calorie tracking app that automatically logs food using photo recognition. It's for people who want to lose weight but hate manual tracking.
-              </div>
-            </div>
-
-            {/* AI Msg */}
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <div className="bg-white border shadow-sm text-[13px] leading-relaxed p-3.5 rounded-2xl rounded-tl-sm text-foreground">
-                Got it. Who do you think your primary users are?
-              </div>
-            </div>
-
-            {/* User Msg */}
-            <div className="flex items-start gap-2.5 flex-row-reverse">
-              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-[10px] font-bold text-primary mt-0.5">Z</div>
-              <div className="bg-[#F5F3FF] text-[#4C1D95] font-medium border border-primary/10 text-[13px] leading-relaxed p-3.5 rounded-2xl rounded-tr-sm">
-                Busy professionals, 20-35, who go to the gym and care about fitness but don't have time to track everything.
-              </div>
-            </div>
-
-             {/* AI Msg */}
-             <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <div className="bg-white border shadow-sm text-[13px] leading-relaxed p-3.5 rounded-2xl rounded-tl-sm text-foreground">
-                Perfect. Are you targeting any specific country or region first?
-              </div>
-            </div>
-
-            {/* User Msg */}
-            <div className="flex items-start gap-2.5 flex-row-reverse">
-              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-[10px] font-bold text-primary mt-0.5">Z</div>
-              <div className="bg-[#F5F3FF] text-[#4C1D95] font-medium border border-primary/10 text-[13px] leading-relaxed p-3.5 rounded-2xl rounded-tr-sm">
-                Let's start with the UK.
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-white border-t mt-auto">
-            <div className="relative flex items-center">
-              <input 
-                type="text" 
-                placeholder="Ask anything about your audience..." 
-                className="w-full bg-[#F3F4F6] border-none rounded-full pl-4 pr-10 py-3 text-[13px] focus:outline-none placeholder:text-muted-foreground/70"
-                readOnly
-              />
-              <button className="absolute right-1.5 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white hover:bg-primary/90 transition-colors shadow-sm">
-                <Send className="w-3.5 h-3.5 ml-0.5" />
-              </button>
-            </div>
-            <div className="text-[10px] text-center text-muted-foreground mt-3 font-medium">
-              Audense can make mistakes. Verify important insights.
-            </div>
-          </div>
-        </div>
-
-        {/* Right Panel: Audience Data */}
-        <div className="flex-1 bg-[#FAFAFA] flex flex-col overflow-y-auto">
-          <div className="px-8 py-5 border-b bg-white sticky top-0 z-10 flex items-center justify-between shadow-sm">
-            <div>
-              <h2 className="text-[22px] font-bold text-foreground tracking-tight">Your Audience</h2>
-              <p className="text-[13px] font-medium text-muted-foreground mt-0.5">Market insights for AI Calorie Tracker in UK</p>
-            </div>
-            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs font-semibold rounded-lg">
-              <Plus className="w-3.5 h-3.5" /> Export Data
-            </Button>
-          </div>
-
-          <div className="p-8 flex flex-col gap-8">
-            {/* 4 Metric Cards */}
-            <div className="grid grid-cols-4 gap-4">
-              <Card className="p-4 border border-border/60 shadow-sm bg-white rounded-xl">
-                <div className="flex items-center gap-2 mb-3 text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Reachable</span>
-                </div>
-                <div className="font-extrabold text-lg text-foreground tracking-tight">850K–1.4M</div>
-                <div className="text-[11px] font-medium text-muted-foreground mt-1">people in the UK</div>
-              </Card>
-              <Card className="p-4 border border-primary/20 shadow-sm bg-white rounded-xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
-                <div className="flex items-center gap-2 mb-3 text-primary">
-                  <Focus className="w-4 h-4" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Coverage</span>
-                </div>
-                <div className="font-extrabold text-lg text-primary tracking-tight">7%</div>
-                <div className="text-[11px] font-medium text-muted-foreground mt-1">~60K people</div>
-              </Card>
-              <Card className="p-4 border border-border/60 shadow-sm bg-white rounded-xl">
-                <div className="flex items-center gap-2 mb-3 text-[#F59E0B]">
-                  <Target className="w-4 h-4" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Untapped</span>
-                </div>
-                <div className="font-extrabold text-lg text-foreground tracking-tight">93%</div>
-                <div className="text-[11px] font-medium text-muted-foreground mt-1">~790K–1.34M</div>
-              </Card>
-              <Card className="p-4 border border-border/60 shadow-sm bg-white rounded-xl">
-                <div className="flex items-center gap-2 mb-3 text-[#10B981]">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Confidence</span>
-                </div>
-                <div className="font-extrabold text-lg text-[#10B981] tracking-tight">Medium</div>
-                <div className="text-[11px] font-medium text-muted-foreground mt-1">Based on available data</div>
-              </Card>
-            </div>
-
-            {/* Audience Universe Dot Grid */}
-            <div className="space-y-4">
-              <h3 className="text-base font-bold text-foreground tracking-tight">Audience Universe</h3>
-              <DotGrid />
-            </div>
-
-            {/* Segments */}
-            <div className="space-y-4 pb-8">
-              <h3 className="text-base font-bold text-foreground tracking-tight">Top Audience Segments</h3>
-              <div className="flex flex-col gap-3">
-                {[
-                  { name: "Gym Goers", size: "25%", range: "~210K-350K", platforms: ["Instagram", "TikTok", "YouTube"] },
-                  { name: "Busy Professionals", size: "30%", range: "~255K-420K", platforms: ["LinkedIn", "X/Twitter"] },
-                  { name: "Health Conscious", size: "20%", range: "~170K-280K", platforms: ["Instagram", "Facebook"] },
-                  { name: "Weight Loss Beginners", size: "15%", range: "~125K-210K", platforms: ["TikTok", "Reddit"] },
-                  { name: "Nutrition Optimisers", size: "10%", range: "~85K-140K", platforms: ["YouTube", "Reddit", "X/Twitter"] },
-                ].map((segment, i) => (
-                  <Card key={i} className="p-4 border border-border/60 shadow-sm bg-white rounded-xl flex items-center justify-between hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2.5">
-                        <span className="font-bold text-[15px] text-foreground group-hover:text-primary transition-colors">{segment.name}</span>
-                        <Badge variant="secondary" className="text-[11px] font-bold h-5 rounded px-1.5 bg-primary/10 text-primary hover:bg-primary/20">{segment.size}</Badge>
-                      </div>
-                      <div className="text-[13px] font-medium text-muted-foreground">{segment.range} people</div>
-                    </div>
-                    
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-wider">Top Platforms</div>
-                      <div className="flex items-center gap-1.5">
-                        {segment.platforms.map(p => (
-                          <div key={p} className="h-6 px-2 rounded-md bg-muted flex items-center justify-center text-[10px] font-bold text-foreground/70">
-                            {p}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Card>
+    </div>
   );
 }
