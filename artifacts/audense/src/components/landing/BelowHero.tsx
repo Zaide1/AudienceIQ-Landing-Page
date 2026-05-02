@@ -343,7 +343,7 @@ function FAQSection() {
       style={{
         width: "100%",
         padding: "clamp(80px, 10vw, 128px) clamp(24px, 5vw, 72px)",
-        background: "#fff",
+        background: "transparent",
       }}
     >
       <div style={{ maxWidth: 880, margin: "0 auto" }}>
@@ -377,10 +377,8 @@ function Footer() {
       style={{
         position: "relative",
         width: "100%",
-        padding: "clamp(72px, 9vw, 120px) clamp(24px, 5vw, 72px) 48px",
-        background:
-          "linear-gradient(180deg, #FFFFFF 0%, #F4F1FB 50%, #EAE3F7 100%)",
-        borderTop: "1px solid #ECE9F5",
+        padding: "clamp(56px, 8vw, 96px) clamp(24px, 5vw, 72px) 56px",
+        background: "transparent",
       }}
     >
       <div
@@ -519,8 +517,32 @@ export function BelowHero() {
     <>
       <ProductValueSection />
       <ExplanationRows />
-      <FAQSection />
-      <Footer />
+      {/* Continuous bottom gradient that bleeds the FAQ down into the footer
+          with no visible seam — soft lavender wash that "overextends" past
+          the content, similar to the Cluely reference. */}
+      <div
+        style={{
+          position: "relative",
+          background:
+            "linear-gradient(180deg, #FFFFFF 0%, #FAF8FE 28%, #EFEAF8 62%, #E2D8F2 100%)",
+        }}
+      >
+        {/* Soft purple bloom anchored bottom-center for a calm, premium glow */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background:
+              "radial-gradient(ellipse 70% 55% at 50% 100%, rgba(167,139,250,0.28) 0%, rgba(124,58,237,0.10) 45%, transparent 78%)",
+          }}
+        />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <FAQSection />
+          <Footer />
+        </div>
+      </div>
     </>
   );
 }
