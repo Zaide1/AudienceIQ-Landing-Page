@@ -25,6 +25,7 @@ export interface EvidenceSummary {
   totalSignals: number;
   strongestSignals: string[];
   limitations: string[];
+  sourcesUsed?: string[];
 }
 
 /* ─── Result shape (mirrors frontend AudienceMapResult) ──────────── */

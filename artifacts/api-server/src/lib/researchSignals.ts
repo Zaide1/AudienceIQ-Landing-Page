@@ -9,7 +9,7 @@ import type {
 /* ─── ResearchSignal type (spec-compliant) ──────────────────────── */
 export interface ResearchSignal {
   id: string;
-  source: "web" | "competitor_site" | "youtube" | "review_site" | "manual";
+  source: "hacker_news" | "web" | "competitor_site" | "youtube" | "review_site" | "manual";
   query: string;
   title: string;
   snippet: string;
@@ -196,7 +196,7 @@ signalType guide:
 
       return {
         id:          `signal-hn-${Date.now()}-${i}`,
-        source:      "web" as const,
+        source:      "hacker_news" as const,
         query:       raw.query,
         title:       raw.title,
         snippet:     raw.snippet,
@@ -211,7 +211,7 @@ signalType guide:
     logger.warn({ err }, "research: signal classification failed, using defaults");
     return rawSignals.map((raw, i) => ({
       id:        `signal-hn-${Date.now()}-${i}`,
-      source:    "web" as const,
+      source:    "hacker_news" as const,
       query:     raw.query,
       title:     raw.title,
       snippet:   raw.snippet,
@@ -301,37 +301,61 @@ Make signals specific to this product's context and realistic. No URLs — these
   }
 }
 
+/* ─── Category relevance helper ─────────────────────────────────── */
+const TECH_CATEGORIES = [
+  "developer tools", "saas", "ai", "artificial intelligence", "productivity",
+  "data", "analytics", "software", "b2b", "enterprise", "developer", "devtools",
+  "startup", "fintech", "edtech", "hr tech", "marketing tech",
+];
+
+function isTechCategory(category: string): boolean {
+  const lower = category.toLowerCase();
+  return TECH_CATEGORIES.some((t) => lower.includes(t));
+}
+
 /* ─── Step 5: Build evidenceSummary + updatedSegments ───────────── */
 function buildResults(
   signals: ResearchSignal[],
   urlBackedCount: number,
   sourceMode: "live_research" | "ai_hypothesis",
   segments: AudienceSegment[],
+  category: string,
 ): { evidenceSummary: EvidenceSummary; updatedSegments: AudienceSegment[] } {
   const strongestSignals = signals
     .filter((s) => s.signalType === "pain_point" || s.signalType === "unmet_need")
     .slice(0, 5)
     .map((s) => s.snippet.slice(0, 100));
 
+  const isTech = isTechCategory(category);
+  const hnRelevanceNote = isTech
+    ? "Hacker News skews toward technical and startup audiences — well-suited for this category."
+    : "Hacker News skews toward technical/startup audiences and may not represent mainstream consumer demand for this category.";
+
+  const confidenceReason = sourceMode === "live_research"
+    ? `Based on ${urlBackedCount} public Hacker News discussion signals plus AI audience analysis.`
+    : urlBackedCount > 0
+      ? `Only ${urlBackedCount} Hacker News signal(s) found (minimum 3 needed for live_research mode). Supplemented with AI hypotheses.`
+      : "No live source-backed signals were collected. All signals are AI-generated hypotheses based on product context.";
+
+  const hnLimitations = sourceMode === "live_research"
+    ? [
+        "Signals are from public Hacker News discussions — not scraped from Reddit, X, TikTok, or review sites.",
+        hnRelevanceNote,
+        "Validate with sources closer to your actual audience before making decisions.",
+      ]
+    : [
+        "This is a directional MVP estimate.",
+        "Live social and competitor data is not connected yet.",
+        "Validate with real user conversations before making decisions.",
+      ];
+
   const evidenceSummary: EvidenceSummary = {
     sourceMode,
-    confidenceReason: sourceMode === "live_research"
-      ? `${urlBackedCount} source-backed signals collected from public HN search results.`
-      : urlBackedCount > 0
-        ? `Only ${urlBackedCount} source-backed signal(s) found — minimum 3 required for live_research. Supplemented with AI hypotheses.`
-        : "No live source-backed signals were collected. All signals are AI-generated hypotheses based on product context.",
+    confidenceReason,
     totalSignals: signals.length,
     strongestSignals,
-    limitations: sourceMode === "live_research"
-      ? [
-          "Signals are from HN public search results — not scraped from Reddit, X, or TikTok.",
-          "Validate insights with direct user conversations before making decisions.",
-        ]
-      : [
-          "This is a directional MVP estimate.",
-          "Live social and competitor data is not connected yet.",
-          "Validate with real user conversations before making decisions.",
-        ],
+    limitations: hnLimitations,
+    ...(sourceMode === "live_research" ? { sourcesUsed: ["hacker_news"] } : {}),
   };
 
   /* Only update segment evidence when there are signals for that segment.
@@ -390,7 +414,7 @@ export async function collectSignals(
   /* No AI configured — return honest empty state, preserve map */
   if (!baseURL || !apiKey) {
     logger.warn("research: AI not configured, returning empty result");
-    const { evidenceSummary, updatedSegments } = buildResults([], 0, "ai_hypothesis", segments);
+    const { evidenceSummary, updatedSegments } = buildResults([], 0, "ai_hypothesis", segments, category);
     return { sourceMode: "ai_hypothesis", signals: [], urlBackedSignalCount: 0, evidenceSummary, updatedSegments };
   }
 
@@ -436,7 +460,7 @@ export async function collectSignals(
     "research: collection complete",
   );
 
-  const { evidenceSummary, updatedSegments } = buildResults(signals, urlBackedCount, sourceMode, segments);
+  const { evidenceSummary, updatedSegments } = buildResults(signals, urlBackedCount, sourceMode, segments, category);
 
   return { sourceMode, signals, urlBackedSignalCount: urlBackedCount, evidenceSummary, updatedSegments };
 }

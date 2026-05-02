@@ -15,11 +15,12 @@ export interface EvidenceSummary {
   totalSignals: number;
   strongestSignals: string[];
   limitations: string[];
+  sourcesUsed?: string[];
 }
 
 export interface ResearchSignal {
   id: string;
-  source: "web" | "competitor_site" | "youtube" | "review_site" | "manual";
+  source: "hacker_news" | "web" | "competitor_site" | "youtube" | "review_site" | "manual";
   query: string;
   title: string;
   snippet: string;

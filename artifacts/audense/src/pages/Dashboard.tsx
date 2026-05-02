@@ -813,11 +813,14 @@ export default function Dashboard() {
         }
       }
 
-      const urlCount = data.urlBackedSignalCount ?? data.signals.filter((s) => s.url).length;
+      const urlCount    = data.urlBackedSignalCount ?? data.signals.filter((s) => s.url).length;
+      const sourcesUsed = data.evidenceSummary?.sourcesUsed ?? [];
+      const usedHN      = sourcesUsed.includes("hacker_news");
       if (data.sourceMode === "live_research") {
-        showToast("success", `Live research added ${urlCount} source-backed signal${urlCount !== 1 ? "s" : ""}.`);
+        const sourceLabel = usedHN ? "Hacker News / public tech discussion" : "public discussion";
+        showToast("success", `Live ${sourceLabel} signals found — ${urlCount} source-backed signal${urlCount !== 1 ? "s" : ""} added.`);
       } else if (urlCount >= 1) {
-        showToast("info", `Not enough live signals found yet — this map is still hypothesis-led.`);
+        showToast("info", "Not enough live signals found yet — this map is still hypothesis-led.");
       } else {
         showToast("info", "No live source-backed signals found yet. Audense is still using hypothesis-led audience estimates.");
       }

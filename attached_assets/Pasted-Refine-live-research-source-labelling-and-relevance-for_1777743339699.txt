@@ -1,0 +1,51 @@
+Refine live research source labelling and relevance for Audense.
+
+Important:
+- Do not change dashboard layout broadly.
+- Do not add new sources yet.
+- Do not fake Reddit/X/TikTok/TikTok/review data.
+- Keep the HN Algolia live research connector working.
+
+Current live research uses Hacker News Algolia. This is real URL-backed public data, but it is not general social listening and should not be described as Reddit/TikTok/X research.
+
+Required changes:
+1. Source labelling
+- When signals come from Hacker News, label source as "hacker_news" or "hn", not generic "web" if possible.
+- UI/toast should say:
+  "Live public discussion signals found from Hacker News."
+  or
+  "Live tech/startup discussion signals found."
+- Do not say "social signals" unless the source is actually social.
+- Do not imply Reddit/X/TikTok data exists.
+
+2. Evidence summary
+- evidenceSummary.confidenceReason should mention the source:
+  "Based on public Hacker News discussion signals plus AI audience analysis."
+- evidenceSummary.limitations should include:
+  "Hacker News skews toward technical/startup audiences."
+  "This may not represent mainstream consumer demand."
+  "Validate with sources closer to your actual audience."
+
+3. SourceMode nuance
+- Keep sourceMode = "live_research" when 3+ URL-backed HN signals exist.
+- But also add/keep source detail so chat can say what kind of live research was used.
+- If possible, add evidenceSummary.sourcesUsed: string[] = ["hacker_news"].
+
+4. Relevance guard
+- If the product category is clearly non-technical/mainstream consumer and HN signals are weak or generic, do not overstate confidence.
+- Keep confidenceReason cautious.
+- Chat should say:
+  "These live signals are from startup/tech discussions, so treat them as partial evidence."
+
+5. Chat honesty
+- If sourceMode is live_research and source is Hacker News, Audense may say:
+  "Based on live Hacker News/public discussion signals..."
+- It must not say:
+  "People on Reddit/TikTok/X are saying..."
+  unless those sources are actually connected.
+
+Validation:
+- For SaaS/dev/AI product: HN signals can be treated as relevant live public signals.
+- For consumer fitness/fashion/local service product: HN signals should be labelled as limited/partial.
+- Toast and chat copy mention Hacker News/public discussion, not generic social listening.
+- No Reddit/X/TikTok claims appear.

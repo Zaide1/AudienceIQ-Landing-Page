@@ -282,9 +282,17 @@ router.post("/chat/refine", async (req, res) => {
 
     const productCtx = productContext(body);
 
-    const sourceMode = currentAudienceMap.evidenceSummary?.sourceMode ?? "mock";
+    const sourceMode   = currentAudienceMap.evidenceSummary?.sourceMode ?? "mock";
+    const sourcesUsed  = currentAudienceMap.evidenceSummary?.sourcesUsed ?? [];
+    const usedHN       = sourcesUsed.includes("hacker_news");
+    const category     = currentAudienceMap.category ?? "";
+    const isTechCat    = ["developer", "saas", "ai", "b2b", "software", "fintech", "edtech", "productivity", "analytics"]
+      .some((t) => category.toLowerCase().includes(t));
+
     const evidenceNote = sourceMode === "live_research"
-      ? "This map is backed by live research signals."
+      ? usedHN
+        ? `This map is backed by live public Hacker News discussion signals (${currentAudienceMap.evidenceSummary?.totalSignals ?? 0} signals). ${isTechCat ? "HN is well-suited for this technical category." : "Note: HN skews toward tech/startup audiences — treat these as partial evidence for a mainstream consumer product."}`
+        : "This map is backed by live research signals."
       : `This map is based on ${sourceMode === "ai_hypothesis" ? "AI-generated hypotheses" : "directional mock estimates"} — no live Reddit, X/Twitter, TikTok, YouTube, or competitor data has been read yet.`;
 
     const evidenceContext = currentAudienceMap.segments
@@ -320,6 +328,10 @@ If the user asks what people are saying on Reddit, X, TikTok, YouTube, or compet
 - If sourceMode is NOT "live_research", say these are directional hypotheses to validate, NOT verified live findings.
 - You may use the evidence fields (unmetNeeds, objections, exampleUserLanguage) to give useful answers, but frame them as "based on what typically happens in this category" or "here's what to look for" — not as verified quotes or scraped data.
 - Never claim to have read live social data, reviews, or competitor pages unless sourceMode is "live_research".
+- If sourceMode IS "live_research" and sourcesUsed includes "hacker_news":
+  - You MAY say "Based on live Hacker News / public tech discussion signals..."
+  - You MUST NOT say "People on Reddit/TikTok/X are saying..." — those sources are not connected.
+  - If the product is non-technical/consumer, add: "These are from tech startup discussions, so treat them as partial evidence — validate with sources closer to your real audience."
 
 ═══ SCOPE GUARDRAILS ═══
 You are an audience intelligence coach only. You cannot and will not provide:
