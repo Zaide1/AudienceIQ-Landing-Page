@@ -378,8 +378,15 @@
 
 @media (min-width: 1200px) {
   .mockup-outer {
-    width: 100%;
-    max-width: none;
+    width: min(52vw, 860px);
+    max-width: 860px;
     margin: 0;
+  }
+}
+
+@media (min-width: 1600px) {
+  .mockup-outer {
+    width: min(46vw, 820px);
+    max-width: 820px;
   }
 }
