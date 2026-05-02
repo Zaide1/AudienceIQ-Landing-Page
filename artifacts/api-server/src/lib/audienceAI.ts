@@ -9,6 +9,24 @@ import {
 const COLORS = ["purple", "blue", "green", "orange", "pink"] as const;
 type Color = (typeof COLORS)[number];
 
+/* ─── Evidence types (mirrors frontend) ─────────────────────────── */
+export interface SegmentEvidence {
+  signalStrength: "Low" | "Medium" | "High";
+  exampleUserLanguage: string[];
+  likelySearchQueries: string[];
+  competitorMentions: string[];
+  unmetNeeds: string[];
+  objections: string[];
+}
+
+export interface EvidenceSummary {
+  sourceMode: "mock" | "ai_hypothesis" | "live_research";
+  confidenceReason: string;
+  totalSignals: number;
+  strongestSignals: string[];
+  limitations: string[];
+}
+
 /* ─── Result shape (mirrors frontend AudienceMapResult) ──────────── */
 export interface AudienceSegment {
   id: string;
@@ -21,6 +39,7 @@ export interface AudienceSegment {
   platforms: string[];
   whyThisSegment: string;
   acquisitionAngle: string;
+  evidence?: SegmentEvidence;
 }
 
 export interface AudienceInsight {
@@ -38,6 +57,28 @@ export interface AudienceMapResult {
   untapped: { percent: number; min: number; max: number };
   segments: AudienceSegment[];
   insights: AudienceInsight[];
+  evidenceSummary?: EvidenceSummary;
+}
+
+/* ─── Mock evidence helper ───────────────────────────────────────── */
+function buildMockSegmentEvidence(painPoints: string[]): SegmentEvidence {
+  return {
+    signalStrength: "Medium",
+    exampleUserLanguage: painPoints.slice(0, 3).map((p) => {
+      const lower = p.charAt(0).toLowerCase() + p.slice(1);
+      return `"I just ${lower.replace(/[.!?]$/, "")}"`;
+    }),
+    likelySearchQueries: painPoints.slice(0, 3).map((p) =>
+      p.toLowerCase().replace(/['".,!?]/g, "").trim(),
+    ),
+    competitorMentions: [],
+    unmetNeeds: painPoints,
+    objections: [
+      "Not sure this is better than what I already use",
+      "Worried about the learning curve",
+      "Price needs to justify switching",
+    ],
+  };
 }
 
 /* ─── Build deterministic fallback ──────────────────────────────── */
@@ -66,6 +107,7 @@ export function buildMockResult(
     platforms: t.platforms,
     whyThisSegment: t.whyThisSegment,
     acquisitionAngle: t.acquisitionAngle,
+    evidence: buildMockSegmentEvidence(t.painPoints),
   }));
 
   return {
@@ -81,6 +123,17 @@ export function buildMockResult(
       max: Math.round(reachMax * (untappedPct / 100)),
     },
     segments,
+    evidenceSummary: {
+      sourceMode: "mock",
+      confidenceReason: "Directional estimate based on category and region benchmarks. No live data has been collected.",
+      totalSignals: 0,
+      strongestSignals: [],
+      limitations: [
+        "This is a directional MVP estimate.",
+        "Live social and competitor data is not connected yet.",
+        "Validate with real user conversations before making decisions.",
+      ],
+    },
     insights: [
       {
         title: "Biggest opportunity",
@@ -130,6 +183,27 @@ function validateResult(raw: unknown): AudienceMapResult | null {
     if (!Array.isArray(s.painPoints) || !Array.isArray(s.platforms)) return null;
     if (typeof s.whyThisSegment !== "string" || typeof s.acquisitionAngle !== "string") return null;
     pctSum += s.percent;
+
+    /* Optionally extract evidence if AI provided it */
+    let evidence: SegmentEvidence | undefined;
+    const ev = s.evidence as Record<string, unknown> | undefined;
+    if (ev && Array.isArray(ev.exampleUserLanguage) && Array.isArray(ev.unmetNeeds) && Array.isArray(ev.objections)) {
+      evidence = {
+        signalStrength: (["Low", "Medium", "High"] as const).includes(ev.signalStrength as "Low" | "Medium" | "High")
+          ? ev.signalStrength as "Low" | "Medium" | "High"
+          : "Medium",
+        exampleUserLanguage: (ev.exampleUserLanguage as unknown[]).filter((x): x is string => typeof x === "string"),
+        likelySearchQueries: Array.isArray(ev.likelySearchQueries)
+          ? (ev.likelySearchQueries as unknown[]).filter((x): x is string => typeof x === "string")
+          : [],
+        competitorMentions: Array.isArray(ev.competitorMentions)
+          ? (ev.competitorMentions as unknown[]).filter((x): x is string => typeof x === "string")
+          : [],
+        unmetNeeds: (ev.unmetNeeds as unknown[]).filter((x): x is string => typeof x === "string"),
+        objections: (ev.objections as unknown[]).filter((x): x is string => typeof x === "string"),
+      };
+    }
+
     segments.push({
       id: s.id,
       name: s.name,
@@ -141,6 +215,7 @@ function validateResult(raw: unknown): AudienceMapResult | null {
       platforms: s.platforms as string[],
       whyThisSegment: s.whyThisSegment,
       acquisitionAngle: s.acquisitionAngle,
+      ...(evidence ? { evidence } : {}),
     });
   }
 
@@ -164,6 +239,19 @@ function validateResult(raw: unknown): AudienceMapResult | null {
     insights.push({ title: i.title, description: i.description });
   }
 
+  /* Build evidenceSummary — always ai_hypothesis for AI-generated results */
+  const evidenceSummary: EvidenceSummary = {
+    sourceMode: "ai_hypothesis",
+    confidenceReason: "Audience segments are hypotheses based on product context. No live Reddit, X, TikTok, or competitor data has been read.",
+    totalSignals: 0,
+    strongestSignals: [],
+    limitations: [
+      "This is a directional MVP estimate.",
+      "Live social and competitor data is not connected yet.",
+      "Validate with real user conversations before making decisions.",
+    ],
+  };
+
   return {
     productSummary: r.productSummary,
     region: r.region,
@@ -174,6 +262,7 @@ function validateResult(raw: unknown): AudienceMapResult | null {
     untapped: { percent: unt.percent, min: unt.min, max: unt.max },
     segments,
     insights,
+    evidenceSummary,
   };
 }
 
@@ -246,7 +335,15 @@ Return a JSON object with exactly this shape — no extra keys:
       "painPoints": ["Pain 1", "Pain 2"],
       "platforms": ["Platform 1", "Platform 2"],
       "whyThisSegment": "Why this segment matters for this product",
-      "acquisitionAngle": "Specific go-to-market angle for this segment"
+      "acquisitionAngle": "Specific go-to-market angle for this segment",
+      "evidence": {
+        "signalStrength": "Medium",
+        "exampleUserLanguage": ["Phrase a real user in this segment would say", "Another phrase"],
+        "likelySearchQueries": ["search term 1", "search term 2"],
+        "competitorMentions": [],
+        "unmetNeeds": ["Specific unmet need 1", "Specific unmet need 2"],
+        "objections": ["Likely objection 1", "Likely objection 2"]
+      }
     }
     // ... exactly 5 segments total, colors must be: purple, blue, green, orange, pink in that order
     // percentages must sum to exactly 100
@@ -264,7 +361,13 @@ Rules:
 - Segment percentages sum to exactly 100
 - audienceMin and audienceMax must scale with percent (e.g. 25% of ${reachMin} = ${Math.round(reachMin * 0.25)})
 - Make segment names, painPoints, platforms, whyThisSegment, and acquisitionAngle specific to this product
-- Keep descriptions practical and actionable — useful for deciding who to target first`;
+- Keep descriptions practical and actionable — useful for deciding who to target first
+- For evidence fields: these are HYPOTHESES based on the product context — do not claim to have read Reddit, X, TikTok, or any live source
+- exampleUserLanguage: 2–3 realistic phrases a person in this segment would actually say
+- likelySearchQueries: 2–3 search terms they would type
+- unmetNeeds: 2–3 specific needs the product could address beyond the pain points listed
+- objections: 2–3 realistic reasons they might not adopt the product
+- competitorMentions: only include obvious category competitors, otherwise []`;
 
   try {
     const client = new OpenAI({ apiKey, baseURL });

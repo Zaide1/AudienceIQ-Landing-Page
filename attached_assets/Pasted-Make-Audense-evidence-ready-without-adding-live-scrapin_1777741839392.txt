@@ -1,0 +1,96 @@
+Make Audense evidence-ready without adding live scraping yet.
+
+Important:
+- Do not add live scraping yet.
+- Do not add Supabase/auth yet.
+- Do not change dashboard layout.
+- Do not change onboarding layout.
+- Do not change chat UI.
+- Keep /api/audience/generate and /api/chat/refine working.
+- Keep existing fallback behaviour.
+- Existing UI should keep rendering if new evidence fields are missing.
+
+Goal:
+Audense’s long-term value is audience intelligence from real user signals: Reddit, X/Twitter, TikTok, YouTube, reviews, forums, and competitor pages.
+Before adding live sources, update the data model and prompts so the system is honest and evidence-ready.
+
+Update AudienceMapResult with optional evidence fields:
+
+AudienceMapResult.evidenceSummary?: {
+  sourceMode: "mock" | "ai_hypothesis" | "live_research";
+  confidenceReason: string;
+  totalSignals: number;
+  strongestSignals: string[];
+  limitations: string[];
+}
+
+Each segment should optionally include:
+evidence?: {
+  signalStrength: "Low" | "Medium" | "High";
+  exampleUserLanguage: string[];
+  likelySearchQueries: string[];
+  competitorMentions: string[];
+  unmetNeeds: string[];
+  objections: string[];
+}
+
+Add an internal type if helpful:
+ResearchSignal:
+{
+  source: "reddit" | "twitter" | "tiktok" | "youtube" | "app_store" | "competitor_site" | "forum" | "manual" | "mock";
+  title: string;
+  snippet: string;
+  url?: string;
+  author?: string;
+  date?: string;
+  sentiment: "positive" | "negative" | "neutral" | "mixed";
+  topics: string[];
+  segmentHint?: string;
+  painPointHint?: string;
+}
+
+Generation behaviour:
+1. Mock generation:
+- Populate realistic placeholder evidence fields.
+- Use sourceMode: "mock" or "ai_hypothesis".
+- Add limitations:
+  - "This is a directional MVP estimate."
+  - "Live social and competitor data is not connected yet."
+  - "Validate with real user conversations before making decisions."
+
+2. AI generation:
+- Prompt the model to generate audience segments as hypotheses based on onboarding context.
+- Include:
+  - exampleUserLanguage
+  - unmetNeeds
+  - objections
+  - likelySearchQueries
+  - competitorMentions if obvious, otherwise []
+- Must not claim it has read Reddit, X/Twitter, TikTok, reviews, or competitor pages unless sourceMode is "live_research".
+- For now, sourceMode should be "ai_hypothesis" when AI generated.
+
+3. Chat behaviour:
+- If the user asks:
+  - “what are people saying?”
+  - “what’s missing in the market?”
+  - “what do competitors miss?”
+  - “what are users complaining about?”
+- Audense should answer honestly from evidence fields.
+- If sourceMode is not "live_research", it should say these are hypotheses/signals to validate, not verified live findings.
+- It should not pretend to have read live social data yet.
+
+Validation:
+- Existing dashboard still renders.
+- Existing chat still works.
+- AudienceMapResult remains backward compatible.
+- Mock result includes evidenceSummary.
+- AI result includes evidenceSummary with sourceMode "ai_hypothesis".
+- Each segment has evidence fields.
+- Chat does not claim live Reddit/Twitter/TikTok/competitor research unless sourceMode is "live_research".
+
+After implementing, explain:
+- Updated data fields
+- How evidence is represented
+- How mock/AI generation populate evidence
+- How chat avoids pretending to have live research
+- How this prepares us for real Reddit/X/TikTok/competitor research later

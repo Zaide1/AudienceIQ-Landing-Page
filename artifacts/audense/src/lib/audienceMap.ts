@@ -1,5 +1,35 @@
 /* ─── AudienceMapResult — shared frontend data contract ─────────── */
 
+export interface SegmentEvidence {
+  signalStrength: "Low" | "Medium" | "High";
+  exampleUserLanguage: string[];
+  likelySearchQueries: string[];
+  competitorMentions: string[];
+  unmetNeeds: string[];
+  objections: string[];
+}
+
+export interface EvidenceSummary {
+  sourceMode: "mock" | "ai_hypothesis" | "live_research";
+  confidenceReason: string;
+  totalSignals: number;
+  strongestSignals: string[];
+  limitations: string[];
+}
+
+export interface ResearchSignal {
+  source: "reddit" | "twitter" | "tiktok" | "youtube" | "app_store" | "competitor_site" | "forum" | "manual" | "mock";
+  title: string;
+  snippet: string;
+  url?: string;
+  author?: string;
+  date?: string;
+  sentiment: "positive" | "negative" | "neutral" | "mixed";
+  topics: string[];
+  segmentHint?: string;
+  painPointHint?: string;
+}
+
 export interface AudienceSegment {
   id: string;
   name: string;
@@ -11,6 +41,7 @@ export interface AudienceSegment {
   platforms: string[];
   whyThisSegment: string;
   acquisitionAngle: string;
+  evidence?: SegmentEvidence;
 }
 
 export interface AudienceInsight {
@@ -39,6 +70,7 @@ export interface AudienceMapResult {
   };
   segments: AudienceSegment[];
   insights: AudienceInsight[];
+  evidenceSummary?: EvidenceSummary;
 }
 
 /* ─── Storage ────────────────────────────────────────────────────── */
@@ -480,6 +512,27 @@ function getTemplate(categoryId: string): SegmentTemplate[] {
   return TEMPLATES["health-fitness"];
 }
 
+/* ─── Mock evidence helper ───────────────────────────────────────── */
+function buildMockSegmentEvidence(painPoints: string[]): SegmentEvidence {
+  return {
+    signalStrength: "Medium",
+    exampleUserLanguage: painPoints.slice(0, 3).map((p) => {
+      const lower = p.charAt(0).toLowerCase() + p.slice(1);
+      return `"I just ${lower.replace(/[.!?]$/, "")}"`;
+    }),
+    likelySearchQueries: painPoints.slice(0, 3).map((p) =>
+      p.toLowerCase().replace(/['".,!?]/g, "").trim(),
+    ),
+    competitorMentions: [],
+    unmetNeeds: painPoints,
+    objections: [
+      "Not sure this is better than what I already use",
+      "Worried about the learning curve",
+      "Price needs to justify switching",
+    ],
+  };
+}
+
 /* ─── Mock generation ────────────────────────────────────────────── */
 export function generateMockAudienceMap(ob: Record<string, string> | null): AudienceMapResult {
   const productIdea = ob?.productIdea ?? "Your product";
@@ -501,6 +554,7 @@ export function generateMockAudienceMap(ob: Record<string, string> | null): Audi
     ...t,
     audienceMin: Math.round(reachMin * (t.percent / 100)),
     audienceMax: Math.round(reachMax * (t.percent / 100)),
+    evidence: buildMockSegmentEvidence(t.painPoints),
   }));
 
   const categoryLabel = CATEGORY_LABELS[categoryId] ?? categoryId;
@@ -525,6 +579,17 @@ export function generateMockAudienceMap(ob: Record<string, string> | null): Audi
       max:     untappedMax,
     },
     segments,
+    evidenceSummary: {
+      sourceMode: "mock",
+      confidenceReason: "Directional estimate based on category and region benchmarks. No live data has been collected.",
+      totalSignals: 0,
+      strongestSignals: [],
+      limitations: [
+        "This is a directional MVP estimate.",
+        "Live social and competitor data is not connected yet.",
+        "Validate with real user conversations before making decisions.",
+      ],
+    },
     insights: [
       {
         title:       "Biggest opportunity",

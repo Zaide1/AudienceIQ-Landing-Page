@@ -282,6 +282,19 @@ router.post("/chat/refine", async (req, res) => {
 
     const productCtx = productContext(body);
 
+    const sourceMode = currentAudienceMap.evidenceSummary?.sourceMode ?? "mock";
+    const evidenceNote = sourceMode === "live_research"
+      ? "This map is backed by live research signals."
+      : `This map is based on ${sourceMode === "ai_hypothesis" ? "AI-generated hypotheses" : "directional mock estimates"} — no live Reddit, X/Twitter, TikTok, YouTube, or competitor data has been read yet.`;
+
+    const evidenceContext = currentAudienceMap.segments
+      .filter((s) => s.evidence)
+      .map((s) => {
+        const ev = s.evidence!;
+        return `${s.name}: needs="${ev.unmetNeeds.slice(0, 2).join("; ")}" | objections="${ev.objections.slice(0, 2).join("; ")}"`;
+      })
+      .join("\n");
+
     const systemPrompt = `You are Audense, a sharp audience intelligence coach for early-stage founders.
 Be concise, specific, and practical. Ground every answer in the founder's current audience map.
 Never invent statistics. Treat audience numbers as directional MVP estimates.
@@ -296,9 +309,17 @@ Segments:
 ${segmentSummary}
 
 Reach: ${currentAudienceMap.reachableAudience.min.toLocaleString()}–${currentAudienceMap.reachableAudience.max.toLocaleString()} | Coverage: ${currentAudienceMap.coverage.percent}% | Untapped: ${currentAudienceMap.untapped.percent}%
+${evidenceContext ? `\nEvidence signals (hypotheses):\n${evidenceContext}` : ""}
 
 Recent conversation:
 ${recentContext || "(none)"}
+
+═══ EVIDENCE HONESTY ═══
+${evidenceNote}
+If the user asks what people are saying on Reddit, X, TikTok, YouTube, or competitor pages — be honest:
+- If sourceMode is NOT "live_research", say these are directional hypotheses to validate, NOT verified live findings.
+- You may use the evidence fields (unmetNeeds, objections, exampleUserLanguage) to give useful answers, but frame them as "based on what typically happens in this category" or "here's what to look for" — not as verified quotes or scraped data.
+- Never claim to have read live social data, reviews, or competitor pages unless sourceMode is "live_research".
 
 ═══ SCOPE GUARDRAILS ═══
 You are an audience intelligence coach only. You cannot and will not provide:
