@@ -1,0 +1,289 @@
+import OpenAI from "openai";
+import {
+  CATEGORY_LABELS,
+  REGION_LABELS,
+  REGION_REACH,
+  resolveTemplate,
+} from "./audienceTemplates";
+
+const COLORS = ["purple", "blue", "green", "orange", "pink"] as const;
+type Color = (typeof COLORS)[number];
+
+/* ─── Result shape (mirrors frontend AudienceMapResult) ──────────── */
+export interface AudienceSegment {
+  id: string;
+  name: string;
+  percent: number;
+  audienceMin: number;
+  audienceMax: number;
+  color: Color;
+  painPoints: string[];
+  platforms: string[];
+  whyThisSegment: string;
+  acquisitionAngle: string;
+}
+
+export interface AudienceInsight {
+  title: string;
+  description: string;
+}
+
+export interface AudienceMapResult {
+  productSummary: string;
+  region: string;
+  category: string;
+  confidence: "Low" | "Medium" | "High";
+  reachableAudience: { min: number; max: number; label: string };
+  coverage: { percent: number; people: number };
+  untapped: { percent: number; min: number; max: number };
+  segments: AudienceSegment[];
+  insights: AudienceInsight[];
+}
+
+/* ─── Build deterministic fallback ──────────────────────────────── */
+export function buildMockResult(
+  productIdea: string,
+  finalCategory: string,
+  finalRegion: string,
+): AudienceMapResult {
+  const regionLabel = REGION_LABELS[finalRegion] ?? finalRegion;
+  const [reachMin, reachMax] = REGION_REACH[finalRegion] ?? [500_000, 900_000];
+  const categoryLabel = CATEGORY_LABELS[finalCategory] ?? finalCategory;
+  const templates = resolveTemplate(finalCategory);
+
+  const coveragePct = 7;
+  const coveragePeople = Math.round(reachMin * (coveragePct / 100));
+  const untappedPct = 100 - coveragePct;
+
+  const segments: AudienceSegment[] = templates.map((t) => ({
+    id: t.id,
+    name: t.name,
+    percent: t.percent,
+    audienceMin: Math.round(reachMin * (t.percent / 100)),
+    audienceMax: Math.round(reachMax * (t.percent / 100)),
+    color: t.color,
+    painPoints: t.painPoints,
+    platforms: t.platforms,
+    whyThisSegment: t.whyThisSegment,
+    acquisitionAngle: t.acquisitionAngle,
+  }));
+
+  return {
+    productSummary: productIdea || "Your product",
+    region: regionLabel,
+    category: categoryLabel,
+    confidence: "Medium",
+    reachableAudience: { min: reachMin, max: reachMax, label: `people in ${regionLabel}` },
+    coverage: { percent: coveragePct, people: coveragePeople },
+    untapped: {
+      percent: untappedPct,
+      min: Math.round(reachMin * (untappedPct / 100)),
+      max: Math.round(reachMax * (untappedPct / 100)),
+    },
+    segments,
+    insights: [
+      {
+        title: "Biggest opportunity",
+        description: `${segments[1]!.name} is your largest segment at ${segments[1]!.percent}% — lean into ${segments[1]!.acquisitionAngle.toLowerCase()}`,
+      },
+      {
+        title: "Quick win",
+        description: `${segments[0]!.name} are already motivated. ${segments[0]!.acquisitionAngle}`,
+      },
+      {
+        title: "Untapped upside",
+        description: `${untappedPct}% of your reachable audience hasn't been reached yet.`,
+      },
+    ],
+  };
+}
+
+/* ─── Validate AI-returned JSON ─────────────────────────────────── */
+function validateResult(raw: unknown): AudienceMapResult | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+
+  if (typeof r.productSummary !== "string") return null;
+  if (typeof r.region !== "string") return null;
+  if (typeof r.category !== "string") return null;
+  if (!["Low", "Medium", "High"].includes(r.confidence as string)) return null;
+
+  const ra = r.reachableAudience as Record<string, unknown>;
+  if (!ra || typeof ra.min !== "number" || typeof ra.max !== "number" || typeof ra.label !== "string") return null;
+
+  const cov = r.coverage as Record<string, unknown>;
+  if (!cov || typeof cov.percent !== "number" || typeof cov.people !== "number") return null;
+
+  const unt = r.untapped as Record<string, unknown>;
+  if (!unt || typeof unt.percent !== "number" || typeof unt.min !== "number" || typeof unt.max !== "number") return null;
+
+  if (!Array.isArray(r.segments) || r.segments.length !== 5) return null;
+  if (!Array.isArray(r.insights) || r.insights.length !== 3) return null;
+
+  /* Validate segments */
+  const segments: AudienceSegment[] = [];
+  let pctSum = 0;
+  for (let i = 0; i < 5; i++) {
+    const s = r.segments[i] as Record<string, unknown>;
+    if (!s || typeof s.id !== "string" || typeof s.name !== "string") return null;
+    if (typeof s.percent !== "number" || typeof s.audienceMin !== "number" || typeof s.audienceMax !== "number") return null;
+    if (!Array.isArray(s.painPoints) || !Array.isArray(s.platforms)) return null;
+    if (typeof s.whyThisSegment !== "string" || typeof s.acquisitionAngle !== "string") return null;
+    pctSum += s.percent;
+    segments.push({
+      id: s.id,
+      name: s.name,
+      percent: s.percent,
+      audienceMin: s.audienceMin,
+      audienceMax: s.audienceMax,
+      color: COLORS[i]!,
+      painPoints: s.painPoints as string[],
+      platforms: s.platforms as string[],
+      whyThisSegment: s.whyThisSegment,
+      acquisitionAngle: s.acquisitionAngle,
+    });
+  }
+
+  /* Normalise percentages if they don't sum to 100 */
+  if (Math.abs(pctSum - 100) > 5) return null;
+  if (pctSum !== 100) {
+    const scale = 100 / pctSum;
+    let remaining = 100;
+    for (let i = 0; i < segments.length - 1; i++) {
+      segments[i]!.percent = Math.round(segments[i]!.percent * scale);
+      remaining -= segments[i]!.percent;
+    }
+    segments[4]!.percent = remaining;
+  }
+
+  /* Validate insights */
+  const insights: AudienceInsight[] = [];
+  for (const ins of r.insights) {
+    const i = ins as Record<string, unknown>;
+    if (typeof i.title !== "string" || typeof i.description !== "string") return null;
+    insights.push({ title: i.title, description: i.description });
+  }
+
+  return {
+    productSummary: r.productSummary,
+    region: r.region,
+    category: r.category,
+    confidence: r.confidence as "Low" | "Medium" | "High",
+    reachableAudience: { min: ra.min, max: ra.max, label: ra.label },
+    coverage: { percent: cov.percent, people: cov.people },
+    untapped: { percent: unt.percent, min: unt.min, max: unt.max },
+    segments,
+    insights,
+  };
+}
+
+/* ─── AI generation service ─────────────────────────────────────── */
+export async function generateAudienceMapWithAI(params: {
+  productIdea: string;
+  targetUsers: string;
+  problem: string;
+  goal: string;
+  finalCategory: string;
+  finalRegion: string;
+}): Promise<AudienceMapResult | null> {
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+
+  if (!baseURL || !apiKey) return null;
+
+  const { productIdea, targetUsers, problem, goal, finalCategory, finalRegion } = params;
+  const regionLabel = REGION_LABELS[finalRegion] ?? finalRegion;
+  const [reachMin, reachMax] = REGION_REACH[finalRegion] ?? [500_000, 900_000];
+  const categoryLabel = CATEGORY_LABELS[finalCategory] ?? finalCategory;
+
+  const isVague = [productIdea, targetUsers, problem].every((s) => !s || s.trim().length < 10);
+  const confidence = isVague ? "Low" : "Medium";
+
+  const systemPrompt = `You are an audience intelligence analyst for early-stage founders.
+Your job is to identify practical audience segments for a product so the founder knows who to target first.
+Be honest — treat audience numbers as directional MVP estimates, not official statistics.
+Do not use words like "verified", "official", "census-backed", or "guaranteed".
+Return ONLY valid JSON, no markdown, no explanation.`;
+
+  const userPrompt = `Analyse this product and return an audience map as strict JSON.
+
+Product idea: ${productIdea || "Not specified"}
+Target users: ${targetUsers || "Not specified"}
+Problem solved: ${problem || "Not specified"}
+Founder goal: ${goal || "Not specified"}
+Category: ${categoryLabel}
+Region: ${regionLabel}
+Estimated reachable audience: ${reachMin.toLocaleString()}–${reachMax.toLocaleString()} people (directional estimate)
+
+Return a JSON object with exactly this shape — no extra keys:
+{
+  "productSummary": "One-sentence description of the product and who it's for",
+  "region": "${regionLabel}",
+  "category": "${categoryLabel}",
+  "confidence": "${confidence}",
+  "reachableAudience": {
+    "min": ${reachMin},
+    "max": ${reachMax},
+    "label": "people in ${regionLabel}"
+  },
+  "coverage": {
+    "percent": 7,
+    "people": ${Math.round(reachMin * 0.07)}
+  },
+  "untapped": {
+    "percent": 93,
+    "min": ${Math.round(reachMin * 0.93)},
+    "max": ${Math.round(reachMax * 0.93)}
+  },
+  "segments": [
+    {
+      "id": "segment-1",
+      "name": "Specific segment name",
+      "percent": 25,
+      "audienceMin": ${Math.round(reachMin * 0.25)},
+      "audienceMax": ${Math.round(reachMax * 0.25)},
+      "color": "purple",
+      "painPoints": ["Pain 1", "Pain 2"],
+      "platforms": ["Platform 1", "Platform 2"],
+      "whyThisSegment": "Why this segment matters for this product",
+      "acquisitionAngle": "Specific go-to-market angle for this segment"
+    }
+    // ... exactly 5 segments total, colors must be: purple, blue, green, orange, pink in that order
+    // percentages must sum to exactly 100
+  ],
+  "insights": [
+    { "title": "Biggest opportunity", "description": "..." },
+    { "title": "Quick win", "description": "..." },
+    { "title": "Untapped upside", "description": "..." }
+  ]
+}
+
+Rules:
+- Exactly 5 segments
+- Segment colors in order: purple, blue, green, orange, pink
+- Segment percentages sum to exactly 100
+- audienceMin and audienceMax must scale with percent (e.g. 25% of ${reachMin} = ${Math.round(reachMin * 0.25)})
+- Make segment names, painPoints, platforms, whyThisSegment, and acquisitionAngle specific to this product
+- Keep descriptions practical and actionable — useful for deciding who to target first`;
+
+  try {
+    const client = new OpenAI({ apiKey, baseURL });
+    const response = await client.chat.completions.create({
+      model: "gpt-5.4",
+      max_completion_tokens: 8192,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) return null;
+
+    const parsed: unknown = JSON.parse(content);
+    return validateResult(parsed);
+  } catch {
+    return null;
+  }
+}

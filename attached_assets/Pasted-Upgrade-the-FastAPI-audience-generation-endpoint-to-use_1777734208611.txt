@@ -1,0 +1,86 @@
+Upgrade the FastAPI audience generation endpoint to use OpenAI when an API key is available.
+
+Important:
+- Keep the same endpoint: POST /api/audience/generate
+- Keep the same request shape.
+- Keep the same AudienceMapResult response shape.
+- Do not change frontend UI.
+- Do not change landing/onboarding/dashboard layout.
+- Do not add Supabase/auth yet.
+- If OpenAI fails or OPENAI_API_KEY is missing, fall back to the existing deterministic mock generation.
+- Do not remove the deterministic mock generator.
+
+Goal:
+Use OpenAI to generate more personalised audience intelligence while keeping the app demo-safe.
+
+Backend requirements:
+1. Read OPENAI_API_KEY from environment.
+2. Create a service function such as:
+   generateAudienceMapWithAI(request): Promise<AudienceMapResult>
+3. The OpenAI function should:
+   - Take productIdea, targetUsers, problem, goal, finalCategory, finalRegion.
+   - Ask the model to return strict JSON only.
+   - Return an object matching AudienceMapResult exactly.
+4. Validate the AI output before returning it.
+5. If validation fails, fall back to deterministic mock generation.
+6. If OpenAI request fails, fall back to deterministic mock generation.
+7. If OPENAI_API_KEY is missing, use deterministic mock generation.
+8. Keep confidence honest:
+   - Usually “Medium”
+   - Use “Low” if product description is vague
+   - Avoid “High” unless the product/category/region is very specific.
+9. Do not invent official market statistics.
+   - Treat audience numbers as directional MVP estimates.
+   - Avoid phrases like “official”, “verified”, “census-backed”, or “guaranteed”.
+
+AudienceMapResult rules:
+- productSummary must reflect the user's product idea.
+- region must reflect finalRegion.
+- category must reflect finalCategory.
+- confidence must be "Low", "Medium", or "High".
+- reachableAudience.min and max must be numbers.
+- coverage.percent must be a number.
+- coverage.people must be a number.
+- untapped.percent must be a number.
+- untapped.min and max must be numbers.
+- segments must contain exactly 5 objects.
+- Segment percentages must sum to exactly 100.
+- Segment colors must be exactly, in this order:
+  1. purple
+  2. blue
+  3. green
+  4. orange
+  5. pink
+- Each segment must include:
+  - id
+  - name
+  - percent
+  - audienceMin
+  - audienceMax
+  - color
+  - painPoints
+  - platforms
+  - whyThisSegment
+  - acquisitionAngle
+- insights must contain exactly 3 objects.
+
+Validation/normalisation:
+- If percentages do not sum to 100, normalise them or fall back to mock.
+- If colours are missing/wrong, correct them or fall back to mock.
+- If fewer/more than 5 segments are returned, fall back to mock.
+- If required fields are missing, fall back to mock.
+- Keep the endpoint response valid no matter what.
+
+Prompting:
+The model should behave like an audience intelligence analyst for early-stage founders.
+It should produce practical segments, pains, platforms, and acquisition angles.
+It should not overclaim certainty.
+It should be useful for deciding who to target first.
+
+After implementing, explain:
+- Files changed
+- Which OpenAI package/client is used
+- How OPENAI_API_KEY is read
+- How fallback works
+- How AI JSON validation works
+- How to test with and without an API key
