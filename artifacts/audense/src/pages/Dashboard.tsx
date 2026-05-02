@@ -142,7 +142,7 @@ const TINT2: Record<string, string> = {
   "#F59E0B": "#FEF3C7",
   "#EC4899": "#FCE7F3",
 };
-const GREY = "#E5E7EB";
+const GREY = "#ECEEF2";
 
 /* Fixed cluster centres + base radii (calibrated to look correct at each
    segment's default percentage when scale = 0.75 + pct/40, clamped 0.8–1.45) */
@@ -354,7 +354,7 @@ function AudienceMap({
         background: "#fff",
         border: "1px solid #F0EDF9",
         borderRadius: 12,
-        padding: "14px 16px 12px",
+        padding: "10px 14px 8px",
       }}
     >
       {/* Dot grid — width: 100% + overflow: hidden prevents any spill */}
@@ -366,12 +366,13 @@ function AudienceMap({
           style={{
             display: "grid",
             gridTemplateColumns: `repeat(${COLS}, 1fr)`,
-            gap: 4,
+            gap: 3,
           }}
         >
           {activeDots.map((color, i) => {
             const segId = COLOR_TO_SEG[activeRaw[i]] ?? null;
             const isClickable = segId !== null;
+            const isUntapped = activeRaw[i] === GREY;
             return (
               <div
                 key={i}
@@ -386,6 +387,7 @@ function AudienceMap({
                   background: color,
                   minWidth: 0,
                   cursor: isClickable ? "pointer" : "default",
+                  opacity: isUntapped ? 0.75 : 0.88,
                 }}
               />
             );
@@ -1276,7 +1278,7 @@ export default function Dashboard() {
               background: "#fff",
               border: "1px solid #E5E7EB",
               borderRadius: 14,
-              padding: "16px 18px",
+              padding: "14px 16px 12px",
               boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
             }}
           >
@@ -1324,7 +1326,7 @@ export default function Dashboard() {
                 </span>
               </div>
             </div>
-            <div style={{ fontSize: 11.5, color: "#9CA3AF", marginBottom: 12 }}>
+            <div style={{ fontSize: 11.5, color: "#9CA3AF", marginBottom: 8 }}>
               Each dot represents ~2,000 people in your reachable audience
             </div>
             <AudienceMap
