@@ -357,9 +357,7 @@ function ChatPanel() {
               <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: "1px solid #EDE9FE" }}>
                 <img src={logoImg} alt="Audense AI" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
-            ) : (
-              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#7C3AED", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: 0 }}>A</div>
-            )}
+            ) : null}
             <div
               style={{
                 background: m.role === "ai" ? "#fff" : "#F5F3FF",
