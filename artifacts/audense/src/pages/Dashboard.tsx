@@ -2576,7 +2576,13 @@ export default function Dashboard() {
       onClose={() => setIsSettingsOpen(false)}
       authUser={authUser}
       onSignIn={() => { setIsSettingsOpen(false); setIsAuthModalOpen(true); }}
-      onSignOut={() => { signOut().then(() => { setSbSessionItems([]); }); setIsSettingsOpen(false); }}
+      onSignOut={() => {
+        setIsSettingsOpen(false);
+        signOut().then(() => {
+          setSbSessionItems([]);
+          navigate("/");
+        });
+      }}
     />
     <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
     <SupportModal isOpen={isSupportModalOpen} onClose={() => setIsSupportModalOpen(false)} />
