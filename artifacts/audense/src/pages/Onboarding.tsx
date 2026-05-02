@@ -53,12 +53,22 @@ const STEP_LABELS = ["Product", "Details", "Audience goals", "Generate map"];
 /* ─── Sub-components ─────────────────────────────────────────────────── */
 
 function TopBar({ step }: { step: number }) {
+  const [, navigate] = useLocation();
   return (
     <div className="w-full flex items-center justify-between" style={{ padding: "24px clamp(24px,5vw,72px) 0" }}>
-      <div className="flex items-center gap-3">
+      <button
+        type="button"
+        onClick={() => navigate("/")}
+        aria-label="Back to landing"
+        className="flex items-center gap-3"
+        style={{
+          background: "transparent", border: "none", padding: 0, cursor: "pointer",
+          fontFamily: "inherit",
+        }}
+      >
         <img src={logoImg} alt="Audense" style={{ width: 36, height: 36, objectFit: "contain" }} className="rounded-lg" />
         <span style={{ fontWeight: 700, fontSize: 20, letterSpacing: "-0.02em", color: "#111827" }}>Audense</span>
-      </div>
+      </button>
       <div className="flex flex-col items-end gap-1.5">
         <span style={{ fontSize: 12, fontWeight: 600, color: "#6B7280" }}>Step {step} of 4</span>
         <div className="flex gap-1.5">
