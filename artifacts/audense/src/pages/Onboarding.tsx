@@ -560,7 +560,7 @@ export default function Onboarding() {
       finalCategory,
       finalRegion,
     }));
-    navigate("/");
+    navigate("/dashboard");
   };
 
   return (

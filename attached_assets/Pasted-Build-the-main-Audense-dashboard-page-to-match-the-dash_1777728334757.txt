@@ -1,0 +1,161 @@
+Build the main Audense dashboard page to match the dashboard reference image in the canvas.
+
+Important:
+- Focus only on `/dashboard`.
+- Do not change the landing page.
+- Do not change onboarding design.
+- Do not add backend, auth, Supabase, or OpenAI.
+- Use localStorage onboarding data and local React state only.
+- Reuse the existing AudienceUniverseMap component/visual style if available.
+- Preserve the signature dot-map style: grey universe + organic coloured clusters + feathered boundary dots + selected tooltip.
+
+Goal:
+After onboarding, `/dashboard` should show a polished audience intelligence workspace:
+- Left Audense chat panel
+- Main “Your Audience” dashboard
+- Metric cards
+- Audience Universe dot map
+- Top Audience Segment cards
+- Chat input/refinement chips on the left
+
+Read onboarding data from localStorage:
+- productIdea
+- targetUsers
+- problem
+- goal
+- finalCategory
+- finalRegion
+
+Fallback demo data if missing:
+- productIdea: “AI calorie tracking app”
+- targetUsers: “Busy professionals who want to get healthier”
+- problem: “Manual tracking is hard and time consuming”
+- goal: “Find target audience”
+- finalCategory: “Health & Fitness”
+- finalRegion: “United Kingdom”
+
+Overall layout:
+- Full-height app page.
+- Two-column layout:
+  - Left chat panel around 390px to 430px wide.
+  - Right main dashboard fills remaining space.
+- Add a vertical divider between left and right.
+- Page background: very light lavender/white.
+- No marketing hero elements.
+
+Left chat panel:
+- Top logo: Audense.
+- Chat area with Audense icon markers on the left.
+- First Audense intro card:
+  “Hi [name or Founder] 👋”
+  “I’m Audense, your audience intelligence agent. I’ll help you discover who your ideal users are, how big your market is, and what matters to them. Let’s start with your product.”
+- User message bubble should be generated from onboarding data:
+  “I’m building [productIdea]. It’s for [targetUsers]. It solves: [problem].”
+- Audense message:
+  “Got it. I’ve mapped your likely early audience based on your product and launch region.”
+- User response bubble:
+  “Let’s start with [finalRegion].”
+- Suggested prompt chips:
+  “Why wouldn’t they use my app?”
+  “Where do I find them?”
+  “What message works?”
+- Bottom chat input:
+  Placeholder: “Ask your audience anything...”
+  Paperclip icon/placeholder on left or right
+  Purple send button
+- Footer disclaimer:
+  “Audense can make mistakes. Verify important insights.”
+
+Chat behaviour for MVP:
+- When user types and sends a message, append it as a user bubble.
+- Then append a mock Audense reply:
+  “I can refine the map based on that. Confirm this update?”
+- Show a “Confirm update” button under that reply.
+- On confirm, update segment percentages slightly and show “Audience map updated.”
+- No real AI.
+
+Right main dashboard:
+Top row:
+- Header title: “Your Audience”
+- Subtitle: “Market insights for [productIdea] in [finalRegion]”
+- Top-right button: “+ New Research”
+
+Metric cards:
+Four cards in one row:
+1. Reachable Audience
+   850K – 1.4M
+   “people in [finalRegion]”
+2. Coverage
+   7%
+   “~60K people”
+3. Untapped Opportunity
+   93%
+   “~790K – 1.34M people”
+4. Confidence
+   Medium
+   “Based on available data”
+
+Audience Universe card:
+- Large card below metrics.
+- Header:
+  “Audience Universe” plus small info icon.
+- Subtitle:
+  “Each dot represents ~2,000 people in your reachable audience”
+- Top-right legend:
+  Covered 7%, Untapped 93%
+- Use the existing AudienceUniverseMap.
+- Selected tooltip should default to the first segment.
+- Clicking a segment card should update selected segment/tooltip.
+
+Top Audience Segments:
+- Card container below the map.
+- Title: “Top Audience Segments” plus small info icon.
+- Subtitle: “Click a segment to explore deeper insights”
+- Five vertical coloured segment cards in a row:
+  1. Gym Goers, 25%, ~210K – 350K
+     Pain points: Tracking is tedious, Forget to log meals
+     Platforms: Instagram, TikTok, YouTube
+  2. Busy Professionals, 30%, ~255K – 420K
+     Pain points: No time to track, Inconsistent routine
+     Platforms: LinkedIn, X, Reddit
+  3. Health Conscious, 20%, ~170K – 280K
+     Pain points: Want simplicity, Hate manual input
+     Platforms: Instagram, YouTube, Facebook
+  4. Weight Loss Beginners, 15%, ~125K – 210K
+     Pain points: Don’t know where to start, Overwhelmed
+     Platforms: TikTok, Instagram, Reddit
+  5. Nutrition Optimisers, 10%, ~85K – 140K
+     Pain points: Want advanced insights, Need accuracy
+     Platforms: YouTube, Reddit, Google
+
+Segment card styling:
+- Same style as landing preview/reference.
+- Soft tinted backgrounds:
+  purple, blue, green, orange, pink.
+- Active/selected card should have stronger border and subtle shadow.
+- Cards should be clickable.
+
+State:
+- Store segments in local React state.
+- selectedSegmentId controls tooltip/selected card.
+- Chat confirmation should update segment percentages locally.
+- Keep changes simple and deterministic.
+
+Visual quality:
+- Match the reference dashboard screenshot closely.
+- White cards, soft shadows, subtle borders, generous spacing.
+- Purple accent.
+- Avoid overbuilding.
+- Avoid heavy animations.
+- Avoid scrollbars unless viewport height is too small.
+- The dashboard should feel like the “real” version of the landing preview.
+
+Responsive:
+- Desktop priority.
+- On narrower screens, stack left chat above or collapse it; keep main dashboard usable.
+
+After implementing, explain:
+- Which files were modified
+- How onboarding data is read
+- How chat mock refinement works
+- How segment selection updates the map tooltip
