@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
+import { useLocation } from "wouter";
 
 export function Navbar() {
+  const [, navigate] = useLocation();
   return (
     <header
       className="w-full flex items-center justify-between bg-white/96 backdrop-blur-sm z-20 sticky top-0 border-b border-border/30"
@@ -27,6 +29,7 @@ export function Navbar() {
       </div>
 
       <Button
+        onClick={() => navigate("/onboarding")}
         className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{ width: 210, height: 52, fontSize: 16 }}
         data-testid="button-map-audience-nav"

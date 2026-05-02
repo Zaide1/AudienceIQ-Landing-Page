@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { DashboardPreview } from "@/components/landing/DashboardPreview";
+import { useLocation } from "wouter";
 
 export function Hero() {
+  const [, navigate] = useLocation();
   return (
     <section className="hero-grid">
       {/* ── Left column ─────────────────────────────────────────────── */}
@@ -38,6 +40,7 @@ export function Hero() {
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Button
             data-testid="button-map-audience-hero"
+            onClick={() => navigate("/onboarding")}
             style={{
               width: 340,
               height: 64,

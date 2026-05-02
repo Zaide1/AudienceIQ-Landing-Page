@@ -1,0 +1,190 @@
+Build the Audense onboarding flow to match the reference images in the canvas.
+
+Important:
+- Focus only on the `/onboarding` page.
+- Do not change the landing page.
+- Do not change the dashboard page.
+- Do not change the AudienceUniverseMap component.
+- Do not add backend, auth, Supabase, or OpenAI.
+- Use local React state only.
+- Keep the style consistent with the landing page: white, soft cards, purple accent, subtle lavender background, dotted pattern bottom-left.
+
+Goal:
+Create a 4-step onboarding flow:
+
+Step 1: Product
+Step 2: Details / Goal
+Step 3: Audience goals / Category
+Step 4: Generate map / Region
+
+The flow should visually match the provided onboarding mockups.
+
+Global onboarding layout:
+- Full-page white/lavender background.
+- Audense logo top-left.
+- Top-right progress indicator showing “Step X of 4” with four horizontal mini progress bars.
+- Large centered card with rounded corners, soft border, and subtle shadow.
+- Bottom stepper below the card:
+  1 Product
+  2 Details
+  3 Audience goals
+  4 Generate map
+- Active step should be purple filled circle.
+- Completed/active connector lines should use purple or pale purple.
+- Inactive steps should be pale grey/lavender.
+- Bottom-left should have the same subtle lavender dotted/particle background effect from the landing page.
+
+Step 1 design: Product
+Title:
+“Let’s understand your product”
+
+Subtitle:
+“Tell us a bit about what you’re building so we can map the right audience.”
+
+Fields:
+1. What is your product or idea?
+   Helper: “In a few words, what does it do?”
+   Placeholder: “e.g. An AI calorie tracking app that logs food using photos”
+   Max count display: 0/200
+
+2. Who is it for?
+   Helper: “Who are your ideal users?”
+   Placeholder: “e.g. Busy professionals who want to get healthier”
+   Max count display: 0/200
+
+3. What problem does it solve?
+   Helper: “What’s the main problem your product solves?”
+   Placeholder: “e.g. Manual tracking is hard and time consuming”
+   Max count display: 0/200
+
+Use large textarea-style inputs with rounded corners.
+When focused, show purple border/glow like the reference.
+Add small purple icon boxes beside each field heading.
+Bottom-left inside the card: lock icon + “Your data is private and secure”.
+Bottom-right: large purple “Next →” button.
+Next should be disabled until at least the first field has text.
+
+Step 2 design: Goal
+Title:
+“What best describes your goal?”
+
+Subtitle:
+“This helps us tailor the insights that matter most.”
+
+Use a 2x2 grid of selectable cards:
+1. Find target audience
+   Description: “Discover who your ideal users are and where they are.”
+2. Validate idea
+   Description: “Understand market demand and validate your idea.”
+3. Market research
+   Description: “Get insights about your market, industry and competitors.”
+4. Growth strategy
+   Description: “Find opportunities to grow and reach more people.”
+
+Selected card:
+- purple border
+- pale purple background
+- checkmark circle in top-right
+- purple icon block
+
+Bottom buttons:
+- Back on left
+- Next on right
+
+Step 3 design: Category
+Title:
+“Which category best fits your product?”
+
+Subtitle:
+“This helps us benchmark against the right market.”
+
+Use a 4x2 grid of selectable cards:
+1. Health & Fitness
+2. SaaS / Software
+3. E-commerce
+4. Education
+5. Finance
+6. Creator Tools
+7. Consumer Apps
+8. Other
+
+Selected card:
+- purple border
+- pale purple background
+- checkmark circle in top-right
+- purple icon block
+
+Bottom buttons:
+- Back on left
+- Next on right
+
+Step 4 design: Region
+Title:
+“Where are you planning to launch?”
+
+Subtitle:
+“Select your primary market or region.”
+
+Add a search input:
+Placeholder: “Search for a country or region...”
+Search icon on the right.
+
+Below it, label:
+“Popular choices”
+
+Use a 2-column grid of region buttons:
+- 🇺🇸 United States
+- 🇬🇧 United Kingdom
+- 🇨🇦 Canada
+- 🇦🇺 Australia
+- 🇮🇳 India
+- 🇩🇪 Germany
+- 🇫🇷 France
+- 🌐 Other
+
+Selected region button:
+- purple border
+- pale purple background
+- optional checkmark
+
+Bottom buttons:
+- Back on left
+- “Generate my audience map ✨” on right
+
+When Generate is clicked:
+- Save onboarding data in local state or localStorage.
+- Navigate to `/dashboard`.
+
+State requirements:
+Create local onboarding state with:
+- productIdea
+- targetUsers
+- problem
+- goal
+- category
+- region
+
+Use controlled inputs.
+Do not use external APIs.
+Do not add validation beyond disabling Next when required step data is missing.
+
+Navigation requirements:
+- Step 1 Next requires productIdea text.
+- Step 2 Next requires selected goal.
+- Step 3 Next requires selected category.
+- Step 4 Generate requires selected region.
+- Back moves to previous step.
+- The bottom stepper should update as the user moves through steps.
+
+Visual polish:
+- Use consistent spacing and card sizing from the reference.
+- Card should be around 900px to 1050px wide on desktop.
+- Step 1 card can be taller.
+- Steps 2–4 cards can be more compact.
+- Avoid scrollbars on normal desktop view.
+- Keep it responsive: on smaller screens, cards stack naturally and grids become one column if needed.
+
+After implementing, explain:
+- Which files were created or modified
+- How onboarding state is stored
+- How navigation between steps works
