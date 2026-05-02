@@ -877,15 +877,7 @@ export default function Dashboard() {
           </div>
 
           {/* Audience Universe */}
-          <div
-            style={{
-              background: "#fff",
-              border: "1px solid #E5E7EB",
-              borderRadius: 14,
-              padding: "16px 18px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-            }}
-          >
+          <div>
             <div
               style={{
                 display: "flex",
