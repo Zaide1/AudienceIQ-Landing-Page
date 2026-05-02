@@ -15,7 +15,7 @@ export function Navbar() {
         <img
           src={logoImg}
           alt="Audense Logo"
-          style={{ width: 30, height: 30, objectFit: "contain" }}
+          style={{ width: 38, height: 38, objectFit: "contain" }}
           className="rounded-lg"
         />
         <span
