@@ -1044,16 +1044,18 @@ export default function Dashboard() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 6,
                 marginBottom: 4,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                 <span style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
                   Audience Universe
                 </span>
                 <Info size={13} style={{ color: "#9CA3AF", cursor: "default" }} />
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 11, fontWeight: 600, color: "#6B7280" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, fontWeight: 600, color: "#6B7280", flexWrap: "wrap" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <span
                     style={{
