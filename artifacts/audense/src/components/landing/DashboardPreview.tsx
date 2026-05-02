@@ -362,13 +362,11 @@ function ChatPanel() {
         {MESSAGES.map((m, i) => (
           <div key={i} style={{ display: "flex", gap: 7, alignItems: "flex-start", flexDirection: m.role === "user" ? "row-reverse" : "row" }}>
             {m.role === "ai" ? (
-              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Sparkles style={{ width: 10, height: 10, color: "#7C3AED" }} />
+              <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: "1px solid #EDE9FE" }}>
+                <img src={logoImg} alt="Audense AI" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
             ) : (
-              <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: "1px solid #EDE9FE" }}>
-                <img src={logoImg} alt="user" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              </div>
+              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#7C3AED", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: 0 }}>A</div>
             )}
             <div
               style={{
