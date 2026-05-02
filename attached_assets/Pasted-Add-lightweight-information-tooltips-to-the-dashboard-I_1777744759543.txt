@@ -1,0 +1,70 @@
+Add lightweight information tooltips to the dashboard.
+
+Important:
+- Do not change routing.
+- Do not change onboarding.
+- Do not change chat behaviour.
+- Do not change AudienceMapResult shape.
+- Do not change the dashboard layout.
+- Do not add backend/auth/Supabase.
+- Keep the visual design premium and minimal.
+
+Goal:
+Add small ⓘ information tooltips only where they help users understand the metrics.
+
+Add info tooltips to:
+1. Reachable Audience metric card
+2. Est. Coverage metric card
+3. Untapped Opportunity metric card
+4. Confidence metric card
+5. Audience Universe heading
+6. Top Audience Segments heading
+7. Run live research button, if it exists
+
+Tooltip copy:
+
+Reachable Audience:
+"Directional estimate of people Audense thinks are reachable for this product, category, and region."
+
+Est. Coverage:
+"The share of your reachable audience your current positioning is likely to address first. This is an MVP estimate, not an official statistic."
+
+Untapped Opportunity:
+"The remaining audience potential outside your current early focus. Calculated from reachable audience minus estimated coverage."
+
+Confidence:
+"How reliable this map is based on onboarding detail, source quality, live research availability, and signal strength."
+
+Audience Universe:
+"Each dot represents a slice of your estimated reachable market. Coloured clusters show priority audience segments."
+
+Top Audience Segments:
+"Your strongest audience groups ranked by fit, urgency, reachability, and likely response to your positioning."
+
+Run live research:
+"Searches connected public sources for evidence-backed audience signals. Source coverage may be limited."
+
+UI behaviour:
+- Use a small circular info icon or existing ⓘ style.
+- Tooltip should appear on hover and focus.
+- Tooltip should be keyboard accessible.
+- Tooltip should not require clicking.
+- Tooltip should be subtle: white background, soft border, small shadow, dark text.
+- Tooltip max-width around 260px.
+- Tooltip z-index high enough to appear above cards.
+- Do not let tooltips cause layout shift.
+- On mobile/touch, allow tap/focus to reveal if practical.
+
+Implementation:
+- Create a reusable InfoTooltip component if one does not already exist.
+- Keep it local/simple; no new package unless already installed.
+- Use CSS only or existing styling conventions.
+- Add aria-label or role="tooltip" where appropriate.
+
+Do not add info icons everywhere.
+Do not add icons to every segment card, pain point, platform, or chat message.
+
+After implementing, explain:
+- Where the reusable tooltip component lives
+- Which dashboard elements received tooltips
+- How hover/focus accessibility works

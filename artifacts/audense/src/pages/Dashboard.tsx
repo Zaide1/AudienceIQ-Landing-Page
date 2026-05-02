@@ -1290,6 +1290,7 @@ export default function Dashboard() {
               </h1>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <button
                 onClick={runLiveResearch}
                 disabled={researchRunning}
@@ -1332,6 +1333,12 @@ export default function Dashboard() {
                   </>
                 )}
               </button>
+              <InfoTooltip
+                title="Run live research"
+                body="Searches connected public sources for evidence-backed audience signals. Source coverage may be limited."
+                size={12}
+              />
+              </div>
               <button
                 onClick={() => navigate("/onboarding")}
                 style={{
@@ -1414,6 +1421,7 @@ export default function Dashboard() {
                 accent: false,
                 border: "#E5E7EB",
                 valColor: "#111827",
+                tooltip: "Directional estimate of people Audense thinks are reachable for this product, category, and region.",
               },
               {
                 label: "Est. Coverage",
@@ -1423,6 +1431,7 @@ export default function Dashboard() {
                 accent: true,
                 border: "#C4B5FD",
                 valColor: "#7C3AED",
+                tooltip: "The share of your reachable audience your current positioning is likely to address first. This is an MVP estimate, not an official statistic.",
               },
               {
                 label: "Untapped Opportunity",
@@ -1432,6 +1441,7 @@ export default function Dashboard() {
                 accent: false,
                 border: "#FDE68A",
                 valColor: "#111827",
+                tooltip: "The remaining audience potential outside your current early focus. Calculated from reachable audience minus estimated coverage.",
               },
               {
                 label: "Confidence",
@@ -1441,6 +1451,7 @@ export default function Dashboard() {
                 accent: false,
                 border: "#E5E7EB",
                 valColor: "#111827",
+                tooltip: "How reliable this map is based on onboarding detail, source quality, live research availability, and signal strength.",
               },
             ].map((card) => (
               <div
@@ -1468,6 +1479,7 @@ export default function Dashboard() {
                   >
                     {card.label}
                   </span>
+                  <InfoTooltip title={card.label} body={card.tooltip} size={11} />
                 </div>
                 <div
                   style={{
@@ -1513,8 +1525,7 @@ export default function Dashboard() {
                 </span>
                 <InfoTooltip
                   title="Audience Universe"
-                  body="Each dot represents a directional slice of your reachable audience. Coloured clusters show the segments Audense believes are most relevant for this product and region. Grey dots represent remaining untapped audience potential."
-                  note="These are MVP estimates, not official market statistics."
+                  body="Each dot represents a slice of your estimated reachable market. Coloured clusters show priority audience segments."
                 />
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, fontWeight: 600, color: "#6B7280", flexWrap: "wrap" }}>
@@ -1577,8 +1588,7 @@ export default function Dashboard() {
               </span>
               <InfoTooltip
                 title="Top Audience Segments"
-                body="These are the highest-priority groups Audense thinks you could target first. Percentages show how your current audience focus is distributed across segments."
-                note="You can refine these by chatting with Audense and confirming map updates."
+                body="Your strongest audience groups ranked by fit, urgency, reachability, and likely response to your positioning."
               />
             </div>
             <div style={{ fontSize: 11.5, color: "#9CA3AF", marginBottom: 14 }}>

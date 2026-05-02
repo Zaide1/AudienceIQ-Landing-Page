@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useId } from "react";
 import { createPortal } from "react-dom";
 import { Info } from "lucide-react";
 
@@ -6,12 +6,14 @@ interface InfoTooltipProps {
   title: string;
   body: string;
   note?: string;
+  size?: number;
 }
 
-export function InfoTooltip({ title, body, note }: InfoTooltipProps) {
+export function InfoTooltip({ title, body, note, size = 13 }: InfoTooltipProps) {
   const [visible, setVisible] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const tooltipId = useId();
 
   const position = useCallback(() => {
     if (!triggerRef.current) return;
@@ -22,11 +24,7 @@ export function InfoTooltip({ title, body, note }: InfoTooltipProps) {
     });
   }, []);
 
-  const open = useCallback(() => {
-    position();
-    setVisible(true);
-  }, [position]);
-
+  const open = useCallback(() => { position(); setVisible(true); }, [position]);
   const close = useCallback(() => setVisible(false), []);
 
   useEffect(() => {
@@ -46,6 +44,8 @@ export function InfoTooltip({ title, body, note }: InfoTooltipProps) {
   const tooltip = visible
     ? createPortal(
         <div
+          id={tooltipId}
+          role="tooltip"
           onMouseEnter={open}
           onMouseLeave={close}
           style={{
@@ -59,8 +59,8 @@ export function InfoTooltip({ title, body, note }: InfoTooltipProps) {
             borderRadius: 12,
             boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
             padding: "10px 12px",
-            maxWidth: 280,
-            minWidth: 200,
+            maxWidth: 260,
+            minWidth: 180,
             pointerEvents: "auto",
           }}
         >
@@ -95,8 +95,11 @@ export function InfoTooltip({ title, body, note }: InfoTooltipProps) {
         ref={triggerRef}
         type="button"
         aria-label={`Info: ${title}`}
+        aria-describedby={visible ? tooltipId : undefined}
         onMouseEnter={open}
         onMouseLeave={close}
+        onFocus={open}
+        onBlur={close}
         onClick={() => (visible ? close() : open())}
         style={{
           background: "none",
@@ -106,9 +109,10 @@ export function InfoTooltip({ title, body, note }: InfoTooltipProps) {
           display: "flex",
           alignItems: "center",
           lineHeight: 1,
+          flexShrink: 0,
         }}
       >
-        <Info size={13} style={{ color: "#9CA3AF" }} />
+        <Info size={size} style={{ color: "#9CA3AF" }} />
       </button>
       {tooltip}
     </>
