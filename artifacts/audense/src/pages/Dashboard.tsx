@@ -551,7 +551,7 @@ function Bubble({
             height: 28,
             borderRadius: "50%",
             flexShrink: 0,
-            background: `#EDE9FE url(${logoImg}) center/cover no-repeat`,
+            background: `transparent url(${logoImg}) center/contain no-repeat`,
           }}
         />
         <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0, flex: 1 }}>
@@ -620,7 +620,7 @@ function Bubble({
             height: 28,
             borderRadius: "50%",
             flexShrink: 0,
-            background: `#EDE9FE url(${logoImg}) center/cover no-repeat`,
+            background: `transparent url(${logoImg}) center/contain no-repeat`,
           }}
         />
         <div
@@ -652,7 +652,7 @@ function Bubble({
             height: 28,
             borderRadius: "50%",
             flexShrink: 0,
-            background: `#EDE9FE url(${logoImg}) center/cover no-repeat`,
+            background: `transparent url(${logoImg}) center/contain no-repeat`,
           }}
         />
         <div
