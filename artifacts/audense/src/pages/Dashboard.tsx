@@ -1288,9 +1288,10 @@ export default function Dashboard() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   /* ── User-isolation helpers ─────────────────────────────────────── */
-  /* Clears data keys that belong to the *active research session* only.
+  /* Clears data keys that belong to the *active research session* and the
+     current user's identity. Display name is per-user and must never bleed.
      Guest tracking flags (audense-has-created-guest-research, guest counters,
-     soft-prompt seen list, display name, split-pct) are intentionally kept. */
+     soft-prompt seen list, split-pct) are intentionally kept. */
   const clearLocalSessionData = useCallback(() => {
     try {
       localStorage.removeItem("audense-active-session-id");
@@ -1298,6 +1299,7 @@ export default function Dashboard() {
       localStorage.removeItem("audense-audience-map");
       localStorage.removeItem("audense-chat-messages");
       localStorage.removeItem("audense_onboarding");
+      localStorage.removeItem("audense-display-name");
     } catch {}
   }, []);
 
