@@ -15,7 +15,7 @@ export function Hero() {
             lineHeight: 0.95,
             letterSpacing: "-0.04em",
             color: "#0D0D12",
-            maxWidth: 560,
+            maxWidth: 520,
             margin: 0,
           }}
         >

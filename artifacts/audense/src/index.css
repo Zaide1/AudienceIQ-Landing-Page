@@ -381,7 +381,7 @@
 
 @media (min-width: 1200px) {
   .mockup-outer {
-    width: min(54vw, 780px);
+    width: 100%;
     max-width: 780px;
     margin: 0;
   }
@@ -389,7 +389,12 @@
 
 @media (min-width: 1600px) {
   .mockup-outer {
-    width: 780px;
+    width: 100%;
     max-width: 780px;
   }
+}
+
+/* Prevent grid items from forcing each other to overflow */
+.hero-grid > * {
+  min-width: 0;
 }
