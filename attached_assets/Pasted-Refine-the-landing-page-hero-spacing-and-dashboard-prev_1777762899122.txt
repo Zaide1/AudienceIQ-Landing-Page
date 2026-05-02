@@ -1,0 +1,52 @@
+Refine the landing page hero spacing and dashboard preview scale.
+
+Important:
+- Do not change the headline text.
+- Do not change the subtitle text.
+- Do not change the CTA button design.
+- Do not change the CTA chips.
+- Do not change the dashboard preview design itself.
+- Only adjust hero layout spacing, alignment, and preview sizing.
+
+Current issue:
+On large desktop, the hero feels too empty. The dashboard preview is now too small and too far away from the headline. The large whitespace above and between the hero text and product preview makes the page feel unfinished.
+
+Goal:
+Make the hero feel balanced, premium, and intentional on full desktop.
+
+Adjustments:
+1. Reduce excessive top whitespace
+- Bring the hero content higher up.
+- Reduce the top padding/margin of the hero section on desktop.
+- The headline and dashboard should sit closer to the visual center of the first viewport.
+
+2. Bring text and dashboard closer together
+- Reduce the horizontal gap between the left text column and the right dashboard preview.
+- The dashboard should feel connected to the CTA, not floating far away.
+
+3. Increase dashboard preview slightly
+- The dashboard preview is currently too small.
+- Increase it slightly from the current size.
+- Suggested desktop width: around 720–780px.
+- Keep a max-width cap so it does not become huge again on ultra-wide screens.
+
+4. Constrain the hero container
+- Add or tighten a max-width on the inner hero content container.
+- Suggested max-width: 1280px–1360px.
+- Center the full hero content within the page.
+- This prevents the text and dashboard from drifting too far apart on wide screens.
+
+5. Align vertically
+- Align the dashboard preview slightly above center relative to the headline block.
+- It should sit around the headline/subtitle/CTA vertical zone, not too high or too low.
+
+6. Keep responsive behaviour
+- On tablet/mobile, keep the existing stacked layout.
+- Only adjust large desktop spacing with media queries if needed.
+
+Validation:
+- At full desktop, the hero should not have a giant empty gap above.
+- The dashboard should be readable but not oversized.
+- The text and dashboard should feel like one composed hero unit.
+- The CTA should remain unchanged.
+- No horizontal overflow.
