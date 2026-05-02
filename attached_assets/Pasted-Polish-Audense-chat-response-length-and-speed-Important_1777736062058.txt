@@ -1,0 +1,56 @@
+Polish Audense chat response length and speed.
+
+Important:
+- Do not change landing.
+- Do not change onboarding.
+- Do not change dashboard layout.
+- Do not change AudienceUniverseMap.
+- Do not change the request/response shape of /api/chat/refine.
+- Do not add auth/Supabase.
+- Keep answer vs proposed_update behaviour working.
+
+Current issue:
+Audense chat answers are too long and sometimes slow. It should feel like a sharp audience coach, not an essay writer.
+
+Backend requirements:
+1. Inspect the current /api/chat/refine OpenAI/Replit AI call.
+2. Add or confirm a timeout around the AI call:
+   - Target: 12–15 seconds.
+   - If timeout occurs, return the deterministic fallback response.
+3. Add or reduce max output tokens for chat/refinement:
+   - Use a cap appropriate for concise answers.
+   - Target default answer length: around 120–180 words.
+4. Update the system prompt so Audense answers:
+   - concise by default
+   - one clear recommendation first
+   - then 3–5 short bullets
+   - no long ranked essays unless the user explicitly asks for a detailed plan
+   - practical and specific to the current audience map
+5. For proposed_update:
+   - keep message short
+   - explain what changed and why in 2–4 sentences
+   - ask the user to confirm
+6. Keep suggestedActions short:
+   - 2–4 actions
+   - each under 40 characters
+7. If model selection is configurable and there is a faster reliable model available in the current Replit AI integration, use the faster one.
+8. Keep fallback responses concise too.
+
+Frontend:
+- No major UI changes.
+- Continue rendering the AI message normally.
+- Do not add suggested action chips yet.
+
+Validation:
+- “Who should I target first?” should return under about 180 words.
+- “Where do I find Busy Professionals?” should return concise channel guidance.
+- “Give me a TikTok plan for Gym Goers” may be slightly longer, but should still be structured and not excessive.
+- “Prioritise paid users” should return a short proposed_update message.
+- If AI exceeds timeout, fallback should return and dashboard should not hang.
+
+After implementing, explain:
+- Current model used
+- Timeout added
+- Max output token limit used
+- Prompt changes made
+- Whether fallback still works

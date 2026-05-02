@@ -1,8 +1,14 @@
 import { Router, type IRouter } from "express";
 import OpenAI from "openai";
-import { buildMockResult, type AudienceMapResult } from "../lib/audienceAI";
+import { type AudienceMapResult } from "../lib/audienceAI";
 
 const router: IRouter = Router();
+
+/* ─── Constants ──────────────────────────────────────────────────── */
+const AI_TIMEOUT_MS  = 13_000;
+const MAX_TOKENS     = 1200;   /* ~150 words answer + JSON overhead + proposed_update map room */
+const MAX_ACTIONS    = 4;
+const MAX_ACTION_LEN = 40;
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 interface ChatMessage {
@@ -77,7 +83,7 @@ function validateProposedMap(raw: unknown): AudienceMapResult | null {
 
   if (Math.abs(pctSum - 100) > 5) return null;
 
-  /* Normalise if off by a small amount */
+  /* Normalise if slightly off */
   if (pctSum !== 100) {
     const scale = 100 / pctSum;
     let rem = 100;
@@ -106,27 +112,35 @@ function validateProposedMap(raw: unknown): AudienceMapResult | null {
   };
 }
 
-/* ─── Deterministic fallback responses ──────────────────────────── */
+/* ─── Helpers ────────────────────────────────────────────────────── */
 const REFINEMENT_KEYWORDS = [
   "priorit", "focus", "shift", "change", "refine", "update", "target", "make",
   "adjust", "rebalance", "move", "increase", "decrease", "drop", "add", "pivot",
 ];
 
 function isRefinementRequest(msg: string): boolean {
-  const lower = msg.toLowerCase();
-  return REFINEMENT_KEYWORDS.some((kw) => lower.includes(kw));
+  return REFINEMENT_KEYWORDS.some((kw) => msg.toLowerCase().includes(kw));
 }
 
-function buildFallbackAnswer(userMessage: string, map: AudienceMapResult): ChatRefineResponse {
+/** Trim suggestedActions to spec: max 4, max 40 chars each */
+function cleanActions(raw: unknown[]): string[] {
+  return raw
+    .filter((a): a is string => typeof a === "string")
+    .slice(0, MAX_ACTIONS)
+    .map((a) => a.length > MAX_ACTION_LEN ? a.slice(0, MAX_ACTION_LEN - 1) + "…" : a);
+}
+
+/* ─── Deterministic fallbacks (concise) ─────────────────────────── */
+function buildFallbackAnswer(map: AudienceMapResult): ChatRefineResponse {
   const seg = map.segments[0];
   return {
     type: "answer",
-    message: `Based on your current audience map, ${seg?.name ?? "your top segment"} (${seg?.percent ?? 0}%) is your strongest starting point. ${seg?.acquisitionAngle ?? ""} Focus on validating this segment first before expanding to others.`,
+    message: `Start with ${seg?.name ?? "your top segment"} (${seg?.percent ?? 0}%). ${seg?.acquisitionAngle ?? ""}`,
     proposedAudienceMap: null,
     suggestedActions: [
-      `Run 5 interviews with ${seg?.name ?? "your top segment"}`,
-      "Post one piece of content targeting their top pain point",
-      "Track early traction to validate before scaling",
+      `Interview 5 ${seg?.name ?? "users"}`,
+      "Post on their top platform",
+      "Measure response in 7 days",
     ],
   };
 }
@@ -143,20 +157,16 @@ function buildFallbackUpdate(map: AudienceMapResult): ChatRefineResponse {
     })),
   });
 
-  /* Re-normalise */
   const sum = updated.segments.reduce((a, s) => a + s.percent, 0);
-  if (sum !== 100) {
-    const diff = 100 - sum;
-    updated.segments[1]!.percent += diff;
-  }
+  if (sum !== 100) updated.segments[1]!.percent += 100 - sum;
 
   return {
     type: "proposed_update",
-    message: `I've adjusted the audience map to increase focus on ${map.segments[0]?.name ?? "your top segment"}. Review the proposed changes and confirm when you're ready.`,
+    message: `Boosted ${map.segments[0]?.name ?? "top segment"} to ${updated.segments[0]!.percent}%. Confirm to apply.`,
     proposedAudienceMap: updated,
     suggestedActions: [
-      "Confirm to apply the updated map",
-      "Ask me why this segment was prioritised",
+      "Confirm update",
+      "Ask why this was prioritised",
     ],
   };
 }
@@ -172,98 +182,94 @@ router.post("/chat/refine", async (req, res) => {
   }
 
   const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
-  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const apiKey  = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 
   if (!baseURL || !apiKey) {
     const fallback = isRefinementRequest(userMessage)
       ? buildFallbackUpdate(currentAudienceMap)
-      : buildFallbackAnswer(userMessage, currentAudienceMap);
+      : buildFallbackAnswer(currentAudienceMap);
     res.json(fallback);
     return;
   }
 
+  /* Abort controller for the 13s timeout */
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
   try {
     const client = new OpenAI({ apiKey, baseURL });
 
-    /* Recent messages context (last 10, skip system roles) */
+    /* Context blocks */
     const recentContext = (messages ?? [])
       .filter((m) => m.role === "user" || m.role === "ai")
-      .slice(-10)
+      .slice(-6)
       .map((m) => `${m.role === "user" ? "Founder" : "Audense"}: ${m.text}`)
       .join("\n");
 
     const segmentSummary = currentAudienceMap.segments
-      .map((s) => `- ${s.name} (${s.percent}%): ${s.painPoints.join(", ")}. Platforms: ${s.platforms.join(", ")}. Angle: ${s.acquisitionAngle}`)
+      .map((s) => `- ${s.name} (${s.percent}%): ${s.painPoints.slice(0, 2).join(", ")}. Platforms: ${s.platforms.slice(0, 2).join(", ")}. Angle: ${s.acquisitionAngle}`)
       .join("\n");
 
-    const systemPrompt = `You are Audense, an audience intelligence coach for early-stage founders.
-You help founders understand their target audience, decide who to focus on first, and plan outreach.
-You are NOT a generic startup chatbot. Every answer must be grounded in the founder's current audience map and onboarding context.
-You do not invent official market statistics. Treat audience numbers as directional MVP estimates.
-Be practical, specific, and founder-friendly. Avoid vague startup platitudes.
+    const systemPrompt = `You are Audense, a sharp audience intelligence coach for early-stage founders.
+Be concise, specific, and practical. Ground every answer in the founder's current audience map.
+Never invent statistics. Treat audience numbers as directional MVP estimates.
 
-Current research context:
+CONTEXT:
 Product: ${onboardingData?.productIdea ?? "Not specified"}
 Target users: ${onboardingData?.targetUsers ?? "Not specified"}
-Problem: ${onboardingData?.problem ?? "Not specified"}
-Goal: ${onboardingData?.goal ?? "Not specified"}
-Category: ${currentAudienceMap.category}
-Region: ${currentAudienceMap.region}
-Confidence: ${currentAudienceMap.confidence}
+Category: ${currentAudienceMap.category} | Region: ${currentAudienceMap.region} | Confidence: ${currentAudienceMap.confidence}
 
-Audience segments:
+Segments:
 ${segmentSummary}
 
-Reachable audience estimate: ${currentAudienceMap.reachableAudience.min.toLocaleString()}–${currentAudienceMap.reachableAudience.max.toLocaleString()} people (directional)
-Coverage so far: ${currentAudienceMap.coverage.percent}% (${currentAudienceMap.coverage.people.toLocaleString()} people)
-Untapped: ${currentAudienceMap.untapped.percent}%
+Reach: ${currentAudienceMap.reachableAudience.min.toLocaleString()}–${currentAudienceMap.reachableAudience.max.toLocaleString()} | Coverage: ${currentAudienceMap.coverage.percent}% | Untapped: ${currentAudienceMap.untapped.percent}%
 
 Recent conversation:
-${recentContext || "(no previous messages)"}
+${recentContext || "(none)"}
 
-DECISION RULE — choose exactly one type:
+═══ ANSWER FORMAT (type "answer") ═══
+ONE sentence: your single best recommendation.
+Then 3–5 bullets (≤ 15 words each, no sub-bullets).
+Total message: under 150 words. No essays, no ranked paragraphs, no preamble.
 
-TYPE = "answer" when:
-- The founder asks a question: where to find users, what message works, why a segment matters, how to validate, TikTok/LinkedIn/Reddit plan, what to say, why they won't use it, etc.
-- The founder asks for advice, ideas, or strategy without asking you to change anything.
-- Examples: "Where do I find gym goers?", "Give me a TikTok plan", "Why wouldn't they use my app?", "Who should I target first?"
+═══ UPDATE FORMAT (type "proposed_update") ═══
+message: 2–3 sentences max. Say what changed and why. End with "Confirm to apply."
+proposedAudienceMap: full map with all required fields (see below).
 
-TYPE = "proposed_update" (with a full proposedAudienceMap) when:
-- The founder uses directive language to change the map: "make X the main/primary/lead", "prioritise X", "shift focus to X", "increase X's share", "drop segment X", "rebalance", "update the map", "refine the segments", "focus on X instead".
-- The founder names a segment plus a clear directive verb.
-- Examples: "Make Busy Professionals the main audience", "Prioritise gym goers", "Shift focus to weight loss beginners", "Update the map to focus on paid users".
-- CRITICAL: If your message text says things like "I'd shift the map", "I'd increase X", "I'd prioritise X" — that means you MUST return type "proposed_update", not "answer". Never describe a map change in prose and return type "answer". If you would change the map, DO it.
+═══ DECISION: which type to use ═══
+"answer" — founder asks a question, wants advice, strategy, or a plan (≈ 70% of messages).
+Examples: "Where do I find them?", "Give me a TikTok plan", "Why won't they convert?", "Who should I target first?"
 
-DO NOT return proposed_update for informational or strategy questions. Most messages (about 70%) should be type "answer".
+"proposed_update" — founder uses a clear directive to change the map: "make X the main", "prioritise X", "shift focus to X", "rebalance", "increase X's share", "drop X", "focus on X instead".
+CRITICAL: If your answer text would say "I'd shift the map" or "I'd prioritise X" — you MUST produce proposed_update, not an essay. Do it, don't describe it.
 
-WHEN returning proposed_update, you MUST include a complete proposedAudienceMap with ALL of these fields:
-- productSummary: string
-- region: string (copy from current map)
-- category: string (copy from current map)
-- confidence: "Low" | "Medium" | "High"
-- reachableAudience: { min: number, max: number, label: string }
-- coverage: { percent: number, people: number }
-- untapped: { percent: number, min: number, max: number }
-- segments: exactly 5 items, percentages summing to exactly 100, colors MUST be in order: "purple", "blue", "green", "orange", "pink". Each segment needs: id, name, percent, audienceMin, audienceMax, color, painPoints (array), platforms (array), whyThisSegment, acquisitionAngle.
-- insights: array of 1–3 { title, description } objects
+═══ proposedAudienceMap SCHEMA (only for proposed_update) ═══
+Required fields: productSummary, region, category, confidence ("Low"|"Medium"|"High"),
+reachableAudience {min,max,label}, coverage {percent,people}, untapped {percent,min,max},
+segments (exactly 5, pct sum = 100, colors in order: purple,blue,green,orange,pink,
+  each: id,name,percent,audienceMin,audienceMax,color,painPoints[],platforms[],whyThisSegment,acquisitionAngle),
+insights (1–3 × {title,description}).
 
-Return ONLY valid JSON, no markdown, no explanation outside the JSON:
-{
-  "type": "answer" | "proposed_update",
-  "message": "Your response to the founder (1–4 sentences, specific and grounded in their context, no vague platitudes).",
-  "proposedAudienceMap": null,
-  "suggestedActions": ["specific action 1", "specific action 2", "specific action 3"]
-}`;
+═══ suggestedActions ═══
+2–4 items. Each ≤ 40 characters. No articles or filler words.
 
-    const response = await client.chat.completions.create({
-      model: "gpt-5.4",
-      max_completion_tokens: 8192,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-      response_format: { type: "json_object" },
-    });
+Return ONLY valid JSON (no markdown, no text outside JSON):
+{"type":"answer|proposed_update","message":"…","proposedAudienceMap":null,"suggestedActions":["…"]}`;
+
+    const response = await client.chat.completions.create(
+      {
+        model: "gpt-5.4",
+        max_completion_tokens: MAX_TOKENS,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        response_format: { type: "json_object" },
+      },
+      { signal: controller.signal },
+    );
+
+    clearTimeout(timer);
 
     const content = response.choices[0]?.message?.content;
     if (!content) throw new Error("Empty AI response");
@@ -271,40 +277,33 @@ Return ONLY valid JSON, no markdown, no explanation outside the JSON:
     const parsed = JSON.parse(content) as Record<string, unknown>;
 
     const type = parsed.type === "proposed_update" ? "proposed_update" : "answer";
-    const message = typeof parsed.message === "string" ? parsed.message : "I can help with that — let me know if you'd like more detail.";
+    const message = typeof parsed.message === "string"
+      ? parsed.message
+      : "I can help with that — ask me anything about your audience.";
     const suggestedActions = Array.isArray(parsed.suggestedActions)
-      ? (parsed.suggestedActions as unknown[]).filter((a): a is string => typeof a === "string").slice(0, 4)
+      ? cleanActions(parsed.suggestedActions as unknown[])
       : [];
 
     let proposedAudienceMap: AudienceMapResult | null = null;
     if (type === "proposed_update" && parsed.proposedAudienceMap) {
       proposedAudienceMap = validateProposedMap(parsed.proposedAudienceMap);
       if (!proposedAudienceMap) {
-        /* Validation failed — degrade to answer so we never return invalid map */
-        req.log.warn("Proposed map failed validation, degrading to answer");
-        res.json({
-          type: "answer",
-          message,
-          proposedAudienceMap: null,
-          suggestedActions,
-        } satisfies ChatRefineResponse);
+        req.log.warn("Proposed map failed validation — degrading to answer");
+        res.json({ type: "answer", message, proposedAudienceMap: null, suggestedActions } satisfies ChatRefineResponse);
         return;
       }
     }
 
-    req.log.info({ type, aiUsed: true }, "chat/refine completed");
+    req.log.info({ type, aiUsed: true }, "chat/refine OK");
+    res.json({ type, message, proposedAudienceMap, suggestedActions } satisfies ChatRefineResponse);
 
-    res.json({
-      type,
-      message,
-      proposedAudienceMap,
-      suggestedActions,
-    } satisfies ChatRefineResponse);
-  } catch (err) {
-    req.log.error({ err }, "chat/refine AI error — using fallback");
+  } catch (err: unknown) {
+    clearTimeout(timer);
+    const isTimeout = err instanceof Error && err.name === "AbortError";
+    req.log.warn({ timeout: isTimeout, err }, "chat/refine fallback");
     const fallback = isRefinementRequest(userMessage)
       ? buildFallbackUpdate(currentAudienceMap)
-      : buildFallbackAnswer(userMessage, currentAudienceMap);
+      : buildFallbackAnswer(currentAudienceMap);
     res.json(fallback);
   }
 });
