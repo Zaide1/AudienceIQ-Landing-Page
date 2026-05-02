@@ -1,3 +1,5 @@
+import React from "react";
+
 /* ─── Guest-mode modal set ────────────────────────────────────────── */
 
 interface BaseProps {
