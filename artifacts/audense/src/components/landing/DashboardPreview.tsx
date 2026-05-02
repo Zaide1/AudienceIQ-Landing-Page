@@ -376,10 +376,10 @@ function ChatPanel() {
 
       {/* Input */}
       <div style={{ padding: "8px 10px", background: "#fff", borderTop: "1px solid #F3F4F6" }}>
-        <div style={{ display: "flex", alignItems: "center", background: "#F3F4F6", borderRadius: 999, padding: "5px 8px 5px 12px", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", background: "#F3F4F6", borderRadius: 999, padding: "4px 4px 4px 12px", gap: 6 }}>
           <span style={{ flex: 1, fontSize: 10.5, color: "#9CA3AF" }}>Ask anything about your audience...</span>
-          <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#7C3AED", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Send style={{ width: 10, height: 10, color: "#fff", marginLeft: 1 }} />
+          <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#7C3AED", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Send style={{ width: 11, height: 11, color: "#fff" }} />
           </div>
         </div>
         <div style={{ textAlign: "center", fontSize: 9, color: "#9CA3AF", marginTop: 5, fontWeight: 500 }}>
