@@ -338,7 +338,7 @@ function StatCards() {
 
 /* ─── Chat panel ────────────────────────────────────────────────────── */
 const MESSAGES = [
-  { role: "ai",   text: "Hi Zaide 👋 I'm Audense, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them." },
+  { role: "ai",   text: "Hi Alex 👋 I'm Audense, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them." },
   { role: "user", text: "I'm building an AI calorie tracking app using photo recognition for people who want to lose weight but hate manual tracking." },
   { role: "ai",   text: "Got it. Who do you think your primary users are?" },
   { role: "user", text: "Busy professionals, 20–35, who go to the gym but don't have time to track everything." },
@@ -366,7 +366,9 @@ function ChatPanel() {
                 <Sparkles style={{ width: 10, height: 10, color: "#7C3AED" }} />
               </div>
             ) : (
-              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#EDE9FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 8, fontWeight: 700, color: "#7C3AED" }}>Z</div>
+              <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: "1px solid #EDE9FE" }}>
+                <img src={logoImg} alt="user" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </div>
             )}
             <div
               style={{
