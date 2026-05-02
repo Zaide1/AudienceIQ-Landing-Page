@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, User, Search, MessageSquare, Database } from "lucide-react";
+import { X, User, Search, MessageSquare, Database, LogOut } from "lucide-react";
 import { loadAudienceMap, type AudienceMapResult } from "../lib/audienceMap";
+
+interface AuthUser { email: string; id: string; }
 
 /* ─── helpers ─────────────────────────────────────────────────────── */
 function ls(key: string, fallback: string) {
@@ -79,50 +81,112 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 ];
 
 /* ─── tab content components ─────────────────────────────────────── */
-function ProfileTab({ displayName }: { displayName: string }) {
+function ProfileTab({
+  displayName, authUser, onSignIn, onSignOut,
+}: {
+  displayName: string;
+  authUser: AuthUser | null;
+  onSignIn: () => void;
+  onSignOut: () => void;
+}) {
   return (
     <>
       <div style={{ fontSize: 18, fontWeight: 700, color: "#111827", marginBottom: 22 }}>Profile</div>
 
-      <div style={{ ...ROW, display: "flex", alignItems: "center", gap: 16 }}>
-        <div style={{
-          width: 56, height: 56, borderRadius: "50%",
-          background: "linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 22, color: "#fff", fontWeight: 700, flexShrink: 0,
-        }}>
-          {displayName.charAt(0).toUpperCase()}
-        </div>
-        <div>
-          <button
-            type="button"
-            disabled
-            style={{
-              padding: "7px 14px", borderRadius: 8, border: "1px solid #E5E7EB",
-              background: "#FAFAFA", color: "#9CA3AF", fontSize: 13, fontWeight: 500,
-              cursor: "not-allowed",
-            }}
-          >
-            Change picture
-          </button>
-          <div style={HINT}>Profile photos will be available when accounts are enabled.</div>
-        </div>
-      </div>
+      {authUser ? (
+        /* ── Signed-in state ─────────────────────────────────────── */
+        <>
+          <div style={{ ...ROW, display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: "50%",
+              background: "linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 22, color: "#fff", fontWeight: 700, flexShrink: 0,
+            }}>
+              {(authUser.email.charAt(0) || "U").toUpperCase()}
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{authUser.email}</div>
+              <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 3 }}>Signed in</div>
+            </div>
+          </div>
 
-      <FieldRow label="Name">
-        <input style={DISABLED_INPUT} value={displayName} disabled />
-      </FieldRow>
+          <FieldRow label="Email">
+            <input style={DISABLED_INPUT} value={authUser.email} disabled />
+          </FieldRow>
 
-      <FieldRow label="Workspace">
-        <input style={DISABLED_INPUT} value="Local demo" disabled />
-      </FieldRow>
+          <FieldRow label="Name">
+            <input style={DISABLED_INPUT} value={displayName} disabled />
+          </FieldRow>
 
-      <div style={{
-        background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 10,
-        padding: "12px 14px", fontSize: 13, color: "#6B7280", lineHeight: 1.65,
-      }}>
-        Profiles will become editable after authentication is added.
-      </div>
+          <div style={{ marginTop: 8 }}>
+            <button
+              type="button"
+              onClick={onSignOut}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "9px 16px", borderRadius: 8,
+                border: "1px solid #FCA5A5", background: "#FEF2F2",
+                color: "#991B1B", fontSize: 13, fontWeight: 500,
+                cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              <LogOut size={14} />
+              Sign out
+            </button>
+          </div>
+        </>
+      ) : (
+        /* ── Guest state ─────────────────────────────────────────── */
+        <>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 14,
+            padding: "14px 16px", borderRadius: 10,
+            background: "#F9FAFB", border: "1px solid #E5E7EB", marginBottom: 20,
+          }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: "50%",
+              background: "#F3F4F6", border: "1px solid #E5E7EB",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <User size={20} style={{ color: "#9CA3AF" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: "#111827" }}>Guest session</div>
+              <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>Research is saved locally in this browser only.</div>
+            </div>
+          </div>
+
+          <div style={{
+            background: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 10,
+            padding: "14px 16px", marginBottom: 20,
+          }}>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: "#5B21B6", marginBottom: 6 }}>
+              Save your research to an account
+            </div>
+            <div style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.6, marginBottom: 14 }}>
+              Create a free account to save this map and chat, access it from any device, and start multiple research projects.
+            </div>
+            <button
+              type="button"
+              onClick={onSignIn}
+              style={{
+                padding: "9px 18px", borderRadius: 8,
+                background: "#7C3AED", color: "#fff",
+                border: "none", fontSize: 13, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              Create free account
+            </button>
+          </div>
+
+          <FieldRow label="Name">
+            <input style={DISABLED_INPUT} value={displayName} disabled />
+          </FieldRow>
+        </>
+      )}
     </>
   );
 }
@@ -284,9 +348,12 @@ function DataTab() {
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  authUser?: AuthUser | null;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
 }
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, authUser = null, onSignIn, onSignOut }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const map = isOpen ? loadAudienceMap() : null;
   const displayName = ls("audense-display-name", "") || ls("audense_onboarding", "{}") && (() => {
@@ -370,7 +437,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Right content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px" }}>
-          {activeTab === "profile"  && <ProfileTab displayName={displayName} />}
+          {activeTab === "profile"  && <ProfileTab displayName={displayName} authUser={authUser} onSignIn={onSignIn ?? (() => {})} onSignOut={onSignOut ?? (() => {})} />}
           {activeTab === "research" && <ResearchTab map={map} />}
           {activeTab === "chat"     && <ChatTab />}
           {activeTab === "data"     && <DataTab />}

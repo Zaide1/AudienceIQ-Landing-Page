@@ -1715,21 +1715,14 @@ export default function Dashboard() {
           <RailIcon icon={<Database size={18} />} label="Sources (coming soon)" />
           {/* Spacer */}
           <div style={{ flex: 1 }} />
-          {/* Auth: Sign in / Sign out */}
-          <RailIcon
-            icon={<User size={18} />}
-            label={authUser ? `Signed in as ${authUser.email} — click to sign out` : "Sign in to save research"}
-            active={!!authUser}
-            onClick={() => {
-              if (authUser) {
-                signOut().then(() => {
-                  setSbSessionItems([]);
-                });
-              } else {
-                setIsAuthModalOpen(true);
-              }
-            }}
-          />
+          {/* Sign-in shortcut — only visible when not signed in */}
+          {!authUser && (
+            <RailIcon
+              icon={<User size={18} />}
+              label="Sign in to save research"
+              onClick={() => setIsAuthModalOpen(true)}
+            />
+          )}
           {/* Settings */}
           <RailIcon
             icon={<Settings size={18} />}
@@ -2506,7 +2499,13 @@ export default function Dashboard() {
       </div>
     </div>
 
-    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+    <SettingsModal
+      isOpen={isSettingsOpen}
+      onClose={() => setIsSettingsOpen(false)}
+      authUser={authUser}
+      onSignIn={() => { setIsSettingsOpen(false); setIsAuthModalOpen(true); }}
+      onSignOut={() => { signOut().then(() => { setSbSessionItems([]); }); setIsSettingsOpen(false); }}
+    />
     <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
     <SupportModal isOpen={isSupportModalOpen} onClose={() => setIsSupportModalOpen(false)} />
     {isAuthModalOpen && (
