@@ -1,7 +1,6 @@
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowRight, Check, MessageSquare, Sparkles, Target } from "lucide-react";
 
 const ROWS: { title: string; body: string }[] = [
   {
@@ -41,296 +40,14 @@ const FAQS: { q: string; a: string }[] = [
   },
 ];
 
-/* ─── Section 1: How Audense works — 4-step workflow ───────────────── */
+/* ─── Section 1: Product preview — chat moment + output card ──────── */
 
-const STEP_LABEL_STYLE: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  height: 22,
-  padding: "0 9px",
-  borderRadius: 999,
-  background: "#EDE9FE",
-  color: "#6D28D9",
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: "0.04em",
-  textTransform: "uppercase",
-};
-
-const CARD_STYLE: React.CSSProperties = {
-  background: "#fff",
-  border: "1px solid #ECE9F5",
-  borderRadius: 16,
-  padding: "18px 18px 20px",
-  boxShadow: "0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(124,58,237,0.06)",
-  display: "flex",
-  flexDirection: "column",
-  gap: 12,
-  flex: 1,
-  minWidth: 0,
-};
-
-function StepLabel({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <span style={STEP_LABEL_STYLE}>
-      {icon}
-      {children}
-    </span>
-  );
-}
-
-function StepConnector() {
-  return (
-    <div
-      aria-hidden="true"
-      className="step-connector"
-      style={{
-        flexShrink: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#C4B5FD",
-      }}
-    >
-      <ArrowRight size={20} strokeWidth={2.25} />
-    </div>
-  );
-}
-
-/* Step 1 — Rough idea (input-style card) */
-function StepRoughIdea() {
-  return (
-    <div style={CARD_STYLE}>
-      <StepLabel icon={<Sparkles size={11} strokeWidth={2.5} />}>Rough idea</StepLabel>
-      <div
-        style={{
-          background: "#FAFAFB",
-          border: "1px solid #ECE9F5",
-          borderRadius: 12,
-          padding: "12px 14px",
-          fontSize: 13,
-          lineHeight: 1.55,
-          color: "#374151",
-          fontStyle: "italic",
-        }}
-      >
-        “I'm building an AI file organiser for busy founders.”
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#9CA3AF" }}>
-        <span
-          aria-hidden="true"
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: "#7C3AED",
-            display: "inline-block",
-          }}
-        />
-        Onboarding input
-      </div>
-    </div>
-  );
-}
-
-/* Step 2 — Audience map (mini cluster visual) */
-function StepAudienceMap() {
-  const dots: { x: number; y: number; r: number; c: string }[] = [
-    // purple cluster
-    { x: 28, y: 38, r: 5, c: "#7C3AED" },
-    { x: 36, y: 30, r: 4, c: "#7C3AED" },
-    { x: 44, y: 42, r: 4, c: "#7C3AED" },
-    { x: 32, y: 48, r: 3, c: "#A78BFA" },
-    { x: 40, y: 36, r: 3, c: "#A78BFA" },
-    // pink cluster
-    { x: 76, y: 32, r: 4, c: "#EC4899" },
-    { x: 82, y: 40, r: 3, c: "#F472B6" },
-    { x: 70, y: 38, r: 3, c: "#F472B6" },
-    // blue cluster
-    { x: 60, y: 70, r: 4, c: "#3B82F6" },
-    { x: 68, y: 64, r: 3, c: "#60A5FA" },
-    { x: 54, y: 64, r: 3, c: "#60A5FA" },
-    // amber cluster
-    { x: 22, y: 74, r: 3, c: "#F59E0B" },
-    { x: 30, y: 80, r: 3, c: "#FBBF24" },
-    // sparse outliers
-    { x: 88, y: 68, r: 2, c: "#C4B5FD" },
-    { x: 14, y: 22, r: 2, c: "#DDD6FE" },
-    { x: 82, y: 80, r: 2, c: "#DDD6FE" },
-  ];
-  return (
-    <div style={CARD_STYLE}>
-      <StepLabel icon={<Target size={11} strokeWidth={2.5} />}>Audience map</StepLabel>
-      <div
-        style={{
-          position: "relative",
-          height: 110,
-          borderRadius: 12,
-          background: "#FAFAFB",
-          border: "1px solid #ECE9F5",
-          overflow: "hidden",
-        }}
-      >
-        {dots.map((d, i) => (
-          <span
-            key={i}
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              left: `${d.x}%`,
-              top: `${d.y}%`,
-              width: d.r * 2,
-              height: d.r * 2,
-              borderRadius: "50%",
-              background: d.c,
-              transform: "translate(-50%, -50%)",
-              opacity: 0.9,
-            }}
-          />
-        ))}
-        {/* segment label pill */}
-        <span
-          style={{
-            position: "absolute",
-            left: 36,
-            top: 12,
-            padding: "3px 8px",
-            borderRadius: 999,
-            background: "#fff",
-            border: "1px solid #DDD6FE",
-            color: "#6D28D9",
-            fontSize: 10.5,
-            fontWeight: 700,
-            letterSpacing: "-0.01em",
-            boxShadow: "0 1px 2px rgba(15,23,42,0.05)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          Startup founders
-        </span>
-      </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {[
-          { c: "#7C3AED", label: "Founders" },
-          { c: "#EC4899", label: "Operators" },
-          { c: "#3B82F6", label: "Devs" },
-          { c: "#F59E0B", label: "Indie" },
-        ].map((s) => (
-          <span
-            key={s.label}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              fontSize: 10.5,
-              color: "#6B7280",
-              fontWeight: 500,
-            }}
-          >
-            <span
-              aria-hidden="true"
-              style={{ width: 6, height: 6, borderRadius: "50%", background: s.c }}
-            />
-            {s.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* Step 3 — Validation (checklist) */
-function StepValidation() {
-  const items = [
-    "What do they use today?",
-    "What would stop them switching?",
-    "Where do they already complain?",
-  ];
-  return (
-    <div style={CARD_STYLE}>
-      <StepLabel icon={<MessageSquare size={11} strokeWidth={2.5} />}>Validation</StepLabel>
-      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-        {items.map((t) => (
-          <li key={t} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-            <span
-              aria-hidden="true"
-              style={{
-                marginTop: 2,
-                width: 16,
-                height: 16,
-                borderRadius: 4,
-                background: "#EDE9FE",
-                border: "1px solid #DDD6FE",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#7C3AED",
-                flexShrink: 0,
-              }}
-            >
-              <Check size={11} strokeWidth={3} />
-            </span>
-            <span style={{ fontSize: 12.5, lineHeight: 1.5, color: "#374151" }}>{t}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-/* Step 4 — First move (plan card) */
-function StepFirstMove() {
-  const items = [
-    "Test X + LinkedIn",
-    "Interview 5 founders",
-    "Lead with the pain moment",
-  ];
-  return (
-    <div style={CARD_STYLE}>
-      <StepLabel icon={<ArrowRight size={11} strokeWidth={2.5} />}>First move</StepLabel>
-      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-        {items.map((t, i) => (
-          <li
-            key={t}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "8px 10px",
-              borderRadius: 10,
-              background: i === 0 ? "#F5F3FF" : "#FAFAFB",
-              border: `1px solid ${i === 0 ? "#DDD6FE" : "#ECE9F5"}`,
-            }}
-          >
-            <span
-              aria-hidden="true"
-              style={{
-                width: 18,
-                height: 18,
-                borderRadius: "50%",
-                background: "#fff",
-                border: "1px solid #DDD6FE",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#7C3AED",
-                fontSize: 10,
-                fontWeight: 800,
-                flexShrink: 0,
-              }}
-            >
-              {i + 1}
-            </span>
-            <span style={{ fontSize: 12.5, lineHeight: 1.4, color: "#374151", fontWeight: 500 }}>
-              {t}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+const PLAN_ROWS: { label: string; value: string }[] = [
+  { label: "Audience", value: "Startup founders" },
+  { label: "Pain", value: "“I can't find the file when I need it.”" },
+  { label: "Where to test", value: "X · LinkedIn · Reddit" },
+  { label: "First move", value: "Ask 5 founders what they use today" },
+];
 
 function ProductValueSection() {
   return (
@@ -357,7 +74,7 @@ function ProductValueSection() {
             marginInline: "auto",
           }}
         >
-          From rough idea to first audience plan.
+          Validate the audience before you build.
         </h2>
         <p
           style={{
@@ -365,22 +82,22 @@ function ProductValueSection() {
             fontSize: "clamp(17px, 1.2vw, 20px)",
             lineHeight: 1.55,
             color: "#6B7280",
-            maxWidth: 700,
+            maxWidth: 720,
             marginInline: "auto",
           }}
         >
-          Audense helps you turn what you want to build into who to test with,
-          what to ask, and where to start.
+          Audense turns a rough product idea into who to test with, what they
+          care about, and where to start.
         </p>
 
-        {/* Large workflow panel */}
+        {/* Large soft panel */}
         <div
           style={{
             marginTop: 56,
             borderRadius: 28,
-            padding: "clamp(24px, 3vw, 44px)",
+            padding: "clamp(28px, 4vw, 56px)",
             background:
-              "linear-gradient(180deg, rgba(237,233,254,0.55) 0%, rgba(221,214,254,0.32) 100%)",
+              "linear-gradient(180deg, rgba(245,243,255,0.85) 0%, rgba(237,233,254,0.55) 100%)",
             border: "1px solid #E5DEFB",
             boxShadow:
               "0 1px 2px rgba(15,23,42,0.04), 0 24px 60px rgba(124,58,237,0.08)",
@@ -388,33 +105,172 @@ function ProductValueSection() {
           }}
         >
           <div
-            className="audense-workflow-row"
+            className="audense-preview-row"
             style={{
-              display: "flex",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "clamp(24px, 3vw, 48px)",
               alignItems: "stretch",
-              gap: 14,
             }}
           >
-            <StepRoughIdea />
-            <StepConnector />
-            <StepAudienceMap />
-            <StepConnector />
-            <StepValidation />
-            <StepConnector />
-            <StepFirstMove />
+            {/* LEFT — Chat moment */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                gap: 18,
+                padding: "clamp(8px, 1.5vw, 20px) clamp(8px, 1vw, 16px)",
+                minWidth: 0,
+              }}
+            >
+              {/* Founder bubble */}
+              <div style={{ display: "flex", justifyContent: "flex-end", minWidth: 0 }}>
+                <div
+                  style={{
+                    background: "#F5F3FF",
+                    borderRadius: "16px 16px 4px 16px",
+                    padding: "14px 18px",
+                    fontSize: 15,
+                    lineHeight: 1.55,
+                    color: "#4C1D95",
+                    maxWidth: "92%",
+                    fontWeight: 500,
+                  }}
+                >
+                  I'm thinking of building an AI file organiser for founders.
+                </div>
+              </div>
+
+              {/* Audense bubble */}
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start", minWidth: 0 }}>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    background: `transparent url(${logoImg}) center/contain no-repeat`,
+                  }}
+                />
+                <div
+                  style={{
+                    background: "#fff",
+                    borderRadius: "16px 16px 16px 4px",
+                    padding: "14px 18px",
+                    fontSize: 15,
+                    lineHeight: 1.6,
+                    color: "#111827",
+                    boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
+                    minWidth: 0,
+                  }}
+                >
+                  Your first audience is likely founders who lose time hunting
+                  for saved files. Test the pain before building the product.
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT — Output card */}
+            <div
+              style={{
+                background: "#fff",
+                border: "1px solid #ECE9F5",
+                borderRadius: 20,
+                padding: "clamp(20px, 2vw, 28px)",
+                boxShadow:
+                  "0 1px 2px rgba(15,23,42,0.04), 0 12px 32px rgba(124,58,237,0.08)",
+                display: "flex",
+                flexDirection: "column",
+                minWidth: 0,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 18,
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: 17,
+                    fontWeight: 800,
+                    letterSpacing: "-0.01em",
+                    color: "#0D0D12",
+                    margin: 0,
+                  }}
+                >
+                  First audience plan
+                </h3>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    height: 20,
+                    padding: "0 8px",
+                    borderRadius: 999,
+                    background: "#F5F3FF",
+                    color: "#6D28D9",
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Audense
+                </span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {PLAN_ROWS.map((r, i) => (
+                  <div
+                    key={r.label}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "120px 1fr",
+                      gap: 16,
+                      padding: "14px 0",
+                      borderTop: i === 0 ? "none" : "1px solid #F1EEF8",
+                      alignItems: "baseline",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "#9CA3AF",
+                      }}
+                    >
+                      {r.label}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 14.5,
+                        lineHeight: 1.55,
+                        color: "#111827",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {r.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Responsive: stack the workflow on small screens */}
+      {/* Responsive: stack columns on small screens */}
       <style>{`
-        @media (max-width: 980px) {
-          .audense-workflow-row {
-            flex-direction: column;
-          }
-          .audense-workflow-row .step-connector {
-            transform: rotate(90deg);
-            margin: 4px auto;
+        @media (max-width: 880px) {
+          .audense-preview-row {
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>

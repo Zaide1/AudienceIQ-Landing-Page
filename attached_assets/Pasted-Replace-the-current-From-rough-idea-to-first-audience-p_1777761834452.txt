@@ -1,0 +1,71 @@
+Replace the current “From rough idea to first audience plan” workflow section.
+
+Important:
+- Do not change the hero.
+- Do not change the main CTA.
+- Do not change the hero dashboard mockup.
+- Remove the current 4-card workflow with arrows.
+- Keep the same section position on the page.
+- Keep the Audense brand style.
+- Make it feel premium, calm, and product-led.
+- Avoid generic SaaS infographic/card-grid styling.
+
+Problem:
+The current workflow section looks cheap and over-designed. It has too many mini cards, arrows, labels, and decorative details.
+
+Goal:
+Replace it with one elegant product moment that shows Audense turning a rough idea into a useful audience insight.
+
+New section title:
+Validate the audience before you build.
+
+Subtitle:
+Audense turns a rough product idea into who to test with, what they care about, and where to start.
+
+Design:
+Create one large rounded panel with a very soft purple/grey background, subtle border, and soft shadow.
+
+Inside the panel, use a 2-column layout:
+
+LEFT COLUMN — Chat moment
+Show a minimal chat-style mock:
+Founder:
+“I’m thinking of building an AI file organiser for founders.”
+
+Audense:
+“Your first audience is likely founders who lose time hunting for saved files. Test the pain before building the product.”
+
+Keep this clean:
+- no avatars unless already styled nicely
+- no excessive icons
+- no fake timestamps
+- no heavy borders
+- lots of whitespace
+
+RIGHT COLUMN — Output card
+Show one premium card titled:
+First audience plan
+
+Inside it show:
+Audience: Startup founders
+Pain: “I can’t find the file when I need it.”
+Where to test: X, LinkedIn, Reddit
+First move: Ask 5 founders what they use today
+
+Style:
+- Use compact rows
+- Use subtle dividers
+- Use Audense purple only as an accent
+- No arrows
+- No numbered workflow
+- No noisy icons
+- No fake social proof
+- No testimonials
+- No stats unless they are clearly product-demo examples
+
+Responsive:
+- Desktop: chat mock left, output card right
+- Mobile: stack vertically
+- Avoid horizontal overflow
+
+The final section should feel like a polished product preview, not an infographic.
