@@ -725,13 +725,7 @@ export default function Dashboard() {
         }}
       >
         {/* Dashboard header */}
-        <div
-          style={{
-            borderBottom: "1px solid #E5E7EB",
-            background: "#fff",
-            flexShrink: 0,
-          }}
-        >
+        <div style={{ flexShrink: 0 }}>
           <div
             style={{
               maxWidth: 1440,
