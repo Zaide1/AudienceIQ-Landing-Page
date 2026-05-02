@@ -203,56 +203,59 @@ function AudienceMap({
         background: "#fff",
         border: "1px solid #F0EDF9",
         borderRadius: 12,
-        padding: "14px 16px 40px",
+        padding: "14px 16px 12px",
       }}
     >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${COLS}, 10px)`,
-          gridTemplateRows: `repeat(${ROWS}, 10px)`,
-          gap: 5,
-          width: "fit-content",
-        }}
-      >
-        {BASE_DOTS.map((color, i) => (
-          <div
-            key={i}
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              background: color,
-              flexShrink: 0,
-            }}
-          />
-        ))}
+      {/* Dot grid — width: 100% + overflow: hidden prevents any spill */}
+      <div style={{ width: "100%", overflow: "hidden" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${COLS}, 1fr)`,
+            gap: 4,
+          }}
+        >
+          {BASE_DOTS.map((color, i) => (
+            <div
+              key={i}
+              style={{
+                aspectRatio: "1",
+                borderRadius: "50%",
+                background: color,
+                minWidth: 0,
+              }}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Dynamic tooltip */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 16,
-          left: selected.tooltipLeft,
-          transform: "translateX(-50%)",
-          background: "#fff",
-          border: `1px solid ${selected.accent}44`,
-          borderRadius: 10,
-          padding: "8px 12px",
-          boxShadow: `0 4px 16px ${selected.accent}22`,
-          minWidth: 160,
-          pointerEvents: "none",
-          transition: "left 0.3s ease",
-          zIndex: 2,
-        }}
-      >
-        <div style={{ fontWeight: 700, fontSize: 12, color: "#111827" }}>{selected.name}</div>
-        <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
-          {selected.pct}% of audience
-        </div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: selected.accent, marginTop: 2 }}>
-          {selected.range} people
+      {/* Dynamic tooltip — rendered below the grid, not absolute */}
+      <div style={{ position: "relative", height: 52 }}>
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            left: selected.tooltipLeft,
+            transform: "translateX(-10%)",
+            background: "#fff",
+            border: `1px solid ${selected.accent}44`,
+            borderRadius: 10,
+            padding: "8px 12px",
+            boxShadow: `0 4px 16px ${selected.accent}22`,
+            minWidth: 160,
+            pointerEvents: "none",
+            transition: "left 0.3s ease",
+            zIndex: 2,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <div style={{ fontWeight: 700, fontSize: 12, color: "#111827" }}>{selected.name}</div>
+          <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
+            {selected.pct}% of audience
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: selected.accent, marginTop: 2 }}>
+            {selected.range} people
+          </div>
         </div>
       </div>
     </div>
