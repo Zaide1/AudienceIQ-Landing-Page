@@ -1,0 +1,145 @@
+Replace the current Settings modal design with a Jack & Jill-style light settings modal.
+
+Important:
+- Do not create a route/page.
+- Do not change dashboard layout.
+- Do not change onboarding.
+- Do not change chat behaviour.
+- Do not add auth/Supabase.
+- Keep it as a modal opened from the existing Settings button.
+- Use local React state and localStorage only.
+
+Design target:
+A large clean white settings modal similar to the provided Jack & Jill reference:
+- Dark translucent backdrop
+- Large white modal
+- Left vertical navigation column
+- Right content panel
+- Close X in the top-right
+- Minimal borders
+- Soft rounded corners
+- Spacious form-style layout
+- Premium SaaS feel
+
+Modal sizing:
+- width: min(900px, calc(100vw - 40px))
+- height: min(720px, calc(100vh - 40px))
+- border-radius: 10px to 14px
+- background: #FFFFFF
+- shadow: 0 24px 80px rgba(15, 23, 42, 0.22)
+- overflow: hidden
+
+Backdrop:
+- fixed full screen
+- rgba(0, 0, 0, 0.45)
+- centered modal
+
+Left sidebar:
+- width around 190px
+- border-right: 1px solid #E5E7EB
+- padding: 16px 12px
+- background: #FAFAF9 or #FBFBFA
+- nav items stacked vertically
+- selected item background: #F4F0FF
+- selected text: Audense purple
+- inactive text: #52525B
+- icon + label per item
+- item height around 40px
+- border radius 8px
+
+Tabs:
+1. Profile
+2. Research
+3. Chat
+4. Data
+5. Help
+
+Right content:
+- padding: 28px 32px
+- overflow-y auto
+- section title at top
+- use form-style rows, labels, helper text, disabled inputs, and simple buttons
+
+Profile tab:
+- Title: Profile
+- Profile Picture row:
+  - circular Audense/user avatar placeholder
+  - Change Picture button disabled for now
+  - helper text: “Profile photos will be available when accounts are enabled.”
+- Name field:
+  - label: Name
+  - disabled input showing displayName if available, otherwise “Founder”
+- Workspace field:
+  - label: Workspace
+  - disabled input showing “Local demo”
+- Note:
+  “Profiles will become editable after authentication is added.”
+
+Research tab:
+- Title: Research
+- Current research section:
+  - Product summary: disabled textarea/value from audienceMap.productSummary
+  - Region: disabled input from audienceMap.region
+  - Category: disabled input from audienceMap.category
+  - Confidence: disabled input from audienceMap.confidence
+- Source section:
+  - Source mode: evidenceSummary.sourceMode or “Hypothesis-led”
+  - Sources used: show “Hacker News” if sourcesUsed includes hacker_news, otherwise “No live sources connected”
+  - Confidence reason: evidenceSummary.confidenceReason if available
+  - Limitations: show evidenceSummary.limitations as bullets
+- Helper note:
+  “Audense estimates are directional and should be validated with real users.”
+
+Chat tab:
+- Title: Chat
+- Rows:
+  - Assistant role: “Audience intelligence coach”
+  - Scope: “Audience research, positioning, validation, messaging, and go-to-market”
+  - Memory: “Current research session only”
+- Add a short explanation:
+  “Audense uses your onboarding data, current audience map, and recent chat context to answer. It should not answer unrelated questions.”
+- Add disabled toggles:
+  - Concise responses: On
+  - Stay on-topic: On
+  - Suggest next actions: On
+
+Data tab:
+- Title: Data
+- Local demo data section:
+  - Button: Clear chat history
+  - Button: Clear current audience map
+  - Button: Reset local demo data
+- Behaviour:
+  - Clear chat history removes localStorage key audense-chat-messages
+  - Clear current audience map removes localStorage key audense-audience-map
+  - Reset local demo data removes audense-chat-messages, audense-audience-map, audense_onboarding
+  - Confirm before reset local demo data
+- Add helper text explaining this only affects local browser demo data.
+
+Help tab:
+- Title: Help
+- Add clean FAQ-style rows:
+  1. What is Reachable Audience?
+  2. What is Est. Coverage?
+  3. What is Untapped Opportunity?
+  4. What is Confidence?
+  5. What is Audience Universe?
+  6. What does Run live research do?
+  7. Why are estimates directional?
+- Each answer should be 1–2 sentences max.
+- Keep copy clear and founder-friendly.
+
+Interactions:
+- Clicking Settings opens modal.
+- Clicking X closes modal.
+- Clicking backdrop closes modal.
+- Escape key closes modal.
+- Switching tabs does not close modal.
+- Modal should not break dashboard scroll/layout.
+- Use accessible aria labels where appropriate.
+
+After implementing, explain:
+- Files changed
+- How the modal opens/closes
+- What each tab contains
+- What localStorage actions were added

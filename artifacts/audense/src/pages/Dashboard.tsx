@@ -8,6 +8,7 @@ import {
   FaXTwitter, FaReddit, FaFacebook, FaGoogle,
 } from "react-icons/fa6";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
+import { SettingsModal } from "../components/SettingsModal";
 import {
   loadAudienceMap, generateMockAudienceMap, saveAudienceMap, formatK,
   type AudienceMapResult, type ResearchSignal,
@@ -733,6 +734,7 @@ export default function Dashboard() {
     ? audienceMap.region.split(",")[0].trim()
     : audienceMap.region;
 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [splitPct, setSplitPct] = useState<number>(loadSplit);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1037,6 +1039,7 @@ export default function Dashboard() {
   };
 
   return (
+    <>
     <div
       ref={containerRef}
       style={{
@@ -1245,7 +1248,7 @@ export default function Dashboard() {
 
         {/* Bottom nav */}
         <div style={{ padding: "6px 12px 14px", borderTop: "1px solid #F3F4F6", flexShrink: 0 }}>
-          <NavItem icon={<Settings size={15} />} label="Settings" onClick={() => navigate("/settings")} />
+          <NavItem icon={<Settings size={15} />} label="Settings" onClick={() => setIsSettingsOpen(true)} />
           <NavItem icon={<HelpCircle size={15} />} label="Need help? Chat with us" onClick={() => navigate("/help")} />
         </div>
       </div>
@@ -1686,5 +1689,8 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+
+    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+    </>
   );
 }
