@@ -1,0 +1,65 @@
+Refine the Audience Universe visual scale and premium feel.
+
+Important:
+- Do not change the dashboard layout.
+- Do not change routing.
+- Do not change onboarding.
+- Do not change chat behaviour.
+- Do not change the segment data contract.
+- Do not change the cluster logic, dot positions, or proportions.
+- Only adjust the visual styling/scale of the Audience Universe map.
+
+Current issue:
+At full-size desktop, the Audience Universe map is technically the right width, but visually it feels too big and not premium. The dots are too large, too dense, and too visually dominant. The map card draws too much attention compared with the metric cards and segment cards.
+
+Smaller/split-panel sizes already look mostly fine, so avoid overcorrecting them.
+
+Goal:
+Keep the map as the main visual, but make it feel more refined, lighter, and more premium — closer to a Stripe/Linear-style analytics card: clean, light, precise, and calm.
+
+Adjustments:
+
+1. Dot sizing
+- Reduce dot diameter by around 15–25% on large desktop.
+- Keep the dot grid readable.
+- Reduce gap slightly only if needed so the grid still fills the width nicely.
+- Dots should feel like a polished data visual, not oversized bubbles.
+
+2. Untapped dots
+- Make grey untapped dots lighter and softer.
+- Use something close to #E5E7EB or #E8EAF0.
+- Lower opacity slightly if needed.
+- Avoid dark grey or heavy contrast.
+
+3. Coloured clusters
+- Keep the same colours and cluster shapes.
+- Slightly soften the coloured dots so they are vibrant but not harsh.
+- Do not add gradients per dot.
+- Do not randomise colours.
+- Do not change the segment proportions.
+
+4. Map card height
+- Reduce the Audience Universe card height slightly on full desktop.
+- The map should not dominate the whole right panel.
+- Aim for a more balanced dashboard where metric cards, map, and segment cards all feel proportionate.
+
+5. Internal spacing
+- Reduce excessive vertical padding inside the map card.
+- Keep enough breathing room around title, subtitle, legend, and dot grid.
+- The dot grid should sit neatly inside the card without looking cramped.
+
+6. Responsive behaviour
+- On very large screens, cap the maximum visual size of the dot grid.
+- On smaller split-panel widths, preserve the current good behaviour as much as possible.
+- If space gets tight, scale dot size down rather than causing horizontal overflow.
+- Avoid squashing the segment cards.
+
+7. Premium feel
+- The final result should feel lighter, calmer, and more precise.
+- The map should still be visually interesting, but less loud.
+
+After implementing, explain:
+- Dot size before/after
+- Dot gap before/after
+- Map/card height changes
+- Any max-height or responsive scaling added
