@@ -1,0 +1,155 @@
+Add the Audense chat/refinement endpoint.
+
+Important:
+- Do not change landing.
+- Do not change onboarding.
+- Do not change dashboard layout.
+- Do not change AudienceUniverseMap visuals.
+- Do not add Supabase/auth yet.
+- Keep the existing /api/audience/generate endpoint working.
+- Use the same OpenAI/Replit AI integration setup already used by /api/audience/generate.
+- If AI fails, return a safe deterministic mock response.
+- Keep this MVP scoped. Do not build full memory, auth, project history, or version history yet.
+
+Goal:
+Create a backend chat endpoint that makes Audense feel like an audience intelligence coach for founders, similar to a strategic chat tool.
+
+Audense should not be a generic chatbot.
+It should answer using the current research context:
+- onboarding answers
+- current audience map
+- current segment data
+- recent chat messages
+- latest user message
+
+Memory/context rule:
+For now, treat each dashboard session as one research instance.
+Use only the current onboardingData, currentAudienceMap, recent messages, and userMessage as context.
+Do not invent or reference past projects.
+Do not build cross-project memory yet.
+Later, auth/Supabase will add user-level memory and saved research projects, but not in this step.
+
+Endpoint:
+POST /api/chat/refine
+
+Request body:
+{
+  "onboardingData": {
+    "productIdea": string,
+    "targetUsers": string,
+    "problem": string,
+    "goal": string,
+    "finalCategory": string,
+    "finalRegion": string
+  },
+  "currentAudienceMap": AudienceMapResult,
+  "messages": recent chat messages array,
+  "userMessage": string
+}
+
+Response shape:
+{
+  "type": "answer" | "proposed_update",
+  "message": string,
+  "proposedAudienceMap": AudienceMapResult | null,
+  "suggestedActions": string[]
+}
+
+Behaviour:
+1. The AI should act as Audense, an audience intelligence coach for founders.
+2. It should use the current onboarding data and currentAudienceMap as context.
+3. It should answer questions about:
+   - who to target first
+   - why a segment matters
+   - objections and pain points
+   - where to find users
+   - messaging angles
+   - social media distribution plans
+   - whether a segment is worth exploring
+   - how to validate the idea
+   - how to start outreach
+   - what assumptions are risky
+4. It should not give generic startup advice detached from the current audience map.
+5. It should not invent official market statistics.
+6. It should treat numbers as directional MVP estimates.
+7. It should be practical, specific, and founder-friendly.
+
+Response rules:
+- If the user asks an informational/advice/planning question, return:
+  type: "answer"
+  proposedAudienceMap: null
+- If the user explicitly asks to change/refine/update/focus/target/prioritise/shift the map, return:
+  type: "proposed_update"
+  proposedAudienceMap: updated AudienceMapResult
+- Do not propose a map update for every message.
+- Normal questions should usually be answers only.
+- proposed_update should only happen when the user asks for a map/audience change or when changing the map is clearly necessary.
+
+proposedAudienceMap rules:
+- Must keep the same AudienceMapResult shape.
+- Exactly 5 segments.
+- Segment percentages sum to 100.
+- Segment colours exactly in this order:
+  1. purple
+  2. blue
+  3. green
+  4. orange
+  5. pink
+- Must include valid metrics, insights, painPoints, platforms, whyThisSegment, acquisitionAngle.
+- The message should explain what changed and why.
+- Do not make wild changes. Refinements should be plausible and incremental unless the user asks for a major pivot.
+
+Fallback:
+If OpenAI/Replit AI integration is unavailable or validation fails:
+- Return a safe mock answer for normal questions.
+- Return a safe mock proposed_update for refinement-style messages.
+- Never break the frontend demo.
+
+Frontend:
+Update the dashboard chat submit flow:
+1. When user sends a message, call POST /api/chat/refine with:
+   - onboardingData
+   - currentAudienceMap
+   - recent messages
+   - userMessage
+2. If response.type is "answer":
+   - append AI message only
+   - no Confirm update button
+3. If response.type is "proposed_update":
+   - append AI message
+   - store proposedAudienceMap as pendingUpdate
+   - show Confirm update and Dismiss
+4. Confirm update:
+   - applies proposedAudienceMap exactly once
+   - saves it to audense-audience-map
+   - clears pendingUpdate
+   - updates map/cards/metrics
+   - adds one confirmation message:
+     “Done — I’ve updated your audience map based on that.”
+5. Dismiss:
+   - clears pendingUpdate
+   - does not change map
+   - adds one message:
+     “No problem — I’ll leave the audience map unchanged.”
+6. Keep chat messages stored separately in audense-chat-messages.
+7. Prevent duplicate pending updates:
+   - If a pending update already exists, ask the user to confirm or dismiss it before creating another.
+
+Validation:
+- Normal question: “Where do I find Busy Professionals?” should return an answer, not update the map.
+- Planning question: “Give me a TikTok plan for Gym Goers” should return an answer, not update the map.
+- Refinement request: “Prioritise paid users” should return proposed_update.
+- Refinement request: “Make Busy Professionals the main audience” should return proposed_update.
+- Confirm applies once.
+- Dismiss does not change the map.
+- Dashboard still works if AI fails.
+- Chat remains separate from onboarding/map data.
+
+After implementing, explain:
+- Files changed
+- Endpoint request/response shape
+- How context is passed to the AI
+- How answer vs proposed_update is decided
+- How frontend pending updates work
+- How fallback works
+- What is intentionally not implemented yet
