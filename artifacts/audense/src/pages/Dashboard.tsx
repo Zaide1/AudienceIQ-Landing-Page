@@ -1100,7 +1100,7 @@ export default function Dashboard() {
             <div style={{ fontSize: 11.5, color: "#9CA3AF", marginBottom: 14 }}>
               Click a segment to explore deeper insights
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 10 }}>
               {segments.map((seg) => {
                 const isActive = selectedSegmentId === seg.id;
                 return (
