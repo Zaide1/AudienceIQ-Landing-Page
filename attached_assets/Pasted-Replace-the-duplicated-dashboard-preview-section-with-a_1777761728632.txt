@@ -1,0 +1,66 @@
+Replace the duplicated dashboard preview section with a graphic “How Audense works” workflow section.
+
+Important:
+- Do not change the hero section.
+- Do not change the main CTA.
+- Do not change the hero dashboard mockup.
+- Remove the duplicated large dashboard screenshot section.
+- Keep the page premium, minimal, and on-brand.
+- No fake social proof.
+- No testimonials.
+- No user counts.
+- Do not make it look like generic AI cards.
+
+Goal:
+Add a visual section that explains the Audense workflow without duplicating the dashboard.
+
+Section title:
+From rough idea to first audience plan.
+
+Subtitle:
+Audense helps you turn what you want to build into who to test with, what to ask, and where to start.
+
+Design:
+Create one large rounded feature panel with a soft purple-tinted background, subtle border, and light shadow. Inside it, show a 4-step horizontal workflow using connected mini-cards.
+
+Workflow cards:
+
+1. Rough idea
+Show a small input-style card with:
+“I’m building an AI file organiser for busy founders.”
+
+2. Audience map
+Show a small simplified audience visual:
+- tiny dot clusters
+- 3–4 coloured groups
+- small label “Startup founders”
+
+3. Validation
+Show a checklist card:
+- What do they use today?
+- What would stop them switching?
+- Where do they already complain?
+
+4. First move
+Show a small plan card:
+- Test X + LinkedIn
+- Interview 5 founders
+- Lead with the pain moment
+
+Visual style:
+- Cards should feel like product UI, not marketing boxes.
+- Use the existing Audense purple accent.
+- Use soft borders, rounded corners, and gentle shadows.
+- Use small icon pills where useful.
+- Keep spacing generous.
+- The section should feel closer to Cluely-style product storytelling: graphic, calm, premium, and minimal.
+
+Responsive:
+- Desktop: 4 cards in a row inside the large panel.
+- Tablet/mobile: stack cards vertically.
+- Avoid horizontal overflow.
+
+After implementing, explain:
+- What section was removed
+- What new workflow section was added
+- How it avoids duplicating the dashboard mockup
