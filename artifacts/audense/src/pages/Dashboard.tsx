@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
   Settings, HelpCircle, Send, Plus, Paperclip, X as XIcon, FileText, Image,
-  Home, Layers, Database, User,
+  Home, Layers, User,
 } from "lucide-react";
 import {
   FaInstagram, FaTiktok, FaYoutube, FaLinkedin,
@@ -1805,17 +1805,37 @@ export default function Dashboard() {
             background: "#fff",
           }}
         >
-          {/* Logo */}
-          <img
-            src={logoImg}
-            alt="AudienceIQ"
-            width={36}
-            height={36}
-            decoding="sync"
-            loading="eager"
-            fetchPriority="high"
-            style={{ width: 36, height: 36, objectFit: "contain", flexShrink: 0, marginBottom: 20 }}
-          />
+          {/* Logo — clickable, navigates to landing route. Does NOT sign out,
+              clear local session data, or open the save-history modal. Pure
+              navigation so guests have a simple way back to `/`. */}
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label="Go to AudienceIQ home"
+            title="Home"
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              margin: 0,
+              marginBottom: 20,
+              cursor: "pointer",
+              flexShrink: 0,
+              borderRadius: 8,
+              lineHeight: 0,
+            }}
+          >
+            <img
+              src={logoImg}
+              alt="AudienceIQ"
+              width={36}
+              height={36}
+              decoding="sync"
+              loading="eager"
+              fetchPriority="high"
+              style={{ width: 36, height: 36, objectFit: "contain", display: "block" }}
+            />
+          </button>
           {/* Top nav icons */}
           <RailIcon icon={<Home size={18} />} label="Home" active onClick={() => {}} />
           <RailIcon
@@ -1824,7 +1844,6 @@ export default function Dashboard() {
             active={isHistoryOpen}
             onClick={() => setIsHistoryOpen((v) => !v)}
           />
-          <RailIcon icon={<Database size={18} />} label="Sources (coming soon)" />
           {/* Spacer */}
           <div style={{ flex: 1 }} />
           {/* Sign-in shortcut — only visible when not signed in */}
