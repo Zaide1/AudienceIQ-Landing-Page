@@ -22,7 +22,7 @@ import {
   type ResearchSession, type StoredMessage,
 } from "../lib/researchSessions";
 import { AuthModal } from "../components/AuthModal";
-import { SoftPromptModal, NewResearchAuthWall } from "../components/GuestModals";
+import { SoftPromptModal, NewResearchAuthWall, LeavingDashboardConfirm } from "../components/GuestModals";
 import { onAuthChange, signOut, getCurrentUser, type AuthUser } from "../lib/auth";
 import { sbAppendMessage, sbUpdateMap, sbLoadSessionList, sbLoadFullSession, sbSaveSession } from "../lib/sbSessions";
 import {
@@ -1186,6 +1186,7 @@ export default function Dashboard() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const authUserRef = useRef<AuthUser | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [sbSessionItems, setSbSessionItems] = useState<ResearchSession[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
@@ -1872,12 +1873,39 @@ export default function Dashboard() {
             background: "#fff",
           }}
         >
-          {/* Logo — clickable, navigates to landing route. Does NOT sign out,
-              clear local session data, or open the save-history modal. Pure
-              navigation so guests have a simple way back to `/`. */}
+          {/* Logo — clickable, navigates to landing route. For *guests with
+              active research* we surface a confirmation modal first so they
+              don't lose their unsaved work by accident. Signed-in users and
+              guests with no research go straight to `/`. This action never
+              signs out, clears local session data, or opens the auth modal
+              directly. */}
           <button
             type="button"
-            onClick={() => navigate("/")}
+            onClick={() => {
+              /* Signed-in: always navigate immediately. Their work is
+                 already persisted to Supabase. */
+              if (authUser) {
+                navigate("/");
+                return;
+              }
+              /* Guest active-research detection. Any of: an active session
+                 id, an existing local session, onboarding/product data,
+                 the guest-research flag, or a non-trivial chat (>2
+                 messages — guards against the seeded welcome turns). */
+              const hasLocalSession =
+                !!activeSessionId ||
+                loadSessions().length > 0 ||
+                !!getActiveSession();
+              const hasOnboarding = !!ob?.productIdea || !!loadOnboarding();
+              const hasMeaningfulChat = messages.length > 2;
+              const hasResearch =
+                hasLocalSession || hasOnboarding || hasGuestResearch() || hasMeaningfulChat;
+              if (hasResearch) {
+                setIsLeaveConfirmOpen(true);
+              } else {
+                navigate("/");
+              }
+            }}
             aria-label="Go to AudienceIQ home"
             title="Home"
             style={{
@@ -2728,6 +2756,23 @@ export default function Dashboard() {
           setSoftPromptSeenAt(3);
           setIsSoftPromptOpen(false);
         }}
+      />
+    )}
+    {isLeaveConfirmOpen && (
+      <LeavingDashboardConfirm
+        onPrimary={() => {
+          /* Save my history → open existing sign-up modal. Do not nav. */
+          setIsLeaveConfirmOpen(false);
+          setIsAuthModalOpen(true);
+        }}
+        onSecondary={() => {
+          /* Continue without saving → go to landing. Local guest data is
+             intentionally preserved so the guest can come back to /dashboard
+             and find their work intact. */
+          setIsLeaveConfirmOpen(false);
+          navigate("/");
+        }}
+        onCancel={() => setIsLeaveConfirmOpen(false)}
       />
     )}
     {isNewResearchAuthWall && (

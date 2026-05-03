@@ -1,0 +1,66 @@
+Fix dashboard logo navigation for guest users.
+
+Current intended behaviour:
+- The AudienceIQ logo on the dashboard should route back to the landing page.
+- This is correct and should remain true.
+
+Problem:
+- If a guest user clicks the dashboard logo and returns to landing, they may lose track of their current unsaved research/chat.
+- This can happen accidentally.
+- We need to warn them and give them a chance to sign up/save before leaving.
+
+Important:
+- Do not change the landing page design.
+- Do not change dashboard layout.
+- Do not change onboarding.
+- Do not change chat behaviour.
+- Do not change AudienceMapResult shape.
+- Do not add billing/pricing.
+- Do not change New Research gating.
+- Do not clear local guest data when navigating to landing.
+
+Required behaviour:
+1. On dashboard logo click:
+   - If the user is signed in:
+     - Navigate directly to the landing page.
+   - If the user is a guest with an active research/chat/map:
+     - Do not navigate immediately.
+     - Open a confirmation modal first.
+   - If the user is a guest with no active research/chat/map:
+     - Navigate directly to landing.
+
+2. Guest confirmation modal:
+   - Title: “Save this research before leaving?”
+   - Body: “You’re using AudienceIQ as a guest. Sign up to save this chat, audience map, and research history before going back to the homepage.”
+   - Primary CTA: “Save my history”
+     - Opens the existing sign-up/auth modal.
+     - Does not navigate away.
+   - Secondary CTA: “Continue without saving”
+     - Navigates to landing.
+     - Does not wipe local guest data.
+   - Close/cancel:
+     - Closes modal.
+     - Keeps user on dashboard.
+
+3. Active guest research detection:
+   Treat the guest as having active research if any of these exist:
+   - active session id
+   - current audience map
+   - non-empty chat messages
+   - onboarding/product data
+   - local research session count > 0
+
+4. Validation:
+   - Guest with research clicks dashboard logo → modal appears.
+   - Guest clicks cancel → stays on dashboard, chat/map intact.
+   - Guest clicks Save my history → existing sign-up modal opens.
+   - Guest clicks Continue without saving → lands on homepage, local data is not deleted.
+   - Guest with no research clicks logo → lands on homepage directly.
+   - Signed-in user clicks logo → lands on homepage directly.
+   - No dashboard/session/localStorage data is cleared by this action.
+
+After implementing, report:
+- Which file handles dashboard logo click.
+- How guest active research is detected.
+- Whether localStorage/session data is preserved.
+- Validation results.
