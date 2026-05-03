@@ -35,8 +35,8 @@ export function Navbar() {
 
       <Button
         onClick={() => navigate("/onboarding")}
-        className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
-        style={{ width: 210, height: 52, fontSize: 16 }}
+        className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+        style={{ width: 210, height: 52, fontSize: 16, borderRadius: 14 }}
         data-testid="button-map-audience-nav"
       >
         Map my audience →

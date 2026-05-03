@@ -411,7 +411,7 @@ function AudienceMap({
                   style={{
                     width: "72%",
                     height: "72%",
-                    borderRadius: 2,
+                    borderRadius: "9999px",
                     background: isUntapped ? "#EEF0F4" : color,
                     opacity: isUntapped ? 0.72 : 0.82,
                   }}
