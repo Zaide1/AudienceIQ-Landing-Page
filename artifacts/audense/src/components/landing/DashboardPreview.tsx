@@ -1,6 +1,23 @@
 import { useRef, useEffect, useState } from "react";
 import { Send, Sparkles } from "lucide-react";
+import {
+  FaInstagram, FaTiktok, FaYoutube, FaLinkedin,
+  FaXTwitter, FaReddit, FaFacebook, FaGoogle,
+} from "react-icons/fa6";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
+
+/* Same mapping the dashboard uses, keyed by the short names in SEGMENTS. */
+const PREVIEW_PLATFORM_ICONS: Record<string, { Icon: React.ComponentType<{ size?: number | string }>; color: string }> = {
+  Insta:     { Icon: FaInstagram, color: "#E1306C" },
+  Instagram: { Icon: FaInstagram, color: "#E1306C" },
+  TikTok:    { Icon: FaTiktok,    color: "#010101" },
+  YouTube:   { Icon: FaYoutube,   color: "#FF0000" },
+  LinkedIn:  { Icon: FaLinkedin,  color: "#0A66C2" },
+  X:         { Icon: FaXTwitter,  color: "#000000" },
+  Reddit:    { Icon: FaReddit,    color: "#FF4500" },
+  Facebook:  { Icon: FaFacebook,  color: "#1877F2" },
+  Google:    { Icon: FaGoogle,    color: "#4285F4" },
+};
 
 /* ─── Fixed design dimensions ─────────────────────────────────────── */
 const DESIGN_WIDTH  = 980;
@@ -273,23 +290,33 @@ function SegmentCards() {
           {/* Platforms */}
           <div style={{ marginTop: "auto", paddingTop: 4 }}>
             <div style={{ fontSize: 8.5, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4 }}>Top Platforms</div>
-            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-              {s.platforms.map((p) => (
-                <span
-                  key={p}
-                  style={{
-                    background: "#fff",
-                    border: `1px solid ${s.accent}33`,
-                    borderRadius: 4,
-                    padding: "1px 5px",
-                    fontSize: 8.5,
-                    fontWeight: 600,
-                    color: "#374151",
-                  }}
-                >
-                  {p}
-                </span>
-              ))}
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {s.platforms.map((p) => {
+                const entry = PREVIEW_PLATFORM_ICONS[p];
+                if (!entry) return null;
+                const { Icon, color } = entry;
+                return (
+                  <span
+                    key={p}
+                    title={p}
+                    aria-label={p}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 16,
+                      height: 16,
+                      borderRadius: 4,
+                      background: "#fff",
+                      border: `1px solid ${s.accent}33`,
+                      color,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon size={9} />
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>
