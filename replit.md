@@ -44,3 +44,7 @@ Highlights since v1:
 - Help, Privacy, Terms restyled via shared `src/components/DocPage.tsx` (gradient hero, centered 760px reading column, `DocSection` / `DocParagraph` / `DocBulletList` / `DocDefinition` primitives). Privacy/Terms legal copy preserved verbatim; Help regrouped into the five spec sections.
 
 Untouched: routing, auth, onboarding, dashboard, navbar, hero copy/CTA, and the dashboard preview component.
+
+## Brand
+
+The product brand is **AudienceIQ** (renamed from "Audense"). All user-facing strings in `artifacts/audense/src/**`, `artifacts/audense/index.html`, and the artifact title in `.replit-artifact/artifact.toml` were updated. The workspace package name (`@workspace/audense`) and directory (`artifacts/audense`) were intentionally left unchanged so workflows, build scripts, and the artifact registry continue to work — these are internal identifiers, not user-facing.

@@ -155,7 +155,7 @@ export function AuthModal({ onClose, onAuth }: Props) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 700, color: "#111827" }}>
-              {tab === "signin" ? "Sign in to Audense" : "Create your account"}
+              {tab === "signin" ? "Sign in to AudienceIQ" : "Create your account"}
             </div>
             <div style={{ fontSize: 12.5, color: "#9CA3AF", marginTop: 3 }}>
               {tab === "signin"

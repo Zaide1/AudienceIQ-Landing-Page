@@ -405,7 +405,7 @@ export default function Settings() {
           </Field>
           <ToggleRow
             label="Allow map update suggestions"
-            hint="Audense may suggest updating your audience map based on chat context."
+            hint="AudienceIQ may suggest updating your audience map based on chat context."
             value={allowMapUpdates}
             onChange={setAllowMapUpdates}
           />
@@ -446,10 +446,10 @@ export default function Settings() {
         </Card>
 
         {/* E — About */}
-        <Card title="About Audense">
+        <Card title="About AudienceIQ">
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={{ fontSize: 18, fontWeight: 800, color: "#111827", letterSpacing: -0.3 }}>Audense</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: "#111827", letterSpacing: -0.3 }}>AudienceIQ</span>
               <span style={{
                 fontSize: 11, fontWeight: 600, color: "#7C3AED",
                 background: "#F5F3FF", borderRadius: 6, padding: "3px 8px",
@@ -458,7 +458,7 @@ export default function Settings() {
               </span>
             </div>
             <p style={{ margin: "8px 0 0", fontSize: 13.5, color: "#6B7280", lineHeight: 1.65 }}>
-              Audense helps founders turn product ideas into audience maps, research hypotheses, and go-to-market direction.
+              AudienceIQ helps founders turn product ideas into audience maps, research hypotheses, and go-to-market direction.
             </p>
           </div>
         </Card>

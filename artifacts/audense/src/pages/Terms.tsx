@@ -4,14 +4,14 @@ const SECTIONS: { heading: string; paragraphs: string[] }[] = [
   {
     heading: "Beta product",
     paragraphs: [
-      "Audense is an early-stage beta product. Features, outputs, and pricing may change. By using Audense, you accept that the product is provided as-is and may be updated, paused, or removed at any time.",
+      "AudienceIQ is an early-stage beta product. Features, outputs, and pricing may change. By using AudienceIQ, you accept that the product is provided as-is and may be updated, paused, or removed at any time.",
     ],
   },
   {
-    heading: "How to use Audense",
+    heading: "How to use AudienceIQ",
     paragraphs: [
-      "You can use Audense to explore audiences and validation ideas for products you are building or considering.",
-      "You agree not to use Audense for unlawful purposes, to harass others, to attempt to break the service, or to scrape or resell the outputs as your own market-research product.",
+      "You can use AudienceIQ to explore audiences and validation ideas for products you are building or considering.",
+      "You agree not to use AudienceIQ for unlawful purposes, to harass others, to attempt to break the service, or to scrape or resell the outputs as your own market-research product.",
     ],
   },
   {
@@ -22,25 +22,25 @@ const SECTIONS: { heading: string; paragraphs: string[] }[] = [
     ],
   },
   {
-    heading: "What Audense outputs are (and aren't)",
+    heading: "What AudienceIQ outputs are (and aren't)",
     paragraphs: [
-      "Audience numbers, segments, objections, and competitor angles produced by Audense are directional MVP estimates designed to help you decide where to validate first.",
+      "Audience numbers, segments, objections, and competitor angles produced by AudienceIQ are directional MVP estimates designed to help you decide where to validate first.",
       "They are not official market sizing, financial advice, legal advice, or guaranteed outcomes. You should validate any decision with real users before investing time or money.",
-      "When live research is connected, Audense may surface public discussion signals to support your map. Those signals come from third-party sources and may be incomplete or biased.",
+      "When live research is connected, AudienceIQ may surface public discussion signals to support your map. Those signals come from third-party sources and may be incomplete or biased.",
     ],
   },
   {
     heading: "Your content",
     paragraphs: [
-      "You retain ownership of the inputs you provide and of the outputs Audense generates for your sessions. Audense receives a limited licence to process them for the purpose of running the product.",
-      "Don't put confidential third-party material, personal data of others, or anything you don't have the right to share into Audense.",
+      "You retain ownership of the inputs you provide and of the outputs AudienceIQ generates for your sessions. AudienceIQ receives a limited licence to process them for the purpose of running the product.",
+      "Don't put confidential third-party material, personal data of others, or anything you don't have the right to share into AudienceIQ.",
     ],
   },
   {
     heading: "No warranty",
     paragraphs: [
-      "Audense is provided without warranties of any kind. We don't guarantee that the service will be available, accurate, or fit for a particular purpose.",
-      "To the extent permitted by law, Audense and its operators are not liable for indirect or consequential losses arising from your use of the product.",
+      "AudienceIQ is provided without warranties of any kind. We don't guarantee that the service will be available, accurate, or fit for a particular purpose.",
+      "To the extent permitted by law, AudienceIQ and its operators are not liable for indirect or consequential losses arising from your use of the product.",
     ],
   },
   {
@@ -66,7 +66,7 @@ export default function Terms() {
   return (
     <DocPage
       title="Terms of Service"
-      subtitle="The honest agreement for using Audense while it's in beta."
+      subtitle="The honest agreement for using AudienceIQ while it's in beta."
       lastUpdated={lastUpdated}
     >
       {SECTIONS.map((s) => (

@@ -93,7 +93,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 
         <div style={{ marginTop: 6, padding: "12px 16px", background: "#F9F8FF", borderRadius: 8, border: "1px solid #EDE9FE" }}>
           <div style={{ fontSize: 12.5, color: "#6B7280", lineHeight: 1.55 }}>
-            <strong style={{ color: "#374151" }}>Audense is in early access.</strong> Some features may change as we improve the product. Your feedback helps us build better.
+            <strong style={{ color: "#374151" }}>AudienceIQ is in early access.</strong> Some features may change as we improve the product. Your feedback helps us build better.
           </div>
         </div>
 

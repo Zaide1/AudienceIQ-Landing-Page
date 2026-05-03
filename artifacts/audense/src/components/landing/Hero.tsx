@@ -33,7 +33,7 @@ export function Hero() {
             margin: 0,
           }}
         >
-          Audense maps who wants your product, where they are, and what they
+          AudienceIQ maps who wants your product, where they are, and what they
           need to hear.
         </p>
 

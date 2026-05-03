@@ -3,11 +3,11 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 const FAQ = [
-  { q: "What is Reachable Audience?",     a: "A directional estimate of people Audense thinks are reachable for your product, category, and region. It's a starting hypothesis, not official market-size data." },
+  { q: "What is Reachable Audience?",     a: "A directional estimate of people AudienceIQ thinks are reachable for your product, category, and region. It's a starting hypothesis, not official market-size data." },
   { q: "What is Est. Coverage?",           a: "The share of your reachable audience your current positioning is likely to address first. This is an MVP estimate based on category benchmarks and product specificity." },
   { q: "What is Untapped Opportunity?",    a: "The remaining audience potential outside your early focus. It's calculated by subtracting estimated coverage from your total reachable audience." },
   { q: "What is Confidence?",              a: "How reliable this map is, based on how much onboarding detail you provided, the source quality, and whether live research signals were used." },
-  { q: "What is Audience Universe?",       a: "A visual map showing directional slices of your reachable market. Coloured clusters represent audience segments Audense identified as most relevant." },
+  { q: "What is Audience Universe?",       a: "A visual map showing directional slices of your reachable market. Coloured clusters represent audience segments AudienceIQ identified as most relevant." },
   { q: "What does Run live research do?", a: "Searches connected public sources (currently Hacker News) for real audience signals. Results add supporting evidence to your map but source coverage may be limited." },
   { q: "Why are estimates directional?",  a: "Market sizing at the MVP stage is inherently uncertain. These numbers are hypotheses to help you decide where to test first — not guarantees or official statistics." },
 ];

@@ -56,11 +56,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is this official market sizing?",
-    a: "No. Audense gives you a working view of who might care and how big the opportunity could feel. Treat the numbers as a starting point for your own validation, not a verified statistic.",
+    a: "No. AudienceIQ gives you a working view of who might care and how big the opportunity could feel. Treat the numbers as a starting point for your own validation, not a verified statistic.",
   },
   {
-    q: "Can Audense compare competitors?",
-    a: "Yes. You can ask Audense who an audience is likely already using, what they tend to say about those tools, and where the gaps in messaging or experience seem to be.",
+    q: "Can AudienceIQ compare competitors?",
+    a: "Yes. You can ask AudienceIQ who an audience is likely already using, what they tend to say about those tools, and where the gaps in messaging or experience seem to be.",
   },
   {
     q: "Do I need to sign up?",
@@ -132,7 +132,7 @@ function ProductValueSection() {
             marginInline: "auto",
           }}
         >
-          Audense turns a rough product idea into who to test with, what they
+          AudienceIQ turns a rough product idea into who to test with, what they
           care about, and where to start.
         </p>
 
@@ -188,7 +188,7 @@ function ProductValueSection() {
                 </div>
               </div>
 
-              {/* Audense bubble */}
+              {/* AudienceIQ bubble */}
               <div style={{ display: "flex", gap: 12, alignItems: "flex-start", minWidth: 0 }}>
                 <div
                   aria-hidden="true"
@@ -266,7 +266,7 @@ function ProductValueSection() {
                     textTransform: "uppercase",
                   }}
                 >
-                  Audense
+                  AudienceIQ
                 </span>
               </div>
 
@@ -429,7 +429,7 @@ function ExplanationRows() {
                 textTransform: "uppercase",
               }}
             >
-              Audense chat
+              AudienceIQ chat
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", minWidth: 0 }}>
@@ -637,7 +637,7 @@ function Footer() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img
                 src={logoImg}
-                alt="Audense"
+                alt="AudienceIQ"
                 width={32}
                 height={32}
                 decoding="sync"
@@ -654,7 +654,7 @@ function Footer() {
                   color: "#0D0D12",
                 }}
               >
-                Audense
+                AudienceIQ
               </span>
               <span
                 style={{
@@ -734,7 +734,7 @@ function Footer() {
           }}
         >
           <span style={{ fontSize: 13, color: "#9CA3AF" }}>
-            © {new Date().getFullYear()} Audense
+            © {new Date().getFullYear()} AudienceIQ
           </span>
           <span style={{ fontSize: 13, color: "#9CA3AF" }}>
             Built for founders.

@@ -249,7 +249,7 @@ function ResearchTab({ map }: { map: AudienceMapResult | null }) {
           </div>
         </div>
       )}
-      <div style={HINT}>Audense estimates are directional and should be validated with real users.</div>
+      <div style={HINT}>AudienceIQ estimates are directional and should be validated with real users.</div>
     </>
   );
 }
@@ -274,7 +274,7 @@ function ChatTab() {
         background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 10,
         padding: "12px 14px", fontSize: 13, color: "#6B7280", lineHeight: 1.65, marginBottom: 20,
       }}>
-        Audense uses your onboarding data, current audience map, and recent chat context to answer. It should not answer unrelated questions.
+        AudienceIQ uses your onboarding data, current audience map, and recent chat context to answer. It should not answer unrelated questions.
       </div>
 
       <div style={DIVIDER} />

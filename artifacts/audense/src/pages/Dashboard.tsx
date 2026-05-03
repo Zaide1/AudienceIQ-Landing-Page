@@ -87,7 +87,7 @@ function buildGreeting(displayName: string): Message {
   return {
     id: 1,
     role: "ai",
-    text: `Hi ${displayName} 👋 I'm Audense, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them. Let's start with your product.`,
+    text: `Hi ${displayName} 👋 I'm AudienceIQ, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them. Let's start with your product.`,
   };
 }
 
@@ -731,7 +731,7 @@ function ThinkingBubble() {
         }}
       >
         <span style={{ fontSize: 13, color: "#9CA3AF", lineHeight: 1 }}>
-          Audense is thinking
+          AudienceIQ is thinking
         </span>
         <span style={{ display: "flex", gap: 3, alignItems: "center" }}>
           {[0, 1, 2].map((i) => (
@@ -1260,7 +1260,7 @@ export default function Dashboard() {
       } else if (urlCount >= 1) {
         showToast("info", "Not enough live signals found yet — this map is still hypothesis-led.");
       } else {
-        showToast("info", "No live source-backed signals found yet. Audense is still using hypothesis-led audience estimates.");
+        showToast("info", "No live source-backed signals found yet. AudienceIQ is still using hypothesis-led audience estimates.");
       }
     } catch {
       showToast("error", "Research scan failed — your map is unchanged");
@@ -1773,7 +1773,7 @@ export default function Dashboard() {
           {/* Logo */}
           <img
             src={logoImg}
-            alt="Audense"
+            alt="AudienceIQ"
             width={36}
             height={36}
             decoding="sync"
@@ -2126,7 +2126,7 @@ export default function Dashboard() {
               paddingBottom: 4,
             }}
           >
-            Audense can make mistakes. Verify important insights.
+            AudienceIQ can make mistakes. Verify important insights.
           </div>
         </div>
 

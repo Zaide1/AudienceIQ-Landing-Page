@@ -16,7 +16,7 @@ export function Navbar() {
       <div className="flex items-center gap-3">
         <img
           src={logoImg}
-          alt="Audense Logo"
+          alt="AudienceIQ Logo"
           width={48}
           height={48}
           decoding="sync"
@@ -29,7 +29,7 @@ export function Navbar() {
           className="font-bold tracking-tight text-foreground"
           style={{ fontSize: 26, letterSpacing: "-0.02em" }}
         >
-          Audense
+          AudienceIQ
         </span>
       </div>
 

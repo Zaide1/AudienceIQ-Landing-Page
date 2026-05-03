@@ -16,7 +16,7 @@ export default function Help() {
     >
       <DocSection heading="Understanding your audience map">
         <DocParagraph>
-          Your audience map is Audense's working view of who is most likely to
+          Your audience map is AudienceIQ's working view of who is most likely to
           care about what you're building. It combines what you described in
           onboarding with broad public signals to produce a directional picture
           of reachable people, priority segments, and where attention seems to
@@ -34,14 +34,14 @@ export default function Help() {
 
       <DocSection heading="What the numbers mean">
         <DocParagraph>
-          The numbers Audense shows are directional audience estimates designed
+          The numbers AudienceIQ shows are directional audience estimates designed
           to help you choose where to test first. They are not official
           market-size statistics. Treat them as a starting point for your own
           validation, not a verified figure.
         </DocParagraph>
         <DocDefinition
           label="Reachable Audience"
-          body="Directional estimate of people Audense thinks are reachable for this product, category, and region."
+          body="Directional estimate of people AudienceIQ thinks are reachable for this product, category, and region."
         />
         <DocDefinition
           label="Estimated Coverage"
@@ -74,7 +74,7 @@ export default function Help() {
 
       <DocSection heading="Live research and evidence">
         <DocParagraph>
-          When live research is enabled, Audense can use connected public
+          When live research is enabled, AudienceIQ can use connected public
           sources as supporting signals for your audience map. This is helpful
           when you want evidence-backed quotes, examples, or patterns to
           pressure-test a segment.
@@ -93,7 +93,7 @@ export default function Help() {
           switch between them at any time from the dashboard.
         </DocParagraph>
         <DocParagraph>
-          You can run a single research session as a guest to try Audense. To
+          You can run a single research session as a guest to try AudienceIQ. To
           save history, switch between sessions, or start additional research,
           create a free account — your active guest session can be migrated
           into your account so nothing is lost.

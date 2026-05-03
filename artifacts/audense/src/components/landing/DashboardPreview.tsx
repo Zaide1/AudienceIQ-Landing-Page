@@ -336,7 +336,7 @@ function StatCards() {
 
 /* ─── Chat panel ────────────────────────────────────────────────────── */
 const MESSAGES = [
-  { role: "ai",   text: "Hi Alex 👋 I'm Audense, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them." },
+  { role: "ai",   text: "Hi Alex 👋 I'm AudienceIQ, your audience intelligence agent. I'll help you discover who your ideal users are, how big your market is, and what matters to them." },
   { role: "user", text: "I'm building an AI calorie tracking app using photo recognition for people who want to lose weight but hate manual tracking." },
   { role: "ai",   text: "Got it. Who do you think your primary users are?" },
   { role: "user", text: "Busy professionals, 20–35, who go to the gym but don't have time to track everything." },
@@ -381,7 +381,7 @@ function ChatPanel() {
           </div>
         </div>
         <div style={{ textAlign: "center", fontSize: 9, color: "#9CA3AF", marginTop: 5, fontWeight: 500 }}>
-          Audense can make mistakes. Verify important insights.
+          AudienceIQ can make mistakes. Verify important insights.
         </div>
       </div>
     </div>
@@ -458,7 +458,7 @@ function DashboardInner() {
       <div style={{ height: 40, borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", padding: "0 14px", justifyContent: "space-between", background: "#fff", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
           <img src={logoImg} alt="logo" style={{ width: 18, height: 18, objectFit: "contain", borderRadius: 4 }} />
-          <span style={{ fontWeight: 700, fontSize: 12, letterSpacing: -0.2 }}>Audense</span>
+          <span style={{ fontWeight: 700, fontSize: 12, letterSpacing: -0.2 }}>AudienceIQ</span>
         </div>
         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
           <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#FC615D", display: "inline-block" }} />
