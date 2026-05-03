@@ -23,7 +23,7 @@ import {
 } from "../lib/researchSessions";
 import { AuthModal } from "../components/AuthModal";
 import { SoftPromptModal, NewResearchAuthWall } from "../components/GuestModals";
-import { onAuthChange, signOut, type AuthUser } from "../lib/auth";
+import { onAuthChange, signOut, getCurrentUser, type AuthUser } from "../lib/auth";
 import { sbAppendMessage, sbUpdateMap, sbLoadSessionList, sbLoadFullSession, sbSaveSession } from "../lib/sbSessions";
 import {
   hasGuestResearch, isGuestMigrated, setGuestMigrated,
@@ -1331,6 +1331,23 @@ export default function Dashboard() {
       setGuestMigrated(sid);
     } catch { /* non-blocking — local data is still intact */ }
   }, []);
+
+  /* ── Fresh-session guard ────────────────────────────────────────────
+     If a visitor deep-links to /dashboard with no local research session,
+     no onboarding data, and no signed-in account, send them to the
+     landing page so they always start there on a fresh session. */
+  useEffect(() => {
+    let cancelled = false;
+    const hasLocalSession = !!getActiveSession();
+    const hasOnboarding = !!loadOnboarding();
+    if (hasLocalSession || hasOnboarding) return;
+    (async () => {
+      const user = await getCurrentUser();
+      if (cancelled) return;
+      if (!user) navigate("/");
+    })();
+    return () => { cancelled = true; };
+  }, [navigate]);
 
   /* ── Auth subscription: handles sign-in, sign-out, and user switch ── */
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
