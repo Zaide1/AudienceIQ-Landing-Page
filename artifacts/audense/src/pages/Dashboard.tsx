@@ -743,7 +743,7 @@ function ThinkingBubble() {
                 borderRadius: "50%",
                 background: "#A78BFA",
                 display: "inline-block",
-                animation: `audense-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+                animation: `audienceiq-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
               }}
             />
           ))}
@@ -2205,7 +2205,7 @@ export default function Dashboard() {
                         border: "1.5px solid #DDD6FE",
                         borderTopColor: "#7C3AED",
                         borderRadius: "50%",
-                        animation: "audense-spin 0.7s linear infinite",
+                        animation: "spin 0.7s linear infinite",
                       }}
                     />
                     Scanning…

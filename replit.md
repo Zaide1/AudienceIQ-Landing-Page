@@ -47,4 +47,17 @@ Untouched: routing, auth, onboarding, dashboard, navbar, hero copy/CTA, and the 
 
 ## Brand
 
-The product brand is **AudienceIQ** (renamed from "Audense"). All user-facing strings in `artifacts/audense/src/**`, `artifacts/audense/index.html`, and the artifact title in `.replit-artifact/artifact.toml` were updated. The workspace package name (`@workspace/audense`) and directory (`artifacts/audense`) were intentionally left unchanged so workflows, build scripts, and the artifact registry continue to work — these are internal identifiers, not user-facing.
+The product brand is **AudienceIQ** (renamed from "Audense").
+
+**v2.1 — Brand sweep**
+
+All user-facing strings, the support email, the CSS keyframe (`audienceiq-dot-bounce`), and the landing CSS class names (`.audienceiq-preview-row`, `.audienceiq-faq-button`) now read AudienceIQ. Also fixed a latent typo: a non-existent `audense-spin` animation reference in `Dashboard.tsx` now correctly references the `spin` keyframe defined in `index.css`.
+
+Support contact: `hello@audienceiq.app`.
+
+**Intentionally NOT renamed (and why):**
+
+- `@workspace/audense` package name, `artifacts/audense/` directory, and the artifact `id` in `.replit-artifact/artifact.toml` — these are workspace/build/registry identifiers; renaming forces workflow + proxy + lockfile rewiring with no user-visible benefit.
+- `localStorage` keys (`audense_onboarding`, `audense-research-sessions`, `audense-audience-map`, `audense-chat-messages`, `audense-display-name`, `audense-workspace-name`, `audense-default-region`, `audense-default-category`, `audense-preferred-sources`, `audense-response-style`, `audense-allow-map-updates`, `audense-show-suggested-actions`, `audense-dashboard-split`, `audense-active-session-id`, `audense-guest-chat-count`, `audense-has-created-guest-research`, `audense-guest-migrated`, `audense-soft-prompt-seen`, plus the export filename `audense-export.json`) — renaming wipes every existing user's onboarding answers, sessions, audience maps, chat history, and settings. If you want these renamed later, ship a one-time migration that copies old keys → new keys on app load.
+
+Verification of v2.1: `pnpm --filter @workspace/audense exec tsc --noEmit` clean; `PORT=5173 BASE_PATH=/ pnpm --filter @workspace/audense run build` succeeds (~672 KB JS / ~99 KB CSS, gzipped 198 KB / 16 KB).

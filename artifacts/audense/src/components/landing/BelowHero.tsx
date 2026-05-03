@@ -151,7 +151,7 @@ function ProductValueSection() {
           }}
         >
           <div
-            className="audense-preview-row"
+            className="audienceiq-preview-row"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
@@ -323,7 +323,7 @@ function ProductValueSection() {
       {/* Responsive: stack columns on small screens */}
       <style>{`
         @media (max-width: 880px) {
-          .audense-preview-row {
+          .audienceiq-preview-row {
             grid-template-columns: 1fr !important;
           }
         }
@@ -492,7 +492,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="audense-faq-button"
+        className="audienceiq-faq-button"
         style={{
           width: "100%",
           background: "transparent",
@@ -587,13 +587,13 @@ function FAQSection() {
         </div>
       </div>
       <style>{`
-        .audense-faq-button:hover {
+        .audienceiq-faq-button:hover {
           background: #FAFAFB;
         }
-        .audense-faq-button:focus {
+        .audienceiq-faq-button:focus {
           outline: none;
         }
-        .audense-faq-button:focus-visible {
+        .audienceiq-faq-button:focus-visible {
           outline: none;
           background: #F5F3FF;
           box-shadow: inset 0 0 0 1px #E5DEFB;

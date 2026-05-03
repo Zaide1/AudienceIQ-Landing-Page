@@ -66,10 +66,10 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
               Send us a message and we'll reply within one business day.
             </div>
             <a
-              href="mailto:hello@audense.app"
+              href="mailto:hello@audienceiq.app"
               style={{ fontSize: 13, color: "#7C3AED", fontWeight: 500, marginTop: 6, display: "inline-flex", alignItems: "center", gap: 4, textDecoration: "none" }}
             >
-              hello@audense.app <ExternalLink size={11} />
+              hello@audienceiq.app <ExternalLink size={11} />
             </a>
           </div>
         </div>
