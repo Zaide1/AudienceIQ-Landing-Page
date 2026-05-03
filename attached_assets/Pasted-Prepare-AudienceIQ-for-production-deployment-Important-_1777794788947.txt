@@ -1,0 +1,88 @@
+Prepare AudienceIQ for production deployment.
+
+Important:
+- Do not change product UI.
+- Do not change dashboard layout.
+- Do not change onboarding/chat behaviour.
+- Do not add billing/pricing.
+- Do not change auth flow unless there is a production-breaking bug.
+- This task is deployment readiness only.
+
+Goal:
+Make sure AudienceIQ is ready to deploy to a production Replit URL and later connect a custom domain.
+
+Please do:
+
+1. Build verification
+- Run frontend typecheck/build.
+- Run backend typecheck/build if applicable.
+- Fix only production-breaking build/type errors.
+- Do not refactor unrelated code.
+
+2. Environment variables audit
+List all required production env vars:
+- Supabase URL
+- Supabase anon/public key
+- Supabase service role key if used server-side
+- Replit/OpenAI integration vars
+- frontend API base URL if needed
+- any auth redirect URL settings
+- any app URL/canonical URL env vars
+
+For each env var, explain:
+- where it is used
+- whether it belongs in frontend or backend
+- whether it is safe to expose publicly
+- whether it must be set in Replit deployment secrets
+
+3. Production routing/config check
+- Verify frontend can call backend correctly in production.
+- Verify CORS allows the deployed frontend origin.
+- Verify Vite build output and backend serving/deployment setup are correct.
+- Verify public routes work:
+  - /
+  - /onboarding
+  - /dashboard
+  - /help
+  - /privacy
+  - /terms
+
+4. SEO/canonical readiness
+- Find current canonical URL, sitemap URL, robots.txt URL, Open Graph URL.
+- Report any placeholder domain currently used.
+- Do not replace the domain until I provide the final production URL.
+- Prepare a clear list of files to update once the final domain is known.
+
+5. Supabase auth production checklist
+- Check whether Supabase redirect URLs need the final domain.
+- Tell me exactly what URLs to add in Supabase settings once deployed.
+- Do not change Supabase project settings directly.
+
+6. Deployment checklist
+Return a clear step-by-step checklist for me:
+- what to set in Replit secrets
+- what to click/deploy in Replit
+- what to test after deploy
+- what to update after I buy/connect the domain
+- what to add in Supabase Auth redirect URLs
+- what to update for sitemap/canonical
+- what to submit to Google Search Console later
+
+7. Smoke test plan
+Provide a short production smoke test:
+- landing CTA
+- onboarding generate
+- AI map generation
+- chat answer
+- chat proposed update
+- confirm update
+- guest logo save prompt
+- sign up/sign in
+- history
+- help/privacy/terms
+
+After finishing, report:
+- build/typecheck status
+- env vars required
+- any production blockers found
+- exact manual deployment steps I need to do
