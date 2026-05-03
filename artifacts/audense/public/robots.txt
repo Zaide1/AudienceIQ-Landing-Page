@@ -4,4 +4,4 @@ Allow: /
 Disallow: /onboarding
 Disallow: /dashboard
 
-Sitemap: https://audienceiq.replit.app/sitemap.xml
+Sitemap: https://audience-iq.app/sitemap.xml
