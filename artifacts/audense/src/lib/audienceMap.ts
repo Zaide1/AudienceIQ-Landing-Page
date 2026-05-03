@@ -677,6 +677,90 @@ export function recalculateCoverageFields(
   };
 }
 
+/* ─── Product-aware segment naming helper ────────────────────────
+   Mirrors backend artifacts/api-server/src/lib/audienceAI.ts —
+   keep both copies in sync. Derives 5 distinct segment names from raw
+   onboarding inputs so the deterministic frontend fallback no longer
+   reads like a fixed category template. */
+const NAMING_STOPWORDS: Set<string> = new Set([
+  "a","an","the","and","or","of","for","to","that","who","with","on","in","at","by","as","from","but","so",
+  "is","are","am","be","was","were","being",
+  "our","my","your","their","his","her","its","this","these","those","it","i","we","you","they","them",
+  "app","apps","tool","tools","platform","platforms","website","site","service","product","products",
+  "startup","startups","idea","ideas","business","company","companies",
+  "build","building","make","making","want","wanting","need","needing","needs","wants",
+  "help","helps","helping","using","use","uses","via","just","really","very","like","when",
+  "people","users","customer","customers","user","some","any","more","less","one","two",
+  "ai","new","best","better","good","great","easy","fast","simple",
+  "find","finds","finding","get","gets","getting","do","does","doing","go","goes","going",
+  "feature","features","page","pages","work","works","working",
+]);
+
+function extractNamingTokens(text: string | undefined, max = 8): string[] {
+  if (!text) return [];
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, " ")
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 2 && !NAMING_STOPWORDS.has(t))
+    .slice(0, max);
+}
+
+function pickNamingPhrase(tokens: string[], n = 2): string {
+  if (tokens.length === 0) return "";
+  return tokens.slice(0, Math.min(n, tokens.length)).join(" ");
+}
+
+function namingTitleCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function namingHash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+const NAMING_PAIN_VERBS = ["struggling with", "frustrated by", "tired of", "fed up with"];
+
+export function deriveSegmentNames(
+  input: { productIdea?: string; targetUsers?: string; problem?: string; goal?: string },
+  fallbackNames: string[],
+): string[] {
+  const productTokens = extractNamingTokens(input.productIdea, 10);
+  const userTokens    = extractNamingTokens(input.targetUsers, 8);
+  const problemTokens = extractNamingTokens(input.problem, 8);
+  const goalTokens    = extractNamingTokens(input.goal, 6);
+
+  const totalSignal = productTokens.length + userTokens.length + problemTokens.length;
+  if (totalSignal < 3) return fallbackNames;
+
+  const subject     = pickNamingPhrase(userTokens, 2) || pickNamingPhrase(productTokens, 1) || "early users";
+  const subjectAlt  = pickNamingPhrase(userTokens.slice(2), 2) || pickNamingPhrase(productTokens.slice(2, 4), 2) || subject;
+  const domain      = pickNamingPhrase(productTokens.slice(0, 2), 2) || pickNamingPhrase(userTokens, 1) || "this space";
+  const domain1     = pickNamingPhrase(productTokens.slice(0, 1), 1) || domain.split(" ")[0]!;
+  const painPhrase  = pickNamingPhrase(problemTokens, 3) || pickNamingPhrase(productTokens.slice(2, 5), 2) || "manual workflows";
+  const altWorkaround = pickNamingPhrase(productTokens.slice(2, 5), 2) || pickNamingPhrase(problemTokens.slice(1, 3), 2) || "spreadsheets and notes";
+  const goalKw      = pickNamingPhrase(goalTokens, 2) || pickNamingPhrase(productTokens.slice(0, 2), 2) || domain;
+
+  const seed = namingHash(`${input.productIdea ?? ""}|${input.targetUsers ?? ""}|${input.problem ?? ""}`);
+  const painVerb = NAMING_PAIN_VERBS[seed % NAMING_PAIN_VERBS.length]!;
+
+  const raw = [
+    `${namingTitleCase(subject)} ${painVerb} ${painPhrase}`,
+    `${namingTitleCase(subject)} stuck on ${altWorkaround}`,
+    `Active ${domain1} researchers`,
+    `${namingTitleCase(subjectAlt)} exploring ${domain}`,
+    `Power users wanting better ${goalKw}`,
+  ];
+
+  return raw.map((n) => {
+    const trimmed = n.replace(/\s+/g, " ").trim();
+    return trimmed.length > 60 ? trimmed.slice(0, 57).trimEnd() + "…" : trimmed;
+  });
+}
+
 /* ─── Mock generation ────────────────────────────────────────────── */
 export function generateMockAudienceMap(ob: Record<string, string> | null): AudienceMapResult {
   const productIdea = ob?.productIdea ?? "Your product";
@@ -700,8 +784,20 @@ export function generateMockAudienceMap(ob: Record<string, string> | null): Audi
 
   const templates = getTemplate(categoryId);
 
-  const segments: AudienceSegment[] = templates.map((t) => ({
+  const fallbackNames = templates.map((t) => t.name);
+  const derivedNames  = deriveSegmentNames(
+    {
+      productIdea: ob?.productIdea,
+      targetUsers: ob?.targetUsers,
+      problem:     ob?.problem,
+      goal:        ob?.goal,
+    },
+    fallbackNames,
+  );
+
+  const segments: AudienceSegment[] = templates.map((t, i) => ({
     ...t,
+    name: derivedNames[i] ?? t.name,
     audienceMin: Math.round(reachMin * (t.percent / 100)),
     audienceMax: Math.round(reachMax * (t.percent / 100)),
     evidence: buildMockSegmentEvidence(t.painPoints),

@@ -80,6 +80,91 @@ export interface AudienceMapResult {
   competitors?: CompetitorIntelligence;
 }
 
+/* ─── Product-aware segment naming helper ────────────────────────
+   Derives 5 distinct segment names from raw onboarding inputs so that
+   the deterministic fallback no longer reads like a fixed category
+   template. If signal is too thin, falls back to category-template
+   names supplied by the caller. Mirrored verbatim in the frontend
+   (artifacts/audense/src/lib/audienceMap.ts) — keep them in sync. */
+const NAMING_STOPWORDS: Set<string> = new Set([
+  "a","an","the","and","or","of","for","to","that","who","with","on","in","at","by","as","from","but","so",
+  "is","are","am","be","was","were","being",
+  "our","my","your","their","his","her","its","this","these","those","it","i","we","you","they","them",
+  "app","apps","tool","tools","platform","platforms","website","site","service","product","products",
+  "startup","startups","idea","ideas","business","company","companies",
+  "build","building","make","making","want","wanting","need","needing","needs","wants",
+  "help","helps","helping","using","use","uses","via","just","really","very","like","when",
+  "people","users","customer","customers","user","some","any","more","less","one","two",
+  "ai","new","best","better","good","great","easy","fast","simple",
+  "find","finds","finding","get","gets","getting","do","does","doing","go","goes","going",
+  "feature","features","page","pages","work","works","working",
+]);
+
+function extractNamingTokens(text: string | undefined, max = 8): string[] {
+  if (!text) return [];
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, " ")
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 2 && !NAMING_STOPWORDS.has(t))
+    .slice(0, max);
+}
+
+function pickNamingPhrase(tokens: string[], n = 2): string {
+  if (tokens.length === 0) return "";
+  return tokens.slice(0, Math.min(n, tokens.length)).join(" ");
+}
+
+function namingTitleCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function namingHash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+const NAMING_PAIN_VERBS = ["struggling with", "frustrated by", "tired of", "fed up with"];
+
+export function deriveSegmentNames(
+  input: { productIdea?: string; targetUsers?: string; problem?: string; goal?: string },
+  fallbackNames: string[],
+): string[] {
+  const productTokens = extractNamingTokens(input.productIdea, 10);
+  const userTokens    = extractNamingTokens(input.targetUsers, 8);
+  const problemTokens = extractNamingTokens(input.problem, 8);
+  const goalTokens    = extractNamingTokens(input.goal, 6);
+
+  const totalSignal = productTokens.length + userTokens.length + problemTokens.length;
+  if (totalSignal < 3) return fallbackNames;
+
+  const subject     = pickNamingPhrase(userTokens, 2) || pickNamingPhrase(productTokens, 1) || "early users";
+  const subjectAlt  = pickNamingPhrase(userTokens.slice(2), 2) || pickNamingPhrase(productTokens.slice(2, 4), 2) || subject;
+  const domain      = pickNamingPhrase(productTokens.slice(0, 2), 2) || pickNamingPhrase(userTokens, 1) || "this space";
+  const domain1     = pickNamingPhrase(productTokens.slice(0, 1), 1) || domain.split(" ")[0]!;
+  const painPhrase  = pickNamingPhrase(problemTokens, 3) || pickNamingPhrase(productTokens.slice(2, 5), 2) || "manual workflows";
+  const altWorkaround = pickNamingPhrase(productTokens.slice(2, 5), 2) || pickNamingPhrase(problemTokens.slice(1, 3), 2) || "spreadsheets and notes";
+  const goalKw      = pickNamingPhrase(goalTokens, 2) || pickNamingPhrase(productTokens.slice(0, 2), 2) || domain;
+
+  const seed = namingHash(`${input.productIdea ?? ""}|${input.targetUsers ?? ""}|${input.problem ?? ""}`);
+  const painVerb = NAMING_PAIN_VERBS[seed % NAMING_PAIN_VERBS.length]!;
+
+  const raw = [
+    `${namingTitleCase(subject)} ${painVerb} ${painPhrase}`,
+    `${namingTitleCase(subject)} stuck on ${altWorkaround}`,
+    `Active ${domain1} researchers`,
+    `${namingTitleCase(subjectAlt)} exploring ${domain}`,
+    `Power users wanting better ${goalKw}`,
+  ];
+
+  return raw.map((n) => {
+    const trimmed = n.replace(/\s+/g, " ").trim();
+    return trimmed.length > 60 ? trimmed.slice(0, 57).trimEnd() + "…" : trimmed;
+  });
+}
+
 /* ─── Mock evidence helper ───────────────────────────────────────── */
 function buildMockSegmentEvidence(painPoints: string[]): SegmentEvidence {
   return {
@@ -339,7 +424,7 @@ Rules:
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       },
-      { signal: AbortSignal.timeout(8_000) },
+      { signal: AbortSignal.timeout(7_000) },
     );
     const content = resp.choices[0]?.message?.content;
     if (!content) return null;
@@ -415,11 +500,17 @@ export function recalculateCoverageFields(
 }
 
 /* ─── Build deterministic fallback ──────────────────────────────── */
-export function buildMockResult(
-  productIdea: string,
-  finalCategory: string,
-  finalRegion: string,
-): AudienceMapResult {
+export interface BuildMockInput {
+  productIdea?: string;
+  targetUsers?: string;
+  problem?: string;
+  goal?: string;
+  finalCategory: string;
+  finalRegion: string;
+}
+
+export function buildMockResult(input: BuildMockInput): AudienceMapResult {
+  const { productIdea = "", targetUsers = "", problem = "", goal = "", finalCategory, finalRegion } = input;
   const regionLabel = REGION_LABELS[finalRegion] ?? finalRegion;
   const [reachMin, reachMax] = REGION_REACH[finalRegion] ?? [500_000, 900_000];
   const categoryLabel = CATEGORY_LABELS[finalCategory] ?? finalCategory;
@@ -429,9 +520,12 @@ export function buildMockResult(
   const coveragePeople = Math.round(reachMin * (coveragePct / 100));
   const untappedPct    = 100 - coveragePct;
 
-  const segments: AudienceSegment[] = templates.map((t) => ({
+  const fallbackNames = templates.map((t) => t.name);
+  const derivedNames  = deriveSegmentNames({ productIdea, targetUsers, problem, goal }, fallbackNames);
+
+  const segments: AudienceSegment[] = templates.map((t, i) => ({
     id: t.id,
-    name: t.name,
+    name: derivedNames[i] ?? t.name,
     percent: t.percent,
     audienceMin: Math.round(reachMin * (t.percent / 100)),
     audienceMax: Math.round(reachMax * (t.percent / 100)),
@@ -606,6 +700,30 @@ function validateResult(raw: unknown): AudienceMapResult | null {
 }
 
 /* ─── AI generation service ─────────────────────────────────────── */
+export type FallbackReason =
+  | "timeout"
+  | "model_error"
+  | "validation_failed"
+  | "missing_credentials"
+  | "ai_error"
+  | "unknown";
+
+export interface GenerateMeta {
+  aiUsed: boolean;
+  fallbackReason: FallbackReason | null;
+  model: string;
+  durationMs: number;
+}
+
+/* `gpt-5-nano` is the fastest model in the Replit AI Integrations
+   catalog, which matters here because the audience-map prompt asks
+   for a long, structured JSON response and previously timed out at
+   12s on `gpt-5-mini`. Quality is acceptable for segment generation
+   and the speed gain pushes us comfortably under the 18s budget. */
+const MAIN_AUDIENCE_MODEL = "gpt-5-nano";
+const MAIN_AI_TIMEOUT_MS = 18_000;
+const MAIN_AI_MAX_TOKENS = 8192;
+
 export async function generateAudienceMapWithAI(params: {
   productIdea: string;
   targetUsers: string;
@@ -613,11 +731,17 @@ export async function generateAudienceMapWithAI(params: {
   goal: string;
   finalCategory: string;
   finalRegion: string;
-}): Promise<AudienceMapResult | null> {
+}): Promise<{ map: AudienceMapResult | null; meta: GenerateMeta }> {
+  const startedAt = Date.now();
   const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
   const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 
-  if (!baseURL || !apiKey) return null;
+  if (!baseURL || !apiKey) {
+    return {
+      map: null,
+      meta: { aiUsed: false, fallbackReason: "missing_credentials", model: MAIN_AUDIENCE_MODEL, durationMs: Date.now() - startedAt },
+    };
+  }
 
   const { productIdea, targetUsers, problem, goal, finalCategory, finalRegion } = params;
   const regionLabel = REGION_LABELS[finalRegion] ?? finalRegion;
@@ -628,9 +752,24 @@ export async function generateAudienceMapWithAI(params: {
   const confidence = isVague ? "Low" : "Medium";
 
   const systemPrompt = `You are an audience intelligence analyst for early-stage founders.
-Your job is to identify practical audience segments for a product so the founder knows who to target first.
+Your job is to identify 5 practical, PRODUCT-SPECIFIC audience segments so the founder knows exactly who to target first.
 Be honest — treat audience numbers as directional MVP estimates, not official statistics.
 Do not use words like "verified", "official", "census-backed", or "guaranteed".
+
+Naming rules — these are CRITICAL:
+- Segment names MUST be derived from THIS specific product idea, target users, problem, use case, buyer intent, workflow, or job-to-be-done.
+- Prefer name patterns like:
+    "[role/people] [verb] [specific pain or use case]"
+    "[users of current alternative] who need [outcome]"
+    "[buyer/user type] trying to [job-to-be-done]"
+    "[high-intent group] already searching/complaining about [problem]"
+- Banned generic labels (do NOT use unless the product itself is explicitly demographic-led):
+    "Gen Z Adopters", "Millennial Professionals", "Remote Workers", "Parents", "Lifelong Learners",
+    "Early Adopters", "Mainstream Buyers", "Casual Browsers", "Niche Power Users", "Value Seekers",
+    "Power Users" used alone, plain "Founders", plain "Professionals".
+- The 5 segments must represent meaningfully DIFFERENT early-user groups (different roles, pains, intents) — not five rewordings of the same person.
+- Length: 3–7 words per name. Specific enough to feel tailored, short enough to fit a card.
+
 Return ONLY valid JSON, no markdown, no explanation.`;
 
   const hintCovPct    = calculateCoverageEstimate({ category: finalCategory, productIdea, targetUsers, problem, sourceMode: "ai_hypothesis" });
@@ -670,7 +809,7 @@ Return a JSON object with exactly this shape — no extra keys:
   "segments": [
     {
       "id": "segment-1",
-      "name": "Specific segment name",
+      "name": "Short product-specific name (3–7 words, derived from this product idea / target users / problem)",
       "percent": 25,
       "audienceMin": ${Math.round(reachMin * 0.25)},
       "audienceMax": ${Math.round(reachMax * 0.25)},
@@ -704,6 +843,8 @@ Rules:
 - Segment percentages sum to exactly 100
 - audienceMin and audienceMax must scale with percent (e.g. 25% of ${reachMin} = ${Math.round(reachMin * 0.25)})
 - Make segment names, painPoints, platforms, whyThisSegment, and acquisitionAngle specific to this product
+- Re-read the system prompt's naming rules before writing each segment name. Names must NOT be generic demographic/lifestyle labels.
+- Example of GOOD names for an AI file organiser for founders: "Founders losing track of saved files", "Operators stuck searching for documents", "Indie hackers with cluttered desktops", "Teams using search as a workaround", "Power users wanting auto-tagged assets". These are illustrative — derive your own from THIS product, do not copy them.
 - Keep descriptions practical and actionable — useful for deciding who to target first
 - For evidence fields: these are HYPOTHESES based on the product context — do not claim to have read Reddit, X, TikTok, or any live source
 - exampleUserLanguage: 2–3 realistic phrases a person in this segment would actually say
@@ -712,40 +853,77 @@ Rules:
 - objections: 2–3 realistic reasons they might not adopt the product
 - competitorMentions: only include obvious category competitors, otherwise []`;
 
-  try {
-    const client = new OpenAI({ apiKey, baseURL });
-    const response = await client.chat.completions.create(
-      {
-        model: "gpt-5.4",
-        max_completion_tokens: 8192,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-      },
-      { signal: AbortSignal.timeout(9_000) },
-    );
+  const client = new OpenAI({ apiKey, baseURL });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) return null;
+  /* Run main audience-map generation and competitor generation in parallel.
+     This avoids the previous serial path where a slow main call left no
+     headroom for competitors before the frontend timeout. */
+  type MainOutcome =
+    | { kind: "ok"; validated: AudienceMapResult }
+    | { kind: "timeout" }
+    | { kind: "model_error" }
+    | { kind: "validation_failed" }
+    | { kind: "ai_error" };
 
-    const parsed: unknown = JSON.parse(content);
-    const mainResult = validateResult(parsed);
-    if (!mainResult) return null;
+  const mainPromise: Promise<MainOutcome> = (async () => {
+    try {
+      /* `reasoning_effort: "minimal"` disables internal chain-of-thought,
+         which is what was making gpt-5-* time out on this prompt. We don't
+         need deep reasoning to produce a structured audience map — straight
+         instruction following is faster and just as good for this task. */
+      const response = await client.chat.completions.create(
+        {
+          model: MAIN_AUDIENCE_MODEL,
+          max_completion_tokens: MAIN_AI_MAX_TOKENS,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+          reasoning_effort: "minimal",
+        },
+        { signal: AbortSignal.timeout(MAIN_AI_TIMEOUT_MS) },
+      );
+      const content = response.choices[0]?.message?.content;
+      if (!content) return { kind: "validation_failed" };
+      try {
+        const parsed: unknown = JSON.parse(content);
+        const validated = validateResult(parsed);
+        if (!validated) return { kind: "validation_failed" };
+        return { kind: "ok", validated };
+      } catch {
+        return { kind: "validation_failed" };
+      }
+    } catch (err: unknown) {
+      const e = err as { name?: string; message?: string; status?: number; response?: { status?: number } };
+      const name = e?.name ?? "";
+      const msg = String(e?.message ?? "");
+      if (name === "AbortError" || /timed?\s*out|aborted/i.test(msg)) return { kind: "timeout" };
+      const status = e?.status ?? e?.response?.status;
+      if (status === 400 || status === 404 || /model/i.test(msg)) return { kind: "model_error" };
+      return { kind: "ai_error" };
+    }
+  })();
 
-    /* Generate competitors as a second, independent AI call.
-       Falls back to category-based fallback if it fails or times out. */
-    const aiCompetitors = await generateCompetitorsWithAI(client, {
-      productIdea, targetUsers, problem, goal,
-      category: categoryLabel, region: regionLabel,
-    });
+  const compPromise = generateCompetitorsWithAI(client, {
+    productIdea, targetUsers, problem, goal,
+    category: categoryLabel, region: regionLabel,
+  }).catch(() => null);
 
-    return {
-      ...mainResult,
-      competitors: aiCompetitors ?? getCompetitorFallback(finalCategory),
-    };
-  } catch {
-    return null;
+  const [mainOutcome, aiCompetitors] = await Promise.all([mainPromise, compPromise]);
+  const durationMs = Date.now() - startedAt;
+
+  if (mainOutcome.kind !== "ok") {
+    const fallbackReason: FallbackReason =
+      mainOutcome.kind === "timeout"            ? "timeout" :
+      mainOutcome.kind === "model_error"        ? "model_error" :
+      mainOutcome.kind === "validation_failed"  ? "validation_failed" :
+      "ai_error";
+    return { map: null, meta: { aiUsed: false, fallbackReason, model: MAIN_AUDIENCE_MODEL, durationMs } };
   }
+
+  return {
+    map: { ...mainOutcome.validated, competitors: aiCompetitors ?? getCompetitorFallback(finalCategory) },
+    meta: { aiUsed: true, fallbackReason: null, model: MAIN_AUDIENCE_MODEL, durationMs },
+  };
 }

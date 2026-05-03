@@ -1,0 +1,156 @@
+Implement the AudienceIQ segment-quality fix based on the audit.
+
+Primary issue:
+Audience generation is falling back too often, so different research sessions can end up with the same deterministic category templates. This makes AudienceIQ feel fake.
+
+Audit root cause:
+- /api/audience/generate is returning aiUsed:false on recent runs.
+- The main audience AI call uses model "gpt-5.4", which appears unsupported/invalid in the Replit AI integration.
+- Frontend timeout is around 9s.
+- Backend main AI timeout is around 9s.
+- Competitor generation can add extra serial delay.
+- When backend AI fails or frontend aborts, backend/frontend fallbacks use fixed category templates.
+- For consumer-apps, fallback returns the same static segment names:
+  Gen Z Adopters, Millennial Professionals, Remote Workers, Parents, Lifelong Learners.
+- This is not a session bleed issue and not a dashboard rendering issue.
+
+Core principle:
+AudienceIQ must work for any product idea, in any category.
+
+Do not solve this by adding more hardcoded examples or category-specific templates.
+
+The system should derive audience segments from the user's actual input:
+- what they want to build
+- who they think it is for
+- what problem it solves
+- where it will be used
+- what alternatives people use today
+- what behaviour, intent, or pain makes someone a likely early user
+
+For every generated or fallback map, segment names should feel specific to that idea.
+
+Segment naming should follow patterns like:
+- “[people/role] with [specific pain/use case]”
+- “[current alternative users] who need [better outcome]”
+- “[buyer/user type] trying to [job-to-be-done]”
+- “[high-intent group] already searching/complaining about [problem]”
+
+This must generalise across consumer apps, B2B SaaS, creator ideas, marketplaces, local services, physical products, communities, agencies, fintech, education, health, real estate, entertainment, and any other idea a founder enters.
+
+Priority order:
+1. First fix AI model + timeout so aiUsed can become true.
+2. Then add fallbackReason logging.
+3. Then tighten the AI prompt.
+4. Then make fallback product-aware so the app still feels tailored when AI fails.
+
+Important constraints:
+- Do not change dashboard UI.
+- Do not change onboarding UI.
+- Do not change chat behaviour.
+- Do not change AudienceMapResult shape.
+- Do not add billing/pricing.
+- Do not add Supabase/auth changes.
+- Keep fallback behaviour.
+- Keep existing localStorage/session behaviour.
+
+Tasks:
+
+1. Fix AI generation reliability
+- In audienceAI.ts, replace the unsupported/invalid model "gpt-5.4" with the known working model already used elsewhere in the project, unless another valid Replit AI model is clearly available.
+- If gpt-5-mini is already working for competitor generation, use that for the main audience map call too.
+- Keep the existing OpenAI/Replit AI integration route.
+- Do not hardcode new external API keys.
+
+2. Fix timeout race
+Current problem:
+- The frontend aborts around the same time the backend AI call times out.
+- The backend may also do competitor generation after the main audience generation, making the total path too slow.
+
+Change:
+- Increase the frontend audience generation timeout so it gives the backend enough time to respond.
+- Keep backend AI timeouts reasonable.
+- Avoid making competitor generation block the entire audience result if possible.
+- Preserve graceful fallback if AI fails.
+- Do not leave the user waiting indefinitely.
+
+Suggested approach:
+- Frontend timeout: around 18–20 seconds.
+- Backend main audience AI timeout: around 12 seconds.
+- Competitor generation timeout: around 6–8 seconds.
+- Competitor generation should not prevent a valid audience map from returning.
+
+3. Add fallback reason logging
+When aiUsed is false, log why fallback was used.
+
+Add a fallbackReason field internally:
+- timeout
+- model_error
+- validation_failed
+- missing_credentials
+- ai_error
+- unknown
+
+Log:
+- aiUsed
+- fallbackReason
+- model used
+- durationMs
+- category
+- region
+- final segment names
+
+Do not expose fallbackReason in the UI.
+
+4. Tighten the AI prompt
+Update the audience generation prompt so segment names must be product-specific.
+
+Add rules:
+- Segment names must be derived from the product idea, target users, problem, use case, buyer intent, workflow, or job-to-be-done.
+- Avoid generic demographic/lifestyle labels unless the product is explicitly demographic-led.
+- Do not default to generic labels like Gen Z Adopters, Millennial Professionals, Remote Workers, Parents, Lifelong Learners, Early Adopters, Mainstream Buyers, or Casual Browsers.
+- Prefer practical, founder-useful segment names based on what the user is trying to build.
+- Segment names should be short enough to fit in the existing UI but specific enough to feel tailored.
+- The 5 segments should represent meaningfully different early-user groups, not five versions of the same person.
+
+Also update the JSON example so it uses product-derived segment names, not placeholder or generic labels.
+
+5. Make fallback product-aware
+The fallback should still return a valid AudienceMapResult, but segment names should no longer be fixed only by category.
+
+In backend buildMockResult and frontend generateMockAudienceMap:
+- Use productIdea, targetUsers, problem, goal, category, region, and competitors where available.
+- Extract simple keywords or noun phrases from the user's input.
+- Use deterministic logic so the same input produces the same fallback.
+- Keep percentages summing to 100.
+- Keep existing reachable audience, coverage, and confidence behaviour unless directly affected.
+
+Fallback segment naming rules:
+- If targetUsers is specific, derive the primary segment from that.
+- If productIdea contains a domain or use case, reflect it in the labels.
+- If competitors are provided, create one segment around people currently using alternatives.
+- If problem is specific, create one segment around that pain.
+- Only use broad demographic labels as a last resort.
+
+Fallback should generate names that are product-aware, not perfect. The goal is to avoid obviously canned templates when AI fails.
+
+6. Keep frontend and backend fallback aligned
+There are duplicated fallback/template paths in the backend and frontend. Update both so they behave similarly.
+Do not do a major shared-package refactor in this task unless it is tiny and safe.
+
+7. Validation
+Do a quick sanity check with several different unrelated product ideas and confirm:
+- segment names differ across product ideas
+- generated names are related to the actual product/use case
+- aiUsed becomes true when the AI succeeds
+- if aiUsed is false, fallback names are still product-aware
+- the dashboard still renders correctly
+- no unrelated fixed template appears for every consumer app
+- no old session/localStorage data is being mistaken for the generated result
+
+After implementing, report:
+- what model is now used
+- what timeout values changed
+- whether AI generation succeeds
+- how fallback names are derived
+- where fallbackReason is logged
+- example final segment names from a few unrelated product ideas

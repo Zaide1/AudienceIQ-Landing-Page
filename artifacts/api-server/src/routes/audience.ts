@@ -18,8 +18,8 @@ router.post("/audience/generate", async (req, res) => {
     return;
   }
 
-  /* Try AI generation first; fall back to deterministic mock if anything fails */
-  const aiResult = await generateAudienceMapWithAI({
+  /* Try AI generation first; fall back to deterministic, product-aware mock if anything fails. */
+  const { map, meta } = await generateAudienceMapWithAI({
     productIdea: productIdea ?? "",
     targetUsers: targetUsers ?? "",
     problem: problem ?? "",
@@ -28,10 +28,26 @@ router.post("/audience/generate", async (req, res) => {
     finalRegion,
   });
 
-  const result = aiResult ?? buildMockResult(productIdea ?? "", finalCategory, finalRegion);
+  const result = map ?? buildMockResult({
+    productIdea: productIdea ?? "",
+    targetUsers: targetUsers ?? "",
+    problem: problem ?? "",
+    goal: goal ?? "",
+    finalCategory,
+    finalRegion,
+  });
 
+  /* Internal-only diagnostics. Not exposed to the client. */
   req.log.info(
-    { aiUsed: aiResult !== null },
+    {
+      aiUsed: meta.aiUsed,
+      fallbackReason: map ? null : (meta.fallbackReason ?? "unknown"),
+      model: meta.model,
+      durationMs: meta.durationMs,
+      category: finalCategory,
+      region: finalRegion,
+      segmentNames: result.segments.map((s) => s.name),
+    },
     "audience/generate completed",
   );
 

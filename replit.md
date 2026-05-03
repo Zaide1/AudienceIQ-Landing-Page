@@ -28,6 +28,30 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 ## Versions
 
+### v3 — Audience-segment quality fix (May 2026)
+
+`/api/audience/generate` previously returned identical generic segment names
+(Gen Z Adopters, Millennial Professionals, Remote Workers, Parents, Lifelong
+Learners) on every run because the AI call always fell back. Fixed by:
+
+- Switching the main model from the unsupported `gpt-5.4` to `gpt-5-nano` with
+  `reasoning_effort: "minimal"` — gpt-5-* default reasoning was burning the
+  whole budget before producing tokens.
+- Running main + competitor calls in `Promise.all` (was sequential).
+- Aligning timeouts: backend main 18s / competitor 7s, frontend Onboarding 20s.
+- Returning `{map, meta}` from `generateAudienceMapWithAI` with classified
+  `fallbackReason` (`timeout` / `model_error` / `validation_failed` /
+  `missing_credentials` / `ai_error`) and logging it from the route.
+- Tightening the system prompt with strict naming rules + a banned-generic
+  list, and adding a concrete good-names example block.
+- New `deriveSegmentNames` helper (duplicated in backend + frontend mock) that
+  produces 5 product-aware names from extracted noun-phrase tokens whenever
+  the AI path is unavailable.
+
+Verified live: 4 unrelated product ideas (calorie tracker, file organiser,
+commercial real estate, perfume TikTok) all return `aiUsed:true` in 10–13s
+with distinct, product-specific names.
+
 ### v2 — Landing & docs polish (May 2026)
 
 Working build saved at this checkpoint. Verified by:

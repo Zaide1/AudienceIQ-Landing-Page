@@ -640,7 +640,7 @@ export default function Onboarding() {
 
     setGenerating(true);
 
-    const TIMEOUT_MS = 9_000;
+    const TIMEOUT_MS = 20_000;
 
     try {
       /* Guests get exactly *one* local research session. If we positively
