@@ -1,0 +1,13 @@
+{
+  "name": "AudienceIQ",
+  "short_name": "AudienceIQ",
+  "description": "Find your real audience in minutes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9F8FF",
+  "theme_color": "#7C3AED",
+  "icons": [
+    { "src": "favicon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "favicon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

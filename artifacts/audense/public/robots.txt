@@ -1,0 +1,7 @@
+# AudienceIQ — robots.txt
+User-agent: *
+Allow: /
+Disallow: /onboarding
+Disallow: /dashboard
+
+Sitemap: https://audienceiq.replit.app/sitemap.xml
