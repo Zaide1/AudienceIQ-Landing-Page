@@ -523,13 +523,73 @@ const TEMPLATES: Record<string, SegmentTemplate[]> = {
   ],
 };
 
+/* Generic, category-agnostic template used as the fallback for unknown or
+   custom ("Other") categories. Previously the fallback was the health-fitness
+   template, which caused unrelated products (e.g. a perfume TikTok page) to
+   render Gym Goers / Busy Professionals / Health Conscious segments — a
+   cross-product bleed users notice immediately. Names here are deliberately
+   neutral so they read sensibly for any product. */
+const GENERIC_TEMPLATE: SegmentTemplate[] = [
+  {
+    id: "gym",
+    name: "Early Adopters",
+    percent: 25,
+    color: "purple",
+    painPoints: ["Want to try new tools first", "Frustrated by current solutions"],
+    platforms: ["X", "Reddit", "TikTok"],
+    whyThisSegment: "Curious users who give early traction and word-of-mouth.",
+    acquisitionAngle: "Lead with what's new and different — give them bragging rights.",
+  },
+  {
+    id: "busy",
+    name: "Mainstream Buyers",
+    percent: 30,
+    color: "blue",
+    painPoints: ["Too many options", "Want proven solutions"],
+    platforms: ["Instagram", "Facebook", "YouTube"],
+    whyThisSegment: "Largest segment once early adopters validate the product.",
+    acquisitionAngle: "Lead with social proof and concrete outcomes.",
+  },
+  {
+    id: "health",
+    name: "Value Seekers",
+    percent: 20,
+    color: "green",
+    painPoints: ["Price-sensitive", "Need clear ROI"],
+    platforms: ["YouTube", "Reddit", "Google"],
+    whyThisSegment: "Convert well when the value-for-money story is clear.",
+    acquisitionAngle: "Show before/after savings or ROI in the first 30 seconds.",
+  },
+  {
+    id: "weight",
+    name: "Niche Power Users",
+    percent: 15,
+    color: "orange",
+    painPoints: ["Existing tools too generic", "Need depth and customisation"],
+    platforms: ["Reddit", "YouTube", "X"],
+    whyThisSegment: "Vocal advocates if you build features they specifically need.",
+    acquisitionAngle: "Showcase advanced features competitors don't offer.",
+  },
+  {
+    id: "nutrition",
+    name: "Casual Browsers",
+    percent: 10,
+    color: "pink",
+    painPoints: ["Low commitment", "Easily distracted"],
+    platforms: ["TikTok", "Instagram", "Pinterest"],
+    whyThisSegment: "Wide reach, low conversion — but cheap to acquire at scale.",
+    acquisitionAngle: "Hook with a 10-second demo that delivers instant value.",
+  },
+];
+
 function getTemplate(categoryId: string): SegmentTemplate[] {
   if (TEMPLATES[categoryId]) return TEMPLATES[categoryId];
-  const lower = categoryId.toLowerCase();
+  const lower = (categoryId ?? "").toLowerCase();
   for (const key of Object.keys(TEMPLATES)) {
-    if (lower.includes(key) || key.includes(lower)) return TEMPLATES[key];
+    if (lower && (lower.includes(key) || key.includes(lower))) return TEMPLATES[key];
   }
-  return TEMPLATES["health-fitness"];
+  /* Unknown / custom category — never silently fall back to fitness segments. */
+  return GENERIC_TEMPLATE;
 }
 
 /* ─── Mock evidence helper ───────────────────────────────────────── */
@@ -696,7 +756,9 @@ export function generateMockAudienceMap(ob: Record<string, string> | null): Audi
     ],
   };
 
-  saveAudienceMap(result);
+  /* Pure function — caller decides when to persist. Removed implicit
+     saveAudienceMap() side-effect to prevent stale-bleed when the mock
+     is generated as an in-memory fallback (e.g. during a brief redirect). */
   return result;
 }
 

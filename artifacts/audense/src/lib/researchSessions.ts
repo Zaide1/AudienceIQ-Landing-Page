@@ -97,3 +97,61 @@ export function updateActiveSession(
   sessions[idx] = { ...sessions[idx], ...patch, updatedAt: new Date().toISOString() };
   saveSessions(sessions);
 }
+
+/* ─── Compat-key cleanup ─────────────────────────────────────────────
+   Single-session compat keys ("audense-audience-map", "audense-chat-messages",
+   "audense_onboarding") were originally the source of truth before sessions
+   existed. They're now downstream caches that follow the active session.
+   When starting a new session or switching users, we must wipe them first so
+   stale data from a previous research never bleeds into the next one. */
+export function clearCompatKeys(): void {
+  try {
+    localStorage.removeItem("audense-audience-map");
+    localStorage.removeItem("audense-chat-messages");
+    localStorage.removeItem("audense_onboarding");
+  } catch {}
+}
+
+export function clearActiveSessionId(): void {
+  try { localStorage.removeItem(ACTIVE_ID_KEY); } catch {}
+}
+
+/* ─── Strict per-id hydration — no global fallback ────────────────── */
+export function hydrateSession(id: string): ResearchSession | null {
+  if (!id) return null;
+  return loadSessions().find((s) => s.id === id) ?? null;
+}
+
+/* ─── Centralised "start fresh research" flow ─────────────────────── */
+export function createFreshResearchSession(params: {
+  onboardingData: Record<string, string>;
+  audienceMap: import("./audienceMap").AudienceMapResult;
+}): ResearchSession {
+  /* Wipe stale compat keys *before* writing the new session so any reader
+     that falls back to compat (legacy code paths) cannot see leftover data
+     from the previous research. */
+  clearCompatKeys();
+
+  const id = newSessionId();
+  const now = new Date().toISOString();
+  const session: ResearchSession = {
+    id,
+    title: makeSessionTitle(params.onboardingData),
+    createdAt: now,
+    updatedAt: now,
+    onboardingData: params.onboardingData,
+    audienceMap: params.audienceMap,
+    chatMessages: [],
+  };
+  upsertSession(session);
+  setActiveSessionId(id);
+
+  /* Re-write compat keys to match the new session — this keeps any legacy
+     reader pointing at the *current* session's data, not a previous one. */
+  try {
+    localStorage.setItem("audense_onboarding", JSON.stringify(params.onboardingData));
+    localStorage.setItem("audense-audience-map", JSON.stringify(params.audienceMap));
+  } catch {}
+
+  return session;
+}

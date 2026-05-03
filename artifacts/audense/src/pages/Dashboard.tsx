@@ -1122,11 +1122,16 @@ export default function Dashboard() {
 
   const displayName = ob?.displayName ?? "Founder";
 
-  /* Load or generate the audience map — prefer active session, fall back to compat keys */
+  /* Load the audience map — *only* from the active session.
+     The previous fallback (`loadAudienceMap()`) read the global
+     `audense-audience-map` compat key, which could contain stale data from a
+     previous research and bleed into a new/empty session. If there's no
+     active session, we render a fresh in-memory mock; the fresh-session
+     guard below redirects unauthenticated visitors to landing anyway. */
   const [audienceMap, setAudienceMap] = useState<AudienceMapResult>(() => {
     const session = getActiveSession();
     if (session) return session.audienceMap;
-    return loadAudienceMap() ?? generateMockAudienceMap(ob);
+    return generateMockAudienceMap(ob);
   });
 
   const shortRegion = audienceMap.region.length > 20
@@ -1186,6 +1191,19 @@ export default function Dashboard() {
   const [segments, setSegments] = useState<Segment[]>(() => buildSegmentsFromMap(audienceMap));
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>("gym");
   const [hoveredSegmentId, setHoveredSegmentId] = useState<string | null>(null);
+
+  /* ── Per-session UI reset ─────────────────────────────────────────
+     Whenever the active session changes (new research, history switch,
+     auth-driven reset), wipe any per-session UI selection so highlights
+     and dynamic chips can never leak across products. switchSession()
+     also resets these explicitly; this effect guarantees the reset for
+     any other code path that mutates activeSessionId. */
+  useEffect(() => {
+    setSelectedSegmentId("gym");
+    setHoveredSegmentId(null);
+    setHasSelectedSegment(false);
+    setSuggestedChips([]);
+  }, [activeSessionId]);
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
 

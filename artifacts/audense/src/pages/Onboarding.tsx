@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { generateMockAudienceMap, saveAudienceMap } from "../lib/audienceMap";
-import { upsertSession, setActiveSessionId, makeSessionTitle, newSessionId } from "../lib/researchSessions";
+import { createFreshResearchSession } from "../lib/researchSessions";
 import { sbSaveSession } from "../lib/sbSessions";
 import { setHasGuestResearch } from "../lib/guestMode";
 
@@ -634,8 +634,8 @@ export default function Onboarding() {
     const finalRegion   = data.region   === "other" ? data.customRegion.trim()   : data.region;
     const onboardingData = { ...data, finalCategory, finalRegion };
 
-    localStorage.setItem("audense_onboarding", JSON.stringify(onboardingData));
-    try { localStorage.removeItem("audense-chat-messages"); } catch {}
+    /* Compat-key cleanup + onboarding write happens inside
+       createFreshResearchSession() once we have the generated map. */
 
     setGenerating(true);
 
@@ -670,40 +670,21 @@ export default function Onboarding() {
         ? (map as Parameters<typeof saveAudienceMap>[0])
         : generateMockAudienceMap(onboardingData);
 
-      saveAudienceMap(finalMap);
-
-      /* ── Create a new research session ─────────────────────────── */
-      const sessionId = newSessionId();
-      const now = new Date().toISOString();
-      const session1 = {
-        id: sessionId,
-        title: makeSessionTitle(onboardingData),
-        createdAt: now,
-        updatedAt: now,
+      /* Centralised fresh-session creation: clears stale compat keys,
+         allocates a new id, persists the session, points active id at it,
+         and re-syncs compat keys to this session's data. */
+      const session1 = createFreshResearchSession({
         onboardingData,
         audienceMap: finalMap,
-        chatMessages: [],
-      };
-      upsertSession(session1);
-      setActiveSessionId(sessionId);
+      });
       setHasGuestResearch();
       sbSaveSession(session1).catch(() => {});
     } catch {
       const fallback = generateMockAudienceMap(onboardingData);
-      saveAudienceMap(fallback);
-      const sessionId = newSessionId();
-      const now = new Date().toISOString();
-      const session2 = {
-        id: sessionId,
-        title: makeSessionTitle(onboardingData),
-        createdAt: now,
-        updatedAt: now,
+      const session2 = createFreshResearchSession({
         onboardingData,
         audienceMap: fallback,
-        chatMessages: [],
-      };
-      upsertSession(session2);
-      setActiveSessionId(sessionId);
+      });
       setHasGuestResearch();
       sbSaveSession(session2).catch(() => {});
     } finally {

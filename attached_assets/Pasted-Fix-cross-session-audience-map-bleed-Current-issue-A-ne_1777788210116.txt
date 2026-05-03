@@ -1,0 +1,77 @@
+Fix cross-session audience map bleed.
+
+Current issue:
+A new research session/new user can show an old audience map from a previous product. Example: the current chat/product context is a perfume TikTok page, but the dashboard still shows Gym Goers, Busy Professionals, and Health Conscious from a previous meal-tracking/fitness map.
+
+This creates a split-brain state:
+- Chat understands the new/current product.
+- Suggested prompts react to the new product.
+- But the right-side Audience Map still displays stale segments from another research session.
+
+This must never happen.
+
+Important:
+- Do not change dashboard UI design.
+- Do not change onboarding design.
+- Do not change AudienceMapResult shape unless absolutely necessary.
+- Do not change chat behaviour except to ensure it receives the correct current session/map context.
+- Keep existing guest/auth migration behaviour.
+- Keep existing fallback/mock generation behaviour.
+
+Goal:
+Every research session must be fully isolated.
+
+Required behaviour:
+1. Starting a new research must create a fresh session ID.
+2. The fresh session must have its own:
+   - onboarding/product data
+   - audience map
+   - chat messages
+   - active session pointer
+3. A new session must never reuse:
+   - audense-audience-map from a previous session
+   - audense-chat-messages from a previous session
+   - stale activeSession state
+   - stale selected segment
+   - stale generated suggestions
+4. Previous sessions should only appear when explicitly opened from Research History.
+5. If no valid map exists for the active session, show a fresh empty/loading state or generate a new map. Do not fall back to an unrelated old map.
+6. When switching sessions from history, then and only then should the app hydrate that selected session’s map/chat into the dashboard.
+
+Audit and fix:
+- Inspect Dashboard.tsx session hydration.
+- Inspect Onboarding.tsx generate/new research flow.
+- Inspect researchSessions.ts.
+- Inspect sbSessions.ts.
+- Inspect localStorage compat keys:
+  - audense-active-session-id
+  - audense-research-sessions
+  - audense-audience-map
+  - audense-chat-messages
+  - audense_onboarding
+- Find any fallback path that reads audense-audience-map globally when the active session map is missing.
+- Remove or guard that fallback so stale maps cannot bleed into new sessions.
+- Ensure selectedSegment/highlight state resets when activeSessionId changes.
+- Ensure suggestedActions reset/recompute when activeSessionId changes.
+
+Implementation expectation:
+- Add/centralize a createFreshResearchSession flow that clears stale compat keys before saving the new session.
+- Add a hydrateSession(sessionId) function that only loads data from that exact session.
+- Add validation: if activeSession.map.product/category/region does not match current onboarding context, do not render it as current.
+- On auth user change, clear local active session cache unless migrating guest data intentionally.
+
+Validation tests:
+1. Create product A: calorie tracking app. Confirm map shows fitness/meal-related segments.
+2. Start New Research for product B: perfume TikTok page. Confirm no Gym Goers/meal-tracking segments remain.
+3. Ask chat “what is my product?” Confirm it matches product B.
+4. Ask “why is Gym Goers showing?” It should not be showing at all.
+5. Open History and select product A. Confirm old product A map returns only when explicitly selected.
+6. Sign out and sign in as another user. Confirm previous user’s sessions/maps do not show.
+7. Refresh page after new research. Confirm active session is still the correct new session.
+
+After implementing, explain:
+- What caused the stale map bleed
+- Which storage keys were involved
+- Where session hydration now happens
+- How new research is isolated
+- How history switching still works

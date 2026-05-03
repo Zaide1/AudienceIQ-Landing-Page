@@ -61,3 +61,25 @@ Support contact: `hello@audienceiq.app`.
 - `localStorage` keys (`audense_onboarding`, `audense-research-sessions`, `audense-audience-map`, `audense-chat-messages`, `audense-display-name`, `audense-workspace-name`, `audense-default-region`, `audense-default-category`, `audense-preferred-sources`, `audense-response-style`, `audense-allow-map-updates`, `audense-show-suggested-actions`, `audense-dashboard-split`, `audense-active-session-id`, `audense-guest-chat-count`, `audense-has-created-guest-research`, `audense-guest-migrated`, `audense-soft-prompt-seen`, plus the export filename `audense-export.json`) — renaming wipes every existing user's onboarding answers, sessions, audience maps, chat history, and settings. If you want these renamed later, ship a one-time migration that copies old keys → new keys on app load.
 
 Verification of v2.1: `pnpm --filter @workspace/audense exec tsc --noEmit` clean; `PORT=5173 BASE_PATH=/ pnpm --filter @workspace/audense run build` succeeds (~672 KB JS / ~99 KB CSS, gzipped 198 KB / 16 KB).
+
+### v2.2 — Cross-session audience-map bleed fix (May 2026)
+
+Users reported that starting a new research session for an unrelated product (e.g. a perfume TikTok page) sometimes still rendered Gym Goers / Busy Professionals / Health Conscious segments from a previous calorie-tracker session.
+
+Two concrete root causes:
+
+1. **`getTemplate()` fitness fallback** in `src/lib/audienceMap.ts` — for any unknown or custom ("Other") category, the function silently returned `TEMPLATES["health-fitness"]`. Replaced with a neutral `GENERIC_TEMPLATE` (Early Adopters, Mainstream Buyers, Value Seekers, Niche Power Users, Casual Browsers).
+2. **Global compat-key fallback in Dashboard initial state** — when `getActiveSession()` returned `null`, the dashboard read `audense-audience-map` directly, surfacing data from a previous research. Removed; the fresh-session guard already redirects unauthenticated visitors to landing.
+
+Session isolation centralised in `src/lib/researchSessions.ts`:
+
+- `clearCompatKeys()` — wipes `audense-audience-map`, `audense-chat-messages`, `audense_onboarding`.
+- `clearActiveSessionId()` — removes the active id key.
+- `hydrateSession(id)` — strict per-id load, no global fallback.
+- `createFreshResearchSession({ onboardingData, audienceMap })` — clears stale compat keys, allocates a new id, persists the session, sets active id, and re-syncs compat keys to the new session's data.
+
+`Onboarding.handleGenerate()` now calls `createFreshResearchSession()` in both success and fallback paths. `generateMockAudienceMap()` is now a pure function (removed implicit `saveAudienceMap()` side effect) so in-memory fallbacks cannot accidentally persist a mock to the global compat key.
+
+`Dashboard.tsx` now also resets per-session UI state (`selectedSegmentId`, `hoveredSegmentId`, `hasSelectedSegment`, `suggestedChips`) via a `useEffect` keyed on `activeSessionId`, so segment highlights and dynamic chips can never leak across products.
+
+localStorage keys retain the `audense-*` prefix (no migration shipped). Verified: `pnpm --filter @workspace/audense exec tsc --noEmit` clean; preview renders.
