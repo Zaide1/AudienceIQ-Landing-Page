@@ -1,0 +1,59 @@
+Fix guest research history behaviour.
+
+Important:
+- Do not change dashboard layout.
+- Do not change onboarding flow.
+- Do not change chat behaviour.
+- Do not change AudienceMapResult shape.
+- Do not add billing/pricing.
+- Keep existing auth and Supabase setup.
+- Keep signed-in research history working.
+
+Current issue:
+Signed-out guest users can accumulate and view multiple research history sessions in localStorage. This makes a guest user look like they have account-level saved history and causes old product ideas to appear when reopening the site and going through the main CTA.
+
+Desired behaviour:
+Guest users should only have one active local research session. Full research history should only be available to signed-in users.
+
+Rules:
+1. If the user is signed out:
+   - Do not show multiple saved research sessions in the Research history drawer.
+   - The history button/drawer should either be hidden, disabled, or show the existing sign-up prompt: “Sign up to save and revisit research history.”
+   - Guest users should not see old guest sessions listed as history.
+
+2. Guest active session:
+   - Keep one active guest research session for convenience.
+   - When a guest starts a new research from the landing CTA/onboarding, replace the previous guest session instead of appending another session to history.
+   - Clear or overwrite old guest research session records when a new guest research is created.
+   - Preserve the current active guest map/chat only until they start a new guest research or clear it.
+
+3. Signed-in users:
+   - Continue to save every research session to Supabase.
+   - Continue to show the Research history drawer normally.
+   - Do not delete signed-in user history.
+   - Do not mix guest local history with signed-in Supabase history after migration.
+
+4. Migration:
+   - If a guest signs up/signs in, migrate only the current active guest research session, not every stale local guest session.
+   - After successful migration, clear local guest session storage so it cannot bleed into future guest or user sessions.
+
+5. Storage cleanup:
+   - For signed-out users, remove stale multi-session localStorage entries such as audense-research-sessions when starting a new guest research.
+   - Keep only the active compatibility keys needed for the current guest session, such as the current map/chat/onboarding data.
+   - Do not clear unrelated UI preferences.
+
+Validation:
+- Signed-out guest opens landing → clicks main CTA → completes onboarding → one current map exists.
+- Same guest returns to landing → clicks main CTA again → new research replaces previous guest session instead of adding to history.
+- Signed-out guest cannot open a list of 3+ old research sessions.
+- Signed-out guest history button shows a sign-up prompt or is hidden.
+- Signed-in user can create multiple research sessions and see them in history.
+- Signing in migrates only the current active guest session.
+- Signing out clears user-specific local cache and does not show previous account history to the next guest.
+
+After implementing, explain:
+- How guest sessions are stored now
+- What happens when a guest starts a new research
+- What history shows for guests vs signed-in users
+- What gets migrated on sign-up
+- Which localStorage keys are cleared or preserved

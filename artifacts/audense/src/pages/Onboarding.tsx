@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { generateMockAudienceMap, saveAudienceMap } from "../lib/audienceMap";
-import { createFreshResearchSession } from "../lib/researchSessions";
+import { createFreshResearchSession, clearGuestSessionStore } from "../lib/researchSessions";
 import { sbSaveSession } from "../lib/sbSessions";
 import { setHasGuestResearch } from "../lib/guestMode";
+import { getCurrentUser } from "../lib/auth";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 interface OnboardingState {
@@ -642,6 +643,23 @@ export default function Onboarding() {
     const TIMEOUT_MS = 9_000;
 
     try {
+      /* Guests get exactly *one* local research session. If we positively
+         confirm the user is signed out, wipe the entire local session
+         store before creating the new one so this research replaces (not
+         appends to) any prior guest research. Signed-in users still
+         accumulate full history in Supabase.
+         This lives inside the outer try/finally so a thrown auth read
+         can't strand `generating=true`. On an *unknown* auth state we
+         default to the non-destructive path (skip clearing) so we never
+         wipe a signed-in user's local cache by mistake — only an
+         explicit `null` from getCurrentUser() triggers the wipe. */
+      let isConfirmedGuest = false;
+      try {
+        const u = await getCurrentUser();
+        isConfirmedGuest = u === null;
+      } catch { /* leave local data intact on unknown auth state */ }
+      if (isConfirmedGuest) clearGuestSessionStore();
+
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 

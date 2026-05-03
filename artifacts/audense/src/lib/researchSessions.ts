@@ -116,6 +116,20 @@ export function clearActiveSessionId(): void {
   try { localStorage.removeItem(ACTIVE_ID_KEY); } catch {}
 }
 
+/* ─── Guest session reset ───────────────────────────────────────────
+   Wipes the *entire* local research-session store: the multi-session list,
+   the active id pointer, and the single-session compat keys. Used when a
+   guest starts a new research from onboarding so that previous guest
+   sessions are *replaced* — not appended to a growing local history.
+   Guests should never accumulate account-style history in localStorage. */
+export function clearGuestSessionStore(): void {
+  try {
+    localStorage.removeItem(SESSIONS_KEY);
+    localStorage.removeItem(ACTIVE_ID_KEY);
+  } catch {}
+  clearCompatKeys();
+}
+
 /* ─── Strict per-id hydration — no global fallback ────────────────── */
 export function hydrateSession(id: string): ResearchSession | null {
   if (!id) return null;

@@ -26,9 +26,10 @@ import { SoftPromptModal, NewResearchAuthWall } from "../components/GuestModals"
 import { onAuthChange, signOut, getCurrentUser, type AuthUser } from "../lib/auth";
 import { sbAppendMessage, sbUpdateMap, sbLoadSessionList, sbLoadFullSession, sbSaveSession } from "../lib/sbSessions";
 import {
-  hasGuestResearch, isGuestMigrated, setGuestMigrated,
+  hasGuestResearch, isGuestMigrated, setGuestMigrated, clearGuestResearch,
   incGuestChatCount, getSoftPromptSeenAt, setSoftPromptSeenAt,
 } from "../lib/guestMode";
+import { saveSessions } from "../lib/researchSessions";
 
 /* ─── Platform icon map ───────────────────────────────────────────── */
 type IconComponent = React.ComponentType<{ size?: number | string }>;
@@ -887,14 +888,22 @@ function HistoryPanel({
   activeSessionId,
   sessions: sessionsProp,
   loading,
+  isGuest,
+  onSignUp,
 }: {
   onClose: () => void;
   onSelect: (session: ResearchSession) => void;
   activeSessionId: string;
   sessions?: ResearchSession[];
   loading?: boolean;
+  isGuest?: boolean;
+  onSignUp?: () => void;
 }) {
-  const sessions = sessionsProp ?? loadSessions();
+  /* Guests never see a multi-session list — full research history is a
+     signed-in feature. We deliberately do NOT read localStorage for guests
+     here because old/stale local sessions (from before single-session
+     enforcement) could otherwise leak into the drawer. */
+  const sessions = isGuest ? [] : (sessionsProp ?? loadSessions());
 
   function fmtDate(iso: string) {
     try {
@@ -954,11 +963,13 @@ function HistoryPanel({
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Research history</div>
             <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
-              {loading
-                ? "Loading…"
-                : sessions.length === 0
-                  ? "No sessions yet"
-                  : `${sessions.length} session${sessions.length !== 1 ? "s" : ""}`}
+              {isGuest
+                ? "Sign up to save and revisit"
+                : loading
+                  ? "Loading…"
+                  : sessions.length === 0
+                    ? "No sessions yet"
+                    : `${sessions.length} session${sessions.length !== 1 ? "s" : ""}`}
             </div>
           </div>
           <button
@@ -976,7 +987,41 @@ function HistoryPanel({
 
         {/* Session list */}
         <div style={{ flex: 1, overflowY: "auto", padding: "12px 12px 24px" }}>
-          {loading ? (
+          {isGuest ? (
+            <div
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                justifyContent: "center", paddingTop: 60, gap: 12, textAlign: "center",
+                paddingLeft: 16, paddingRight: 16,
+              }}
+            >
+              <div style={{ fontSize: 36 }}>🔒</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
+                Sign up to save and revisit research history.
+              </div>
+              <div style={{ fontSize: 13, color: "#9CA3AF", maxWidth: 260, lineHeight: 1.5 }}>
+                Free accounts keep every research session, so you can come back to past audience maps any time.
+              </div>
+              {onSignUp && (
+                <button
+                  onClick={onSignUp}
+                  style={{
+                    marginTop: 6,
+                    background: "#7C3AED",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 10,
+                    padding: "10px 18px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Sign up — it's free
+                </button>
+              )}
+            </div>
+          ) : loading ? (
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "center",
               paddingTop: 60, color: "#9CA3AF", fontSize: 14,
@@ -1345,8 +1390,16 @@ export default function Dashboard() {
     const session = getActiveSession();
     if (!session) return;
     try {
-      await sbSaveSession(session);
+      const ok = await sbSaveSession(session);
+      if (!ok) return;
       setGuestMigrated(sid);
+      /* Prune local list to *only* this migrated session and drop the
+         guest flag so stale guest entries can't bleed into account or
+         future-guest history. Mirrors the auth-subscription branch.
+         Gated on actual Supabase success so a failed save can be retried
+         on the next auth-trigger instead of being silently marked done. */
+      saveSessions([session]);
+      clearGuestResearch();
     } catch { /* non-blocking — local data is still intact */ }
   }, []);
 
@@ -1390,16 +1443,25 @@ export default function Dashboard() {
         resetDashboardState();
         setSbSessionItems([]);
       } else if (prev === null) {
-        /* Guest → signed in. Migrate guest research if any, otherwise the
-           local cache belongs to a different prior user — clear it. */
+        /* Guest → signed in. Migrate the *active* guest research if any,
+           and prune local storage to just that session so any stale guest
+           entries from before single-session enforcement cannot bleed into
+           future guest or signed-in sessions. */
         const sid = getActiveSessionId();
         const guestSess = sid && hasGuestResearch() ? getActiveSession() : null;
         if (sid && guestSess && !isGuestMigrated(sid)) {
           try {
-            await sbSaveSession(guestSess);
-            setGuestMigrated(sid);
+            const ok = await sbSaveSession(guestSess);
+            if (ok) {
+              setGuestMigrated(sid);
+              /* Replace any multi-entry local list with just the migrated
+                 session, and drop the guest flag — this is now an account
+                 session, not a guest one. Gated on actual Supabase success
+                 so a transient failure can retry on the next auth event. */
+              saveSessions([guestSess]);
+              clearGuestResearch();
+            }
           } catch {}
-          /* Keep local data — it now belongs to this account. */
         } else if (!guestSess) {
           clearLocalSessionData();
           resetDashboardState();
@@ -1769,6 +1831,11 @@ export default function Dashboard() {
         activeSessionId={activeSessionId}
         sessions={authUser ? sbSessionItems : undefined}
         loading={loadingHistory}
+        isGuest={!authUser}
+        onSignUp={() => {
+          setIsHistoryOpen(false);
+          setIsAuthModalOpen(true);
+        }}
       />
     )}
     <div
