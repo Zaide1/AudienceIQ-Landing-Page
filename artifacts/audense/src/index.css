@@ -351,13 +351,13 @@
 .hero-grid {
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 32px;
   align-items: stretch;
   justify-content: center;
-  padding-left: clamp(24px, 5vw, 72px);
-  padding-right: clamp(24px, 5vw, 72px);
-  padding-top: 56px;
-  padding-bottom: 56px;
+  padding-left: clamp(20px, 5vw, 72px);
+  padding-right: clamp(20px, 5vw, 72px);
+  padding-top: 36px;
+  padding-bottom: 36px;
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;

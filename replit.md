@@ -28,6 +28,25 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 ## Versions
 
+### v4 — Mobile-responsive layout (May 2026)
+
+All pages now work properly on phone screens (< 768px):
+
+- **Landing Navbar**: CTA shrinks to "Start →" on mobile; brand text + logo
+  scale down; no more overflow.
+- **Hero**: title clamp lowered from 56px min to 36px; CTA button uses
+  `min(340px, 100%)`; removed `whiteSpace: "nowrap"` on heading.
+- **Hero grid CSS**: tighter mobile padding (20px sides, 36px top/bottom).
+- **Dashboard**: uses `useIsMobile()` hook (768px breakpoint). On mobile:
+  - Tab bar replaces the desktop icon rail (Chat | Map tabs + logo + settings).
+  - Only the active tab's panel is shown (full-width, full-height).
+  - Divider and split-drag are hidden.
+  - Desktop layout is completely unchanged.
+- **Onboarding / Help / Privacy / Terms**: already responsive — no changes needed.
+
+Verified via Playwright e2e at 390×844 viewport: full onboarding → generate →
+dashboard Chat/Map tab switching → /help all pass.
+
 ### v3 — Audience-segment quality fix (May 2026)
 
 `/api/audience/generate` previously returned identical generic segment names

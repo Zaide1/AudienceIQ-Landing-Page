@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import {
   Settings, HelpCircle, Send, Plus, Paperclip, X as XIcon, FileText, Image,
-  Home, Layers, User,
+  Home, Layers, User, MessageSquare, BarChart3,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   FaInstagram, FaTiktok, FaYoutube, FaLinkedin,
   FaXTwitter, FaReddit, FaFacebook, FaGoogle,
@@ -1207,6 +1208,8 @@ export default function Dashboard() {
   const [splitPct, setSplitPct] = useState<number>(loadSplit);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const [mobileTab, setMobileTab] = useState<"map" | "chat">("map");
 
   const onDividerMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -1844,19 +1847,90 @@ export default function Dashboard() {
       style={{
         height: "100vh",
         display: "flex",
+        flexDirection: isMobile ? "column" : "row",
         fontFamily: "Inter, sans-serif",
         background: "#F9F8FF",
         overflow: "hidden",
       }}
     >
+      {/* ── Mobile tab bar ─────────────────────────────────── */}
+      {isMobile && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            background: "#fff",
+            borderBottom: "1px solid #E5E7EB",
+            flexShrink: 0,
+            padding: "0 8px",
+            gap: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              if (authUser) { navigate("/"); return; }
+              const hasResearch = !!activeSessionId || loadSessions().length > 0 || !!getActiveSession() || !!ob?.productIdea || !!loadOnboarding() || messages.length > 2 || hasGuestResearch();
+              if (hasResearch) { setIsLeaveConfirmOpen(true); } else { navigate("/"); }
+            }}
+            style={{ background: "none", border: "none", padding: 8, cursor: "pointer", flexShrink: 0 }}
+          >
+            <img src={logoImg} alt="AudienceIQ" width={28} height={28} style={{ width: 28, height: 28, objectFit: "contain", borderRadius: 6 }} />
+          </button>
+          {([
+            { key: "chat" as const, label: "Chat", icon: <MessageSquare size={15} /> },
+            { key: "map" as const, label: "Map", icon: <BarChart3 size={15} /> },
+          ]).map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setMobileTab(tab.key)}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                padding: "12px 0",
+                background: "none",
+                border: "none",
+                borderBottom: mobileTab === tab.key ? "2px solid #7C3AED" : "2px solid transparent",
+                color: mobileTab === tab.key ? "#7C3AED" : "#6B7280",
+                fontWeight: mobileTab === tab.key ? 700 : 500,
+                fontSize: 13,
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+            <button type="button" onClick={() => setIsHistoryOpen(v => !v)} title="History" style={{ background: "none", border: "none", padding: 6, cursor: "pointer", color: isHistoryOpen ? "#7C3AED" : "#9CA3AF" }}>
+              <Layers size={16} />
+            </button>
+            {!authUser && (
+              <button type="button" onClick={() => setIsAuthModalOpen(true)} title="Sign in" style={{ background: "none", border: "none", padding: 6, cursor: "pointer", color: "#9CA3AF" }}>
+                <User size={16} />
+              </button>
+            )}
+            <button type="button" onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ background: "none", border: "none", padding: 6, cursor: "pointer", color: "#9CA3AF" }}>
+              <Settings size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Left panel ─────────────────────────────────────── */}
       <div
         style={{
-          width: `${splitPct}%`,
+          width: isMobile ? "100%" : `${splitPct}%`,
           flexShrink: 0,
-          display: "flex",
+          display: isMobile && mobileTab !== "chat" ? "none" : "flex",
+          flex: isMobile ? 1 : undefined,
           background: "#fff",
           overflow: "hidden",
+          minHeight: 0,
         }}
       >
         {/* ── Icon rail ────────────────────────────────────── */}
@@ -1864,7 +1938,7 @@ export default function Dashboard() {
           style={{
             width: 64,
             flexShrink: 0,
-            display: "flex",
+            display: isMobile ? "none" : "flex",
             flexDirection: "column",
             alignItems: "center",
             borderRight: "1px solid #E5E7EB",
@@ -2283,22 +2357,24 @@ export default function Dashboard() {
       </div>
 
       {/* ── Divider ────────────────────────────────────────── */}
-      <div
-        onMouseDown={onDividerMouseDown}
-        style={{
-          width: 5,
-          flexShrink: 0,
-          cursor: "col-resize",
-          background: "#E5E7EB",
-          zIndex: 10,
-        }}
-      />
+      {!isMobile && (
+        <div
+          onMouseDown={onDividerMouseDown}
+          style={{
+            width: 5,
+            flexShrink: 0,
+            cursor: "col-resize",
+            background: "#E5E7EB",
+            zIndex: 10,
+          }}
+        />
+      )}
 
       {/* ── Right panel ────────────────────────────────────── */}
       <div
         style={{
           flex: 1,
-          display: "flex",
+          display: isMobile && mobileTab !== "map" ? "none" : "flex",
           flexDirection: "column",
           overflow: "hidden",
           minWidth: 0,

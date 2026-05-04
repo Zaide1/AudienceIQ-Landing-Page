@@ -13,7 +13,7 @@ export function Navbar() {
         paddingRight: "clamp(24px, 5vw, 72px)",
       }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <img
           src={logoImg}
           alt="AudienceIQ Logo"
@@ -22,12 +22,12 @@ export function Navbar() {
           decoding="sync"
           loading="eager"
           fetchPriority="high"
-          style={{ width: 48, height: 48, objectFit: "contain" }}
-          className="rounded-lg"
+          style={{ width: 40, height: 40, objectFit: "contain" }}
+          className="rounded-lg sm:!w-12 sm:!h-12 flex-shrink-0"
         />
         <span
-          className="font-bold tracking-tight text-foreground"
-          style={{ fontSize: 26, letterSpacing: "-0.02em" }}
+          className="font-bold tracking-tight text-foreground text-lg sm:text-[26px] truncate"
+          style={{ letterSpacing: "-0.02em" }}
         >
           AudienceIQ
         </span>
@@ -35,11 +35,12 @@ export function Navbar() {
 
       <Button
         onClick={() => navigate("/onboarding")}
-        className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
-        style={{ width: 210, height: 52, fontSize: 16, borderRadius: 14 }}
+        className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 flex-shrink-0"
+        style={{ height: 44, fontSize: 14, borderRadius: 14, paddingLeft: 16, paddingRight: 16 }}
         data-testid="button-map-audience-nav"
       >
-        Map my audience →
+        <span className="hidden sm:inline">Map my audience →</span>
+        <span className="sm:hidden">Start →</span>
       </Button>
     </header>
   );

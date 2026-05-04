@@ -10,7 +10,7 @@ export function Hero() {
       <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         <h1
           style={{
-            fontSize: "clamp(56px, 5vw, 88px)",
+            fontSize: "clamp(36px, 7vw, 88px)",
             fontWeight: 900,
             lineHeight: 0.95,
             letterSpacing: "-0.04em",
@@ -19,7 +19,7 @@ export function Hero() {
             margin: 0,
           }}
         >
-          <span style={{ whiteSpace: "nowrap" }}>Your audience,</span>
+          Your audience,
           <br />
           <span style={{ color: "#7C3AED" }}>found.</span>
         </h1>
@@ -42,9 +42,9 @@ export function Hero() {
             data-testid="button-map-audience-hero"
             onClick={() => navigate("/onboarding")}
             style={{
-              width: 340,
-              height: 64,
-              fontSize: 22,
+              width: "min(340px, 100%)",
+              height: 56,
+              fontSize: "clamp(18px, 3vw, 22px)",
               fontWeight: 700,
               borderRadius: 14,
               background: "#7C3AED",
