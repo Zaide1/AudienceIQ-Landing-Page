@@ -56,38 +56,38 @@ const STEP_LABELS = ["Product", "Details", "Audience goals", "Generate map"];
 function TopBar({ step }: { step: number }) {
   const [, navigate] = useLocation();
   return (
-    <div className="w-full flex items-center justify-between" style={{ padding: "24px clamp(24px,5vw,72px) 0" }}>
+    <div className="w-full flex items-center justify-between" style={{ padding: "16px clamp(16px,5vw,72px) 0" }}>
       <button
         type="button"
         onClick={() => navigate("/")}
         aria-label="Back to landing"
-        className="flex items-center gap-3"
+        className="flex items-center gap-2"
         style={{
           background: "transparent", border: "none", padding: 0, cursor: "pointer",
-          fontFamily: "inherit",
+          fontFamily: "inherit", flexShrink: 0,
         }}
       >
         <img
           src={logoImg}
           alt="AudienceIQ"
-          width={36}
-          height={36}
+          width={32}
+          height={32}
           decoding="sync"
           loading="eager"
           fetchPriority="high"
-          style={{ width: 36, height: 36, objectFit: "contain" }}
+          style={{ width: 32, height: 32, objectFit: "contain" }}
           className="rounded-lg"
         />
-        <span style={{ fontWeight: 700, fontSize: 20, letterSpacing: "-0.02em", color: "#111827" }}>AudienceIQ</span>
+        <span className="hidden sm:inline" style={{ fontWeight: 700, fontSize: 20, letterSpacing: "-0.02em", color: "#111827" }}>AudienceIQ</span>
       </button>
       <div className="flex flex-col items-end gap-1.5">
         <span style={{ fontSize: 12, fontWeight: 600, color: "#6B7280" }}>Step {step} of 4</span>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1">
           {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
               style={{
-                width: 52,
+                width: "clamp(28px, 8vw, 52px)",
                 height: 4,
                 borderRadius: 99,
                 background: s <= step ? "#7C3AED" : "#E5E7EB",
@@ -103,18 +103,18 @@ function TopBar({ step }: { step: number }) {
 
 function BottomStepper({ step }: { step: number }) {
   return (
-    <div className="flex items-center justify-center gap-0" style={{ padding: "20px 0 28px" }}>
+    <div className="flex items-center justify-center gap-0" style={{ padding: "16px 12px 24px" }}>
       {STEP_LABELS.map((label, i) => {
         const n = i + 1;
         const done = n < step;
         const active = n === step;
         return (
           <div key={n} className="flex items-center">
-            <div className="flex flex-col items-center" style={{ minWidth: 64 }}>
+            <div className="flex flex-col items-center" style={{ minWidth: 0, width: "clamp(48px, 12vw, 64px)" }}>
               <div
                 style={{
-                  width: 28,
-                  height: 28,
+                  width: 24,
+                  height: 24,
                   borderRadius: "50%",
                   background: done || active ? "#7C3AED" : "#F3F4F6",
                   border: done || active ? "2px solid #7C3AED" : "2px solid #E5E7EB",
@@ -123,18 +123,19 @@ function BottomStepper({ step }: { step: number }) {
                   justifyContent: "center",
                   color: done || active ? "#fff" : "#9CA3AF",
                   fontWeight: 700,
-                  fontSize: 12,
+                  fontSize: 11,
                   transition: "all 0.3s",
+                  flexShrink: 0,
                 }}
               >
                 {done ? "✓" : n}
               </div>
-              <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? "#7C3AED" : "#9CA3AF", marginTop: 4, whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: 10, fontWeight: active ? 600 : 400, color: active ? "#7C3AED" : "#9CA3AF", marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
                 {label}
               </span>
             </div>
             {i < STEP_LABELS.length - 1 && (
-              <div style={{ width: 40, height: 2, background: n < step ? "#7C3AED" : "#E5E7EB", marginBottom: 16, transition: "background 0.3s" }} />
+              <div style={{ width: "clamp(16px, 4vw, 40px)", height: 2, background: n < step ? "#7C3AED" : "#E5E7EB", marginBottom: 16, transition: "background 0.3s", flexShrink: 0 }} />
             )}
           </div>
         );
@@ -184,7 +185,7 @@ function NavButtons({
           color: "#fff",
           border: "none",
           borderRadius: 10,
-          padding: "13px 28px",
+          padding: "13px clamp(16px, 3vw, 28px)",
           fontSize: 15,
           fontWeight: 600,
           cursor: disabled ? "not-allowed" : "pointer",
@@ -202,7 +203,7 @@ function NavButtons({
             display: "inline-block", animation: "spin 0.7s linear infinite",
           }} />
         )}
-        {nextLoading ? "Mapping your audience…" : nextLabel}
+        {nextLoading ? "Mapping…" : nextLabel}
       </button>
     </div>
   );
@@ -289,7 +290,7 @@ function Step1({ data, onChange, onNext }: {
             color: "#fff",
             border: "none",
             borderRadius: 10,
-            padding: "13px 28px",
+            padding: "13px clamp(16px, 3vw, 28px)",
             fontSize: 15,
             fontWeight: 600,
             cursor: !data.productIdea.trim() ? "not-allowed" : "pointer",
@@ -379,7 +380,7 @@ function Step3({ data, onChange, onNext, onBack }: {
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
         {CATEGORIES.map((c) => {
           const selected = data.category === c.id;
           return (
@@ -570,7 +571,7 @@ function Step4({ data, onChange, onNext, onBack, generating, loadingStep }: {
       <NavButtons
         onBack={onBack}
         onNext={onNext}
-        nextLabel="Generate my audience map ✨"
+        nextLabel="Generate map ✨"
         nextLoading={generating}
         nextDisabled={!data.region || (data.region === "other" && !data.customRegion.trim())}
       />
@@ -721,7 +722,8 @@ export default function Onboarding() {
         flexDirection: "column",
         fontFamily: "Inter, sans-serif",
         position: "relative",
-        overflow: "hidden",
+        overflowX: "hidden",
+        overflowY: "auto",
       }}
     >
       {/* Bottom-left lavender dotted pattern */}
@@ -746,7 +748,7 @@ export default function Onboarding() {
       <TopBar step={step} />
 
       {/* Card */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px clamp(16px,5vw,72px)", position: "relative", zIndex: 1 }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px clamp(12px,4vw,72px)", position: "relative", zIndex: 1 }}>
         <div
           style={{
             width: "100%",
@@ -755,7 +757,7 @@ export default function Onboarding() {
             borderRadius: 20,
             border: "1px solid #E5E7EB",
             boxShadow: "0 4px 40px rgba(0,0,0,0.06)",
-            padding: "40px 48px",
+            padding: "clamp(24px, 4vw, 40px) clamp(16px, 4vw, 48px)",
             transition: "max-width 0.3s",
           }}
         >

@@ -362,7 +362,13 @@
   max-width: 1440px;
   margin: 0 auto;
   box-sizing: border-box;
-  min-height: calc(100vh - 80px);
+  min-height: auto;
+}
+
+@media (min-width: 768px) {
+  .hero-grid {
+    min-height: calc(100vh - 80px);
+  }
 }
 
 .hero-grid > * {
@@ -397,7 +403,8 @@
 }
 
 .mockup-outer {
-  width: min(92vw, 860px);
+  width: 100%;
+  max-width: 860px;
   margin: 0 auto;
 }
 
