@@ -25,11 +25,12 @@ function PlatformChip({ name, Icon, color }: { name: string; Icon: React.Compone
         border: "1px solid #ECE9F5",
         color,
         flexShrink: 0,
+        overflow: "hidden",
         boxShadow:
           "0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(124,58,237,0.06)",
       }}
     >
-      <Icon size={17} />
+      <Icon size={15} />
     </span>
   );
 }

@@ -311,6 +311,7 @@ function SegmentCards() {
                       border: `1px solid ${s.accent}33`,
                       color,
                       flexShrink: 0,
+                      overflow: "hidden",
                     }}
                   >
                     <Icon size={9} />
