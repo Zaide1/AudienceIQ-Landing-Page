@@ -277,11 +277,11 @@ function ProductValueSection() {
                     key={r.label}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "120px 1fr",
-                      gap: 16,
+                      gridTemplateColumns: "clamp(80px, 25%, 120px) 1fr",
+                      gap: 12,
                       padding: "14px 0",
                       borderTop: i === 0 ? "none" : "1px solid #F1EEF8",
-                      alignItems: "baseline",
+                      alignItems: "center",
                     }}
                   >
                     <span
@@ -296,7 +296,7 @@ function ProductValueSection() {
                       {r.label}
                     </span>
                     {r.label === "Where to test" ? (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                         {WHERE_TO_TEST_PLATFORMS.map((p) => (
                           <PlatformChip key={p.name} name={p.name} Icon={p.Icon} color={p.color} />
                         ))}
