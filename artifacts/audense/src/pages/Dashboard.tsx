@@ -1293,12 +1293,26 @@ export default function Dashboard() {
       /* Only apply map update if we have useful data — never wipe a good map */
       const hasUsefulSignals = data.signals.length > 0;
       if (hasUsefulSignals) {
+        const existingCompetitors = audienceMap.competitors;
+        let mergedCompetitors = existingCompetitors;
+        if (data.competitors && existingCompetitors) {
+          const existingDirectNames = new Set(existingCompetitors.direct.map((c) => c.name.toLowerCase()));
+          const newDirect = data.competitors.direct.filter((c) => !existingDirectNames.has(c.name.toLowerCase()));
+          mergedCompetitors = {
+            direct: [...existingCompetitors.direct, ...newDirect],
+            adjacent: existingCompetitors.adjacent,
+            substitutes: existingCompetitors.substitutes,
+            notes: existingCompetitors.notes,
+          };
+        } else if (data.competitors && !existingCompetitors) {
+          mergedCompetitors = data.competitors;
+        }
+
         const updatedMap: AudienceMapResult = {
           ...audienceMap,
           evidenceSummary: data.evidenceSummary,
           segments: data.updatedSegments,
-          /* Merge HN-derived competitors if present; fallback keeps existing */
-          ...(data.competitors ? { competitors: data.competitors } : {}),
+          ...(mergedCompetitors ? { competitors: mergedCompetitors } : {}),
         };
         setAudienceMap(updatedMap);
         setSegments(buildSegmentsFromMap(updatedMap));
@@ -1309,7 +1323,11 @@ export default function Dashboard() {
       } else {
         /* Still update just the evidenceSummary so sourceMode/limitations stay honest */
         if (data.evidenceSummary) {
-          const updatedMap: AudienceMapResult = { ...audienceMap, evidenceSummary: data.evidenceSummary };
+          const updatedMap: AudienceMapResult = {
+            ...audienceMap,
+            evidenceSummary: data.evidenceSummary,
+            ...(audienceMap.competitors ? { competitors: audienceMap.competitors } : {}),
+          };
           setAudienceMap(updatedMap);
           saveAudienceMap(updatedMap);
           updateActiveSession({ audienceMap: updatedMap });

@@ -47,6 +47,26 @@ All pages now work properly on phone screens (< 768px):
 Verified via Playwright e2e at 390×844 viewport: full onboarding → generate →
 dashboard Chat/Map tab switching → /help all pass.
 
+### v3.2 — Live search competitor preservation fix (May 2026)
+
+After clicking "Run live search", the Competitors & Alternatives section
+disappeared because the live research response replaced the full competitor
+object with a sparse HN-only version (only `direct` items, empty
+`adjacent`/`substitutes`).
+
+Root cause: `runLiveResearch` in `Dashboard.tsx` line 1301 did
+`...(data.competitors ? { competitors: data.competitors } : {})` which
+overwrote the existing rich competitors with the partial HN-derived object.
+
+Fix: Live search now **merges** HN-derived competitors into the existing data
+instead of replacing it. New HN competitor signals are appended to `direct`
+(deduplicated by name), while `adjacent`, `substitutes`, and `notes` are
+always preserved from the original map. The zero-signals path also explicitly
+preserves `competitors` when updating `evidenceSummary`.
+
+Files changed: `artifacts/audense/src/pages/Dashboard.tsx` (runLiveResearch
+handler only).
+
 ### v3.1 — Competitor relevance fix (May 2026)
 
 The Competitors & Alternatives section returned irrelevant apps (Duolingo,

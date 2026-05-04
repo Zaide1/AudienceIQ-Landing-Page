@@ -1,0 +1,88 @@
+Fix only the Run live search competitor/tools disappearance.
+
+Issue:
+Competitors & Alternatives are visible after normal audience generation, but after clicking Run live search they disappear or show nothing.
+
+Important:
+- Do not change normal audience generation.
+- Do not change competitor generation during normal map creation.
+- Do not change dashboard layout.
+- Do not change UI design.
+- Do not change chat behaviour.
+- Do not change AudienceMapResult shape unless there is a clear bug.
+- Do not remove live search.
+- Do not remove relevance guards.
+- This task is only about the Run live search path.
+
+Goal:
+Run live search should enrich the current map with live/source-backed research signals, while preserving the existing competitors, tools, alternatives, segments, and metrics.
+
+Required behaviour:
+- Before live search:
+  - existing competitors/tools/alternatives are visible.
+- After live search:
+  - competitors/tools/alternatives should still be visible.
+  - source-backed signals can be added.
+  - evidenceSummary can update.
+  - segment evidence can update.
+  - the existing map should not be wiped or replaced with a partial object.
+- If live search finds 0 signals:
+  - keep the existing map completely unchanged except maybe an honest evidenceSummary/limitations update.
+- If live search finds signals:
+  - merge evidence into the existing map.
+  - preserve competitors/tools/alternatives unless the live endpoint returns a complete replacement with valid competitor data.
+
+Inspect:
+- Run live search frontend handler
+- live research API route
+- merge function used after live search
+- setAudienceMap after live search
+- saveAudienceMap after live search
+- session save/update after live search
+- Competitors & Alternatives render condition
+
+Find out:
+1. Is live search returning a partial object without competitors/tools/alternatives?
+2. Is the frontend saving that partial object over the full audience map?
+3. Are competitors/tools/alternatives becoming undefined or empty after merge?
+4. Is the dashboard hiding the section because arrays are empty?
+5. Are relevance guards filtering live results too aggressively?
+6. Are field names inconsistent between normal generation and live search?
+
+Fix:
+- Live search merge must start from the current full audienceMap.
+- Only update live/evidence-related fields unless a full valid map is returned.
+- Always preserve:
+  - competitors/tools/alternatives
+  - segments
+  - reachableAudience
+  - coverage
+  - untapped
+  - insights
+  - chat messages
+  - onboarding data
+  - active session id
+- Before saveAudienceMap/session update, assert that competitors/tools/alternatives are present.
+- If missing after merge, restore them from the previous audienceMap.
+- Add debug logging:
+  - competitors before live search
+  - competitors after live search
+  - whether live search returned competitors
+  - whether preservation fallback was used
+
+Validation:
+1. Generate a fresh map.
+2. Confirm competitors/tools/alternatives show.
+3. Click Run live search.
+4. Confirm competitors/tools/alternatives still show.
+5. Confirm any live source-backed signals appear where expected.
+6. Confirm running live search with 0 signals does not wipe the map.
+7. Refresh the dashboard and confirm competitors/tools/alternatives remain.
+
+After implementing, report:
+- root cause
+- files changed
+- whether live search returned partial data
+- whether the frontend was overwriting the full map
+- how competitors/tools/alternatives are now preserved
+- validation results
