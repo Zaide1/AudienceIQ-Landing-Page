@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { Send, Sparkles } from "lucide-react";
 import {
   FaInstagram, FaTiktok, FaYoutube, FaLinkedin,
-  FaXTwitter, FaReddit, FaFacebook, FaGoogle,
+  FaXTwitter, FaRedditAlien, FaFacebook, FaGoogle,
 } from "react-icons/fa6";
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 
@@ -14,7 +14,7 @@ const PREVIEW_PLATFORM_ICONS: Record<string, { Icon: React.ComponentType<{ size?
   YouTube:   { Icon: FaYoutube,   color: "#FF0000" },
   LinkedIn:  { Icon: FaLinkedin,  color: "#0A66C2" },
   X:         { Icon: FaXTwitter,  color: "#000000" },
-  Reddit:    { Icon: FaReddit,    color: "#FF4500" },
+  Reddit:    { Icon: FaRedditAlien, color: "#FF4500" },
   Facebook:  { Icon: FaFacebook,  color: "#1877F2" },
   Google:    { Icon: FaGoogle,    color: "#4285F4" },
 };

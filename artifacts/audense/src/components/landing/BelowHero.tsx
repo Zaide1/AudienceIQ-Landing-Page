@@ -1,12 +1,12 @@
 import logoImg from "@assets/1Image_May_1,_2026,_03_54_49_PM_1777723358698.png";
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { FaXTwitter, FaLinkedin, FaReddit } from "react-icons/fa6";
+import { FaXTwitter, FaLinkedin, FaRedditAlien } from "react-icons/fa6";
 
 const WHERE_TO_TEST_PLATFORMS: { name: string; Icon: React.ComponentType<{ size?: number | string }>; color: string }[] = [
   { name: "X", Icon: FaXTwitter, color: "#000000" },
   { name: "LinkedIn", Icon: FaLinkedin, color: "#0A66C2" },
-  { name: "Reddit", Icon: FaReddit, color: "#FF4500" },
+  { name: "Reddit", Icon: FaRedditAlien, color: "#FF4500" },
 ];
 
 function PlatformChip({ name, Icon, color }: { name: string; Icon: React.ComponentType<{ size?: number | string }>; color: string }) {
@@ -30,7 +30,7 @@ function PlatformChip({ name, Icon, color }: { name: string; Icon: React.Compone
           "0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(124,58,237,0.06)",
       }}
     >
-      <Icon size={15} />
+      <Icon size={16} />
     </span>
   );
 }
