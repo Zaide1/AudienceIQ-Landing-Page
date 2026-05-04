@@ -186,128 +186,182 @@ function buildMockSegmentEvidence(painPoints: string[]): SegmentEvidence {
   };
 }
 
-/* ─── Competitor intelligence fallbacks by category ─────────────── */
-const COMPETITOR_FALLBACKS: Record<string, CompetitorIntelligence> = {
-  "health-fitness": {
-    direct: [
-      { name: "MyFitnessPal", type: "direct", whyRelevant: "Market-leading calorie and macro tracker", targetOverlap: "Gym goers and weight loss beginners", weaknessToExploit: "Complex UI, ad-heavy, large-corp feel — users want faster and cleaner", confidence: "medium" },
-      { name: "Lose It!", type: "direct", whyRelevant: "Popular food diary with barcode scanning", targetOverlap: "Busy professionals tracking on the go", weaknessToExploit: "Key features paywalled, no real coaching or personalisation", confidence: "medium" },
-      { name: "Cronometer", type: "direct", whyRelevant: "Micronutrient-focused tracker for power users", targetOverlap: "Nutrition optimisers seeking accuracy", weaknessToExploit: "Too complex for beginners, steep learning curve", confidence: "medium" },
-    ],
-    adjacent: [
-      { name: "Strava", type: "adjacent", whyRelevant: "Fitness activity tracker many health-conscious users already use", targetOverlap: "Active gym goers and runners", weaknessToExploit: "Leaves a gap on nutrition — no meal tracking at all", confidence: "medium" },
-      { name: "Apple Health", type: "adjacent", whyRelevant: "Built-in iOS health aggregator users already have", targetOverlap: "All iOS health-conscious users", weaknessToExploit: "Generic, non-actionable, no personalised guidance", confidence: "medium" },
-    ],
-    substitutes: [
-      { name: "Notes app logging", type: "substitute", whyRelevant: "Many casual trackers write meals informally in Apple Notes or Reminders", targetOverlap: "Beginners not yet committed to a dedicated app", weaknessToExploit: "Zero structure, no feedback loop, habit breaks easily", confidence: "medium" },
-      { name: "Meal photos", type: "substitute", whyRelevant: "Users photograph food instead of logging it", targetOverlap: "Overwhelmed beginners wanting zero-friction capture", weaknessToExploit: "No data extracted, no insight generated", confidence: "medium" },
-      { name: "Spreadsheet tracking", type: "substitute", whyRelevant: "Data-minded users build custom calorie logs in Google Sheets", targetOverlap: "Nutrition optimisers wanting full control", weaknessToExploit: "High setup cost, no mobile UX, doesn't scale to daily habit", confidence: "low" },
-    ],
-    notes: "Likely alternatives to compare against — not officially verified market data.",
-  },
-  "saas": {
-    direct: [
-      { name: "Notion", type: "direct", whyRelevant: "All-in-one workspace used as catch-all productivity tool", targetOverlap: "Startup founders and indie hackers", weaknessToExploit: "Too generic — no opinionated workflow; users spend hours on templates", confidence: "medium" },
-      { name: "Airtable", type: "direct", whyRelevant: "Database-as-spreadsheet for structured workflows", targetOverlap: "Product managers and operations teams", weaknessToExploit: "Steep learning curve for non-technical users; expensive at scale", confidence: "medium" },
-      { name: "Monday.com", type: "direct", whyRelevant: "Work OS for project and task management", targetOverlap: "Enterprise buyers and team leads", weaknessToExploit: "Expensive, bloated with features most teams never use", confidence: "medium" },
-    ],
-    adjacent: [
-      { name: "Linear", type: "adjacent", whyRelevant: "Developer-focused issue tracker competing for dev team attention", targetOverlap: "Dev teams and technical founders", weaknessToExploit: "Only serves dev workflows — leaves broader team coordination unsolved", confidence: "medium" },
-      { name: "Zapier", type: "adjacent", whyRelevant: "Automation layer that touches every SaaS workflow", targetOverlap: "Indie hackers and ops-heavy teams", weaknessToExploit: "Complex setup, no intelligence — just rule-based triggers", confidence: "medium" },
-    ],
-    substitutes: [
-      { name: "Email threads", type: "substitute", whyRelevant: "Default coordination tool before adopting SaaS", targetOverlap: "Enterprise buyers resistant to change", weaknessToExploit: "No structure, context is lost, decisions are hard to trace", confidence: "medium" },
-      { name: "Shared Google Docs", type: "substitute", whyRelevant: "Teams use collaborative docs as lightweight wikis and trackers", targetOverlap: "Small teams and early-stage startups", weaknessToExploit: "No workflow, no accountability, becomes a graveyard of outdated docs", confidence: "medium" },
-    ],
-    notes: "Likely alternatives to compare against — not officially verified market data.",
-  },
-  "ecommerce": {
-    direct: [
-      { name: "Shopify", type: "direct", whyRelevant: "Dominant e-commerce platform for direct-to-consumer brands", targetOverlap: "Founders building online stores", weaknessToExploit: "Transaction fees and app costs stack up fast; not built for niche workflows", confidence: "medium" },
-      { name: "WooCommerce", type: "direct", whyRelevant: "WordPress-based e-commerce plugin with large install base", targetOverlap: "Small businesses and WordPress users", weaknessToExploit: "Requires hosting and maintenance; feels fragile at scale", confidence: "medium" },
-    ],
-    adjacent: [
-      { name: "Etsy", type: "adjacent", whyRelevant: "Marketplace platform for creators and niche goods sellers", targetOverlap: "Small creators and artisan sellers", weaknessToExploit: "No brand ownership — seller is always 'on Etsy', not their own brand", confidence: "medium" },
-      { name: "Stripe", type: "adjacent", whyRelevant: "Payment infrastructure many e-commerce teams build on", targetOverlap: "Technical founders building custom checkout flows", weaknessToExploit: "Payments only — no storefront, discovery, or fulfilment layer", confidence: "medium" },
-    ],
-    substitutes: [
-      { name: "Social media selling", type: "substitute", whyRelevant: "Founders sell via Instagram DMs or TikTok Shop before building a store", targetOverlap: "Early-stage creators monetising an audience", weaknessToExploit: "No inventory management, no data ownership, platform dependency risk", confidence: "medium" },
-      { name: "Manual invoicing", type: "substitute", whyRelevant: "Service businesses send invoices manually before automating", targetOverlap: "B2B-focused early-stage businesses", weaknessToExploit: "Doesn't scale, error-prone, painful for recurring customers", confidence: "low" },
-    ],
-    notes: "Likely alternatives to compare against — not officially verified market data.",
-  },
-  "education": {
-    direct: [
-      { name: "Udemy", type: "direct", whyRelevant: "Marketplace for pre-recorded courses across all topics", targetOverlap: "Career changers and professionals upskilling", weaknessToExploit: "Constant discounting erodes perceived value; no community or mentorship", confidence: "medium" },
-      { name: "Coursera", type: "direct", whyRelevant: "University-backed credential platform for professionals", targetOverlap: "Working professionals seeking recognised certifications", weaknessToExploit: "Expensive, passive video-only format, low completion rates", confidence: "medium" },
-      { name: "Teachable", type: "direct", whyRelevant: "Course creation platform for independent instructors", targetOverlap: "Content creators and coaches selling knowledge", weaknessToExploit: "Platform fees, no built-in audience, creator does all marketing", confidence: "medium" },
-    ],
-    adjacent: [
-      { name: "YouTube", type: "adjacent", whyRelevant: "Free video content competing for learner attention", targetOverlap: "Hobbyists and beginners exploring a new topic", weaknessToExploit: "No structure, no accountability, no certification, inconsistent quality", confidence: "medium" },
-      { name: "Substack", type: "adjacent", whyRelevant: "Newsletter platform used by creators to monetise knowledge", targetOverlap: "Lifelong learners who prefer text-based content", weaknessToExploit: "Passive consumption — no exercises, no community, no feedback", confidence: "medium" },
-    ],
-    substitutes: [
-      { name: "Physical textbooks", type: "substitute", whyRelevant: "Traditional study resource still used by students", targetOverlap: "University students and academic learners", weaknessToExploit: "Static, expensive, no interactivity or personalised feedback", confidence: "medium" },
-      { name: "Peer study groups", type: "substitute", whyRelevant: "Group chats and Discord servers where learners help each other", targetOverlap: "Students seeking community and accountability", weaknessToExploit: "Inconsistent quality, no structured learning path", confidence: "low" },
-    ],
-    notes: "Likely alternatives to compare against — not officially verified market data.",
-  },
-  "finance": {
-    direct: [
-      { name: "YNAB", type: "direct", whyRelevant: "Popular budgeting app based on zero-based budgeting", targetOverlap: "Budget-conscious families and debt managers", weaknessToExploit: "Steep learning curve; subscription-only with no free tier", confidence: "medium" },
-      { name: "Copilot", type: "direct", whyRelevant: "AI-powered personal finance app for iOS", targetOverlap: "Young savers and millennial professionals", weaknessToExploit: "iOS-only, US-focused, subscription cost adds up", confidence: "medium" },
-      { name: "Revolut", type: "direct", whyRelevant: "Neobank with built-in budgeting and spending analytics", targetOverlap: "Young savers and retail investors", weaknessToExploit: "Banking-first; analytics are secondary and not actionable for serious budgeters", confidence: "medium" },
-    ],
-    adjacent: [
-      { name: "Monzo", type: "adjacent", whyRelevant: "UK neobank with pots and spending categorisation", targetOverlap: "Young savers and budget-conscious families in the UK", weaknessToExploit: "Banking product, not budgeting — categories limited and not goal-oriented", confidence: "medium" },
-      { name: "Plaid", type: "adjacent", whyRelevant: "Bank connectivity infrastructure many finance apps build on", targetOverlap: "Developers and fintech founders", weaknessToExploit: "Infrastructure only — no user-facing budgeting or advice layer", confidence: "medium" },
-    ],
-    substitutes: [
-      { name: "Spreadsheet budgeting", type: "substitute", whyRelevant: "Classic approach — Google Sheets or Excel for expense tracking", targetOverlap: "Data-minded users and small business owners", weaknessToExploit: "Manual, error-prone, no real-time bank syncing, high maintenance", confidence: "medium" },
-      { name: "Bank app review", type: "substitute", whyRelevant: "Many users scroll their bank app at month end to check spending", targetOverlap: "Casual money managers not ready for a dedicated app", weaknessToExploit: "Reactive, no planning, no trend analysis, no goal setting", confidence: "medium" },
-    ],
-    notes: "Likely alternatives to compare against — not officially verified market data.",
-  },
-  "creator-tools": {
-    direct: [
-      { name: "Buffer", type: "direct", whyRelevant: "Social media scheduling tool used by solo creators and small teams", targetOverlap: "Instagram creators and newsletter writers on multiple platforms", weaknessToExploit: "Limited analytics, no AI content generation, feels dated", confidence: "medium" },
-      { name: "Hootsuite", type: "direct", whyRelevant: "Enterprise social media management platform", targetOverlap: "Larger creator teams and brands", weaknessToExploit: "Overpriced for solo creators; complex UI built for agencies", confidence: "medium" },
-      { name: "Later", type: "direct", whyRelevant: "Visual-first scheduling tool popular with Instagram creators", targetOverlap: "Instagram and Pinterest creators", weaknessToExploit: "Weak on TikTok and LinkedIn; no content ideation features", confidence: "medium" },
-    ],
-    adjacent: [
-      { name: "Canva", type: "adjacent", whyRelevant: "Design tool creators use for social media visuals", targetOverlap: "All creator types producing visual content", weaknessToExploit: "Design-only — no scheduling, analytics, or content strategy layer", confidence: "medium" },
-      { name: "CapCut", type: "adjacent", whyRelevant: "Short-form video editor popular with TikTok and Reels creators", targetOverlap: "TikTok creators and video-first content producers", weaknessToExploit: "Editing-only — no planning, scheduling, or repurposing features", confidence: "medium" },
-    ],
-    substitutes: [
-      { name: "Manual native posting", type: "substitute", whyRelevant: "Most creators post directly from each platform's app without a scheduler", targetOverlap: "Early-stage creators before needing workflow tools", weaknessToExploit: "No consistency, no analytics, platform-by-platform context switching", confidence: "medium" },
-      { name: "Notes app drafting", type: "substitute", whyRelevant: "Creators draft posts and ideas in Apple Notes or Notion before publishing", targetOverlap: "Writers and newsletter creators managing content ideas", weaknessToExploit: "No publishing, no calendar, no collaboration layer", confidence: "medium" },
-    ],
-    notes: "Likely alternatives to compare against — not officially verified market data.",
-  },
-  "consumer-apps": {
-    direct: [
-      { name: "Duolingo", type: "direct", whyRelevant: "High-retention consumer app known for gamification and daily habits", targetOverlap: "Gen Z adopters and millennials building daily routines", weaknessToExploit: "Single-skill focus; gamification can feel hollow after initial novelty", confidence: "low" },
-      { name: "Headspace", type: "direct", whyRelevant: "Popular consumer wellness app with strong brand and subscription model", targetOverlap: "Remote workers and millennial professionals seeking daily routines", weaknessToExploit: "Expensive subscription; passive consumption, not personalised", confidence: "low" },
-    ],
-    adjacent: [
-      { name: "Apple Shortcuts", type: "adjacent", whyRelevant: "Built-in automation tool power users already have on iPhone", targetOverlap: "Remote workers and productivity-focused users", weaknessToExploit: "Requires technical setup; most users never configure it", confidence: "medium" },
-      { name: "Zapier", type: "adjacent", whyRelevant: "Automation tool competing for the 'connect my life together' use case", targetOverlap: "Indie hackers and productivity users", weaknessToExploit: "Complex, web-focused, no mobile-first experience", confidence: "medium" },
-    ],
-    substitutes: [
-      { name: "Manual habits and routines", type: "substitute", whyRelevant: "Users build their own system with alarms, sticky notes, and calendar events", targetOverlap: "All segments before app adoption", weaknessToExploit: "No feedback loop, no streak, no accountability — breaks under stress", confidence: "medium" },
-      { name: "Browser bookmarks", type: "substitute", whyRelevant: "Common workaround for saving and organising things to return to", targetOverlap: "Remote workers and lifelong learners", weaknessToExploit: "Disorganised, poor cross-device sync, no resurface mechanism", confidence: "low" },
-    ],
-    notes: "Likely alternatives to compare against — not officially verified market data.",
-  },
-};
+/* ─── Context-aware competitor fallback ─────────────────────────── */
 
-function getCompetitorFallback(categoryId: string): CompetitorIntelligence {
-  if (COMPETITOR_FALLBACKS[categoryId]) return COMPETITOR_FALLBACKS[categoryId]!;
-  const lower = categoryId.toLowerCase();
-  for (const key of Object.keys(COMPETITOR_FALLBACKS)) {
-    if (lower.includes(key) || key.includes(lower)) return COMPETITOR_FALLBACKS[key]!;
+function buildContextAwareFallbackCompetitors(params: {
+  productIdea: string;
+  targetUsers: string;
+  problem: string;
+  category: string;
+}): CompetitorIntelligence {
+  const { productIdea, targetUsers, problem, category } = params;
+
+  const ctx = `${productIdea} ${targetUsers} ${problem}`.toLowerCase();
+  const catLower = category.toLowerCase();
+
+  const domainTokens = extractNamingTokens(productIdea, 6);
+  const userTokens = extractNamingTokens(targetUsers, 4);
+  const problemTokens = extractNamingTokens(problem, 4);
+  const domainPhrase = domainTokens.slice(0, 3).join(" ") || catLower;
+  const userPhrase = userTokens.slice(0, 2).join(" ") || "target users";
+  const problemPhrase = problemTokens.slice(0, 3).join(" ") || "current pain points";
+
+  const direct: CompetitorItem[] = [
+    {
+      name: `Leading ${domainPhrase} apps`,
+      type: "direct",
+      whyRelevant: `Established products already solving parts of "${problemPhrase}" for ${userPhrase}`,
+      targetOverlap: `${userPhrase} actively looking for solutions`,
+      weaknessToExploit: "Generic approach — not tailored to this specific use case or audience",
+      confidence: "low",
+    },
+    {
+      name: `Niche ${domainPhrase} tools`,
+      type: "direct",
+      whyRelevant: `Smaller or newer products targeting the same domain`,
+      targetOverlap: `${userPhrase} who have tried alternatives`,
+      weaknessToExploit: "Limited features or small user base — opportunity to build something more complete",
+      confidence: "low",
+    },
+  ];
+
+  const substituteOptions: Array<{ name: string; why: string; overlap: string; weakness: string }> = [];
+
+  if (["social", "community", "forum", "chat", "network", "connect"].some((w) => ctx.includes(w))) {
+    substituteOptions.push(
+      { name: "Social media groups and pages", why: `${userPhrase} gather in Facebook groups, subreddits, or Discord servers around ${domainPhrase}`, overlap: `${userPhrase} seeking community`, weakness: "Fragmented, noisy, no structured experience" },
+      { name: "Direct messaging and group chats", why: `Users coordinate via WhatsApp or Telegram instead of a dedicated tool`, overlap: `${userPhrase} with existing peer networks`, weakness: "No organisation, hard to scale, context gets lost" },
+    );
   }
-  return COMPETITOR_FALLBACKS["saas"]!;
+  if (["track", "log", "monitor", "data", "analytics", "measure", "score", "stat"].some((w) => ctx.includes(w))) {
+    substituteOptions.push(
+      { name: "Spreadsheet tracking", why: `${userPhrase} build manual trackers in Google Sheets or Excel for ${domainPhrase}`, overlap: `Data-minded ${userPhrase}`, weakness: "High setup cost, no automation, breaks as a daily habit" },
+      { name: "Notes and manual logging", why: `Users jot things down in Apple Notes or a notebook instead of using a dedicated tool`, overlap: `Casual ${userPhrase} not ready for a full app`, weakness: "No feedback, no trends, no accountability" },
+    );
+  }
+  if (["learn", "teach", "course", "study", "train", "skill", "education", "tutor"].some((w) => ctx.includes(w))) {
+    substituteOptions.push(
+      { name: "YouTube tutorials", why: `Free video content covering ${domainPhrase} topics`, overlap: `${userPhrase} exploring options before committing`, weakness: "No structure, no progress tracking, inconsistent quality" },
+      { name: "Peer learning and study groups", why: `${userPhrase} learn from each other in informal groups`, overlap: `${userPhrase} seeking community accountability`, weakness: "Inconsistent, no curriculum, depends on group quality" },
+    );
+  }
+  if (["shop", "buy", "sell", "store", "market", "commerce", "product", "brand"].some((w) => ctx.includes(w))) {
+    substituteOptions.push(
+      { name: "Marketplace browsing", why: `${userPhrase} browse Amazon, Etsy, or similar marketplaces for ${domainPhrase}`, overlap: `${userPhrase} comparing options`, weakness: "Overwhelming choice, no personalisation, algorithm-driven" },
+      { name: "Social media selling", why: `Sellers use Instagram DMs or TikTok Shop instead of dedicated platforms`, overlap: `Early-stage ${userPhrase}`, weakness: "No inventory management, no analytics, platform dependency" },
+    );
+  }
+  if (["game", "play", "sport", "football", "soccer", "basketball", "cricket", "tennis", "match", "team", "league", "fitness", "exercise", "workout", "run"].some((w) => ctx.includes(w))) {
+    substituteOptions.push(
+      { name: "Existing sports and activity apps", why: `${userPhrase} already use general-purpose fitness or sports apps for ${domainPhrase}`, overlap: `Active ${userPhrase}`, weakness: "Too broad — not specialised for this specific activity or audience" },
+      { name: "Manual coordination via group chats", why: `${userPhrase} organise activities through WhatsApp, iMessage, or team group chats`, overlap: `${userPhrase} with existing social circles`, weakness: "No scheduling intelligence, no history, hard to manage larger groups" },
+    );
+  }
+  if (["money", "finance", "budget", "invest", "save", "bank", "payment", "expense"].some((w) => ctx.includes(w))) {
+    substituteOptions.push(
+      { name: "Bank app spending review", why: `${userPhrase} scroll their bank app to check spending instead of using a dedicated tool`, overlap: `Casual ${userPhrase}`, weakness: "Reactive, no planning, no trend analysis, no goals" },
+      { name: "Spreadsheet budgeting", why: `${userPhrase} track finances manually in Google Sheets`, overlap: `Data-minded ${userPhrase}`, weakness: "Manual, error-prone, no real-time syncing" },
+    );
+  }
+  if (["content", "creator", "video", "podcast", "newsletter", "blog", "post", "publish"].some((w) => ctx.includes(w))) {
+    substituteOptions.push(
+      { name: "Native platform posting", why: `${userPhrase} post directly on each platform without scheduling or planning tools`, overlap: `Early-stage ${userPhrase}`, weakness: "No consistency, no analytics, context switching between platforms" },
+      { name: "Notes app for drafting", why: `${userPhrase} draft ideas and content in Apple Notes or Google Docs`, overlap: `${userPhrase} managing content ideas`, weakness: "No publishing, no calendar, no collaboration" },
+    );
+  }
+
+  if (substituteOptions.length < 2) {
+    substituteOptions.push(
+      { name: `Searching online for ${domainPhrase}`, why: `${userPhrase} search Google, Reddit, or YouTube for answers instead of using a dedicated solution`, overlap: `${userPhrase} in early discovery`, weakness: "Scattered results, no personalisation, time-consuming to piece together" },
+      { name: `Asking peers for advice`, why: `${userPhrase} ask friends, colleagues, or online communities for recommendations on ${domainPhrase}`, overlap: `${userPhrase} who value social proof`, weakness: "Biased, inconsistent, depends on who you know" },
+    );
+  }
+
+  const substitutes: CompetitorItem[] = substituteOptions.slice(0, 3).map((s) => ({
+    name: s.name,
+    type: "substitute" as const,
+    whyRelevant: s.why,
+    targetOverlap: s.overlap,
+    weaknessToExploit: s.weakness,
+    confidence: "low" as const,
+  }));
+
+  const adjacent: CompetitorItem[] = [
+    {
+      name: `General-purpose tools used for ${domainPhrase}`,
+      type: "adjacent",
+      whyRelevant: `Broad platforms (social media, productivity apps) that ${userPhrase} currently repurpose for parts of this job`,
+      targetOverlap: `${userPhrase} not yet aware a specialised solution exists`,
+      weaknessToExploit: "Not purpose-built — requires workarounds and manual effort",
+      confidence: "low",
+    },
+  ];
+
+  return {
+    direct,
+    adjacent,
+    substitutes,
+    notes: `Fallback estimates for ${domainPhrase} — AI competitor analysis was not available. Treat as directional only.`,
+  };
+}
+
+/* ─── Lightweight relevance guard for AI-returned competitors ───── */
+function isCompetitorRelevant(
+  competitor: CompetitorItem,
+  domainTokens: string[],
+  productIdea: string,
+  category: string,
+): boolean {
+
+  const KNOWN_IRRELEVANT_UNLESS_MATCHED: Record<string, string[]> = {
+    "Duolingo": ["language", "learn", "education", "study", "vocab", "lesson"],
+    "Headspace": ["meditat", "mindful", "mental", "wellness", "calm", "sleep", "stress"],
+    "Zapier": ["automat", "integrat", "workflow", "connect", "zap", "trigger"],
+    "Apple Shortcuts": ["automat", "shortcut", "workflow", "siri"],
+    "Notion": ["note", "wiki", "knowledge", "document", "workspace", "project"],
+    "Slack": ["messag", "chat", "team", "communicat", "channel"],
+    "Trello": ["board", "kanban", "project", "task", "manage"],
+    "Canva": ["design", "graphic", "visual", "poster", "banner"],
+  };
+
+  const compName = competitor.name.trim();
+  const ctx = `${productIdea} ${category}`.toLowerCase();
+
+  for (const [knownApp, requiredTokens] of Object.entries(KNOWN_IRRELEVANT_UNLESS_MATCHED)) {
+    if (compName.toLowerCase().includes(knownApp.toLowerCase())) {
+      const matches = requiredTokens.some((t) => ctx.includes(t));
+      if (!matches) return false;
+    }
+  }
+
+  return true;
+}
+
+function applyRelevanceGuard(
+  intelligence: CompetitorIntelligence,
+  productIdea: string,
+  category: string,
+): { filtered: CompetitorIntelligence; rejected: string[] } {
+  const domainTokens = extractNamingTokens(productIdea, 8);
+  const rejected: string[] = [];
+
+  function filterList(items: CompetitorItem[]): CompetitorItem[] {
+    return items.filter((item) => {
+      const relevant = isCompetitorRelevant(item, domainTokens, productIdea, category);
+      if (!relevant) rejected.push(item.name);
+      return relevant;
+    });
+  }
+
+  return {
+    filtered: {
+      direct: filterList(intelligence.direct),
+      adjacent: filterList(intelligence.adjacent),
+      substitutes: filterList(intelligence.substitutes),
+      notes: intelligence.notes,
+    },
+    rejected,
+  };
 }
 
 /* ─── Validate AI-generated competitor data ──────────────────────── */
@@ -380,16 +434,24 @@ async function generateCompetitorsWithAI(
   const { productIdea, targetUsers, problem, goal, category, region } = params;
 
   const prompt = `You are a competitive intelligence analyst for early-stage founders.
-Identify named competitors and substitute behaviours for this product.
+Identify named competitors and substitute behaviours for THIS SPECIFIC product.
 Use "likely" framing unless the product is in a well-known category.
 Return ONLY valid JSON.
 
-Product: ${productIdea || "Not specified"}
+Product idea: ${productIdea || "Not specified"}
 Target users: ${targetUsers || "Not specified"}
-Problem: ${problem || "Not specified"}
-Goal: ${goal || "Not specified"}
+Problem being solved: ${problem || "Not specified"}
+Founder goal: ${goal || "Not specified"}
 Category: ${category}
 Region: ${region}
+
+CRITICAL — Domain relevance rules:
+- Every competitor MUST be something the target users described above would realistically use, compare, search for, or substitute instead of THIS product.
+- Ground your analysis in the specific product domain. A football app competes with other football/sports apps, NOT with Duolingo or Headspace.
+- Do NOT return famous apps from unrelated domains (language learning, wellness, automation, productivity) unless the product itself is in that domain.
+- Before including each competitor, ask: "Would ${targetUsers || "the target user"} realistically compare this to ${productIdea || "this product"}?" If no, exclude it.
+- If a competitor is only loosely related, set confidence to "low".
+- Prefer domain-specific competitors over generic well-known brands.
 
 Return exactly this JSON shape:
 {
@@ -405,16 +467,17 @@ Return exactly this JSON shape:
   ],
   "adjacent": [ same shape ],
   "substitutes": [ same shape ],
-  "notes": "1-sentence landscape summary"
+  "notes": "1-sentence landscape summary grounded in the product domain"
 }
 
 Rules:
-- direct: 2–4 products solving the same core job
-- adjacent: 2–3 products competing for attention or part of the workflow
-- substitutes: 2–3 manual workarounds or current user behaviours (not apps)
-- confidence: "medium" for well-known categories, "low" if speculative
+- direct: 2–4 products solving the same core job for the same users
+- adjacent: 2–3 products competing for the same user attention, budget, or workflow
+- substitutes: 2–3 manual workarounds or current user behaviours the target users actually do today (not random apps)
+- confidence: "medium" for well-known category matches, "low" if speculative or loosely related
 - Do NOT include sourceUrl — reserved for source-backed signals only
-- Do NOT invent fake company names`;
+- Do NOT invent fake company names
+- Do NOT include competitors from unrelated industries`;
 
   try {
     const resp = await client.chat.completions.create(
@@ -561,7 +624,7 @@ export function buildMockResult(input: BuildMockInput): AudienceMapResult {
         "Validate with real user conversations before making decisions.",
       ],
     },
-    competitors: getCompetitorFallback(finalCategory),
+    competitors: buildContextAwareFallbackCompetitors({ productIdea, targetUsers, problem, category: finalCategory }),
     insights: [
       {
         title: "Biggest opportunity",
@@ -713,6 +776,8 @@ export interface GenerateMeta {
   fallbackReason: FallbackReason | null;
   model: string;
   durationMs: number;
+  competitorSource?: "ai" | "fallback";
+  rejectedCompetitors?: string[];
 }
 
 /* `gpt-5-nano` is the fastest model in the Replit AI Integrations
@@ -919,11 +984,15 @@ Rules:
       mainOutcome.kind === "model_error"        ? "model_error" :
       mainOutcome.kind === "validation_failed"  ? "validation_failed" :
       "ai_error";
-    return { map: null, meta: { aiUsed: false, fallbackReason, model: MAIN_AUDIENCE_MODEL, durationMs } };
+    return { map: null, meta: { aiUsed: false, fallbackReason, model: MAIN_AUDIENCE_MODEL, durationMs, competitorSource: "fallback" as const, rejectedCompetitors: [] } };
   }
 
+  const competitorSourceUsed = aiCompetitors ? "ai" : "fallback";
+  const rawCompetitors = aiCompetitors ?? buildContextAwareFallbackCompetitors({ productIdea, targetUsers, problem, category: finalCategory });
+  const { filtered, rejected } = applyRelevanceGuard(rawCompetitors, productIdea, finalCategory);
+
   return {
-    map: { ...mainOutcome.validated, competitors: aiCompetitors ?? getCompetitorFallback(finalCategory) },
-    meta: { aiUsed: true, fallbackReason: null, model: MAIN_AUDIENCE_MODEL, durationMs },
+    map: { ...mainOutcome.validated, competitors: filtered },
+    meta: { aiUsed: true, fallbackReason: null, model: MAIN_AUDIENCE_MODEL, durationMs, competitorSource: competitorSourceUsed as "ai" | "fallback", rejectedCompetitors: rejected },
   };
 }

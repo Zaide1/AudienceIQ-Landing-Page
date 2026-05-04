@@ -38,6 +38,13 @@ router.post("/audience/generate", async (req, res) => {
   });
 
   /* Internal-only diagnostics. Not exposed to the client. */
+  const compNames = result.competitors
+    ? [
+        ...result.competitors.direct.map((c) => c.name),
+        ...result.competitors.adjacent.map((c) => c.name),
+        ...result.competitors.substitutes.map((c) => c.name),
+      ]
+    : [];
   req.log.info(
     {
       aiUsed: meta.aiUsed,
@@ -46,7 +53,11 @@ router.post("/audience/generate", async (req, res) => {
       durationMs: meta.durationMs,
       category: finalCategory,
       region: finalRegion,
+      productIdea: productIdea?.slice(0, 80),
       segmentNames: result.segments.map((s) => s.name),
+      competitorSource: meta.competitorSource ?? "fallback",
+      competitorNames: compNames,
+      rejectedCompetitors: meta.rejectedCompetitors ?? [],
     },
     "audience/generate completed",
   );

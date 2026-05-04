@@ -47,6 +47,38 @@ All pages now work properly on phone screens (< 768px):
 Verified via Playwright e2e at 390×844 viewport: full onboarding → generate →
 dashboard Chat/Map tab switching → /help all pass.
 
+### v3.1 — Competitor relevance fix (May 2026)
+
+The Competitors & Alternatives section returned irrelevant apps (Duolingo,
+Headspace, Zapier) for unrelated products because fallback competitors were
+hardcoded per category, ignoring the actual product idea entirely.
+
+Root cause: `COMPETITOR_FALLBACKS` in `audienceAI.ts` was a static map keyed
+only by category ID (e.g. "consumer-apps" always returned the same 7 apps).
+
+Fixes applied (API server only — no UI changes):
+
+1. **Replaced static fallback** with `buildContextAwareFallbackCompetitors()`
+   that derives competitors from `productIdea`, `targetUsers`, `problem`, and
+   `category`. Uses keyword matching to select domain-appropriate substitutes
+   (sports, finance, content, learning, etc.) instead of a universal list.
+
+2. **Improved AI competitor prompt** with explicit domain-relevance rules:
+   competitors must be something the target user would realistically compare,
+   grounded in the specific product domain.
+
+3. **Added relevance guard** (`applyRelevanceGuard`) that filters known
+   famous apps (Duolingo, Headspace, Zapier, Notion, etc.) unless the product
+   context actually matches their domain.
+
+4. **Added competitor diagnostics logging**: `competitorSource` (ai/fallback),
+   `competitorNames`, `rejectedCompetitors` logged per request.
+
+Files changed: `artifacts/api-server/src/lib/audienceAI.ts`,
+`artifacts/api-server/src/routes/audience.ts`.
+
+AudienceMapResult shape: unchanged. Dashboard UI: unchanged.
+
 ### v3 — Audience-segment quality fix (May 2026)
 
 `/api/audience/generate` previously returned identical generic segment names

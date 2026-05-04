@@ -1,0 +1,103 @@
+Audit and fix competitor/alternative generation relevance.
+
+Current issue:
+The Competitors & Alternatives section can return irrelevant tools for the current product idea.
+
+Example of the failure pattern:
+The user enters a product idea in one domain, but the competitors returned are from totally different domains such as language learning, wellness, automation, or productivity. This makes AudienceIQ feel untrustworthy.
+
+Important:
+- Do not change UI design.
+- Do not change dashboard layout.
+- Do not change AudienceMapResult shape unless absolutely necessary.
+- Do not change onboarding flow.
+- Do not change chat behaviour.
+- Do not add auth/Supabase changes.
+- This is a data-quality/generation fix only.
+- Do not solve this by hardcoding examples for one category.
+
+Goal:
+Competitors and alternatives must be grounded in the current product idea, target users, problem, category, region, and likely user behaviour.
+
+Audit first:
+Inspect:
+- competitor generation prompt
+- competitor fallback logic
+- generateCompetitorsWithAI
+- buildMockResult / fallback result generation
+- where productIdea, targetUsers, problem, category, region are passed into competitor generation
+- validation/normalisation logic for competitors
+- any old default/static competitor examples
+
+Find out:
+1. Are irrelevant competitors coming from AI or fallback?
+2. Is old product context leaking into competitor generation?
+3. Are generic examples hardcoded anywhere?
+4. Is competitor generation using the actual productIdea?
+5. Is category being mapped incorrectly?
+6. Is there any validation that checks relevance?
+7. Are fallback competitors too generic?
+
+Core rule:
+For every competitor or alternative, the system must be able to answer:
+“Would the target user realistically use, compare, search for, follow, buy from, or substitute this instead of the current product idea?”
+
+If the answer is no, it should not be included.
+
+General competitor rules:
+- Direct competitors should be real or plausible products/services in the same domain or solving the same main job.
+- Adjacent alternatives should compete for the same user behaviour, attention, workflow, budget, or decision.
+- “What users do today instead” should be realistic workarounds for this specific audience.
+- Do not return generic famous apps unless they genuinely compete with the current product.
+- Do not include unrelated examples from language learning, wellness, automation, productivity, or notes unless the current idea actually relates to those domains.
+- If unsure, prefer honest behavioural alternatives such as search, communities, spreadsheets, group chats, manual tracking, reviews, forums, social media accounts, marketplaces, or existing providers only when they fit the product context.
+- Do not reuse examples from previous runs.
+- Do not make every category fall back to the same universal competitor list.
+
+Prompt fix:
+Update the competitor generation prompt to say:
+- Use the exact productIdea, targetUsers, problem, category, and region.
+- Competitors must be domain-relevant.
+- Before returning each competitor, check whether the target user would realistically use or compare it instead.
+- If not, do not include it.
+- If a competitor is only adjacent or inferred, mark confidence lower.
+- Do not use generic examples just because they are well-known.
+
+Fallback fix:
+If AI competitor generation fails:
+- Do not use a universal fixed competitor list.
+- Generate fallback alternatives from product keywords, category, target users, and problem.
+- Prefer realistic behavioural alternatives over unrelated SaaS tools.
+- For unknown categories, use context-aware alternatives only if they fit the product:
+  - search engines
+  - social media accounts
+  - online communities
+  - marketplaces
+  - spreadsheets/manual notes
+  - group chats
+  - existing providers/services
+  - forums/reviews
+- Do not include any of these if they do not fit the product context.
+
+Validation/relevance guard:
+Add a lightweight relevance guard:
+- If competitor name/domain clearly conflicts with productIdea/category, reject or replace it.
+- If productIdea contains strong domain words, final competitors should reflect that domain or the same user job.
+- Log final competitor names with productIdea/category and whether AI/fallback was used.
+- Log whether any competitor was rejected or replaced for relevance.
+
+Manual sanity check:
+Run several unrelated product ideas across different domains and confirm:
+- competitor names change by idea
+- alternatives are relevant to that idea
+- generic unrelated famous apps do not appear
+- fallback still returns plausible context-aware alternatives
+- dashboard still renders without UI changes
+
+After implementing, report:
+- root cause
+- files changed
+- whether bad competitors came from AI or fallback
+- how relevance is now enforced
+- how fallback competitors are now derived
+- example competitor outputs from several unrelated product ideas
