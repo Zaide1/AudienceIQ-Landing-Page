@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUp } from "lucide-react";
+import { Link } from "wouter";
 import { SiReddit, SiX, SiTiktok, SiYoutube, SiInstagram } from "react-icons/si";
 import type { IconType } from "react-icons";
 
@@ -77,7 +78,7 @@ export function RealQuotesFeed() {
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           Real Quotes Feed
         </CardTitle>
-        <a href="#" className="text-xs text-primary font-medium hover:underline">View all</a>
+        <Link href="/quotes" className="text-xs text-primary font-medium hover:underline">View all</Link>
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-y-auto">
         <div className="divide-y divide-border/40">

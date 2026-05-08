@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 import { SiReddit, SiX, SiTiktok } from "react-icons/si";
 import { FaLinkedinIn as SiLinkedin } from "react-icons/fa";
 import type { IconType } from "react-icons";
@@ -67,7 +68,7 @@ export function ViralPostOpportunities() {
         <CardTitle className="text-[14px] font-semibold flex items-center gap-2 text-primary">
           Viral Post Opportunities
         </CardTitle>
-        <a href="#" className="text-xs text-primary font-medium hover:underline">View all</a>
+        <Link href="/viral-opportunities" className="text-xs text-primary font-medium hover:underline">View all</Link>
       </CardHeader>
       <CardContent className="p-0 flex-1">
         <div className="divide-y divide-border/40">

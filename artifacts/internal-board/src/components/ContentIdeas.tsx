@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 const drafts = {
   tweets: [
@@ -17,7 +18,7 @@ export function ContentIdeas() {
         <CardTitle className="text-[14px] font-semibold flex items-center gap-2">
           Content Ideas
         </CardTitle>
-        <a href="#" className="text-xs text-primary font-medium hover:underline">View all</a>
+        <Link href="/content-ideas" className="text-xs text-primary font-medium hover:underline">View all</Link>
       </CardHeader>
       <CardContent className="p-5 flex-1 flex flex-col">
         <Tabs defaultValue="tweets" className="flex-1 flex flex-col">

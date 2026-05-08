@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShieldAlert, Bookmark } from "lucide-react";
+import { Bookmark } from "lucide-react";
+import { Link } from "wouter";
 
 const competitors = [
   { name: "MyFitnessPal", mentions: "8.2k mentions", sentiment: "Negative", complaint: "Paywalled scanner" },
@@ -21,8 +22,9 @@ export function CompetitorWatchAndSaved() {
     <div className="flex flex-col gap-6 h-full col-span-1 md:col-span-2 lg:col-span-1">
       {/* Competitor Watch */}
       <Card className="shadow-none border-[#E5E7EB] rounded-[12px] flex-1 flex flex-col">
-        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40">
+        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40 flex flex-row items-center justify-between">
           <CardTitle className="text-[14px] font-semibold">Competitor Watch</CardTitle>
+          <Link href="/competitor-watch" className="text-xs text-primary font-medium hover:underline">View all</Link>
         </CardHeader>
         <CardContent className="p-0 flex-1">
           <ul className="divide-y divide-border/40">
@@ -55,10 +57,11 @@ export function CompetitorWatchAndSaved() {
 
       {/* Saved Insights */}
       <Card className="shadow-none border-[#E5E7EB] rounded-[12px] flex flex-col">
-        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40">
+        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40 flex flex-row items-center justify-between">
           <CardTitle className="text-[14px] font-semibold flex items-center gap-2">
             Saved Insights
           </CardTitle>
+          <Link href="/saved" className="text-xs text-primary font-medium hover:underline">View all</Link>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border/40">

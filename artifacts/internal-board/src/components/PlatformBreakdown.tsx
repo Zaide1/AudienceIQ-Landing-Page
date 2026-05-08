@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { Link } from "wouter";
 
 const data = [
   { name: "Reddit", value: 62100, displayValue: "62.1K", percentage: "48.2%", fill: "#ff4500" },
@@ -14,7 +15,7 @@ export function PlatformBreakdown() {
     <Card className="shadow-none border-[#E5E7EB] rounded-[12px] h-full flex flex-col">
       <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40 flex flex-row items-center justify-between">
         <CardTitle className="text-[14px] font-semibold">Platform Breakdown</CardTitle>
-        <a href="#" className="text-xs text-primary font-medium hover:underline">View all</a>
+        <Link href="/platforms" className="text-xs text-primary font-medium hover:underline">View all</Link>
       </CardHeader>
       <CardContent className="p-5 flex-1 flex items-center justify-between gap-4">
         <div className="w-1/2 h-[160px] relative">

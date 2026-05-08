@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Link } from "wouter";
 
 const subreddits = [
   { name: "r/loseit", mentions: "12.4k", growth: "↑ 26%", trend: "up" },
@@ -26,8 +26,9 @@ export function TopSubredditsAndSentiment() {
     <div className="flex flex-col gap-6 h-full col-span-1 md:col-span-2 lg:col-span-1">
       {/* Top Subreddits */}
       <Card className="shadow-none border-[#E5E7EB] rounded-[12px] flex-1 flex flex-col">
-        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40">
+        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40 flex flex-row items-center justify-between">
           <CardTitle className="text-[14px] font-semibold">Top Subreddits by Activity</CardTitle>
+          <Link href="/subreddits" className="text-xs text-primary font-medium hover:underline">View all</Link>
         </CardHeader>
         <CardContent className="p-0 flex-1">
           <ul className="divide-y divide-border/40">
@@ -50,8 +51,9 @@ export function TopSubredditsAndSentiment() {
 
       {/* Sentiment Trend */}
       <Card className="shadow-none border-[#E5E7EB] rounded-[12px] flex-1 flex flex-col min-h-[220px]">
-        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40">
+        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40 flex flex-row items-center justify-between">
           <CardTitle className="text-[14px] font-semibold">Sentiment Trend (All Competitors)</CardTitle>
+          <Link href="/sentiment" className="text-xs text-primary font-medium hover:underline">View all</Link>
         </CardHeader>
         <CardContent className="p-5 flex-1 relative">
            <ResponsiveContainer width="100%" height="100%">

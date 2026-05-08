@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { Link } from "wouter";
 
 const data = [
   { date: "May 12", meal: 120, ai: 40, macro: 80 },
@@ -20,7 +21,7 @@ export function MentionsOverTime() {
           <div className="w-2 h-2 rounded-full bg-blue-500" />
           Mentions Over Time
         </CardTitle>
-        <a href="#" className="text-xs text-primary font-medium hover:underline">View all</a>
+        <Link href="/mentions" className="text-xs text-primary font-medium hover:underline">View all</Link>
       </CardHeader>
       <CardContent className="p-5 flex-1 min-h-[250px]">
         <ResponsiveContainer width="100%" height="100%">

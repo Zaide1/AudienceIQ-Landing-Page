@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "wouter";
 
 const themes = [
   { name: "Meal Logging", value: 28400, displayValue: "28.4K", percentage: 100 },
@@ -13,7 +14,7 @@ export function TopThemesByVolume() {
     <Card className="shadow-none border-[#E5E7EB] rounded-[12px] h-full flex flex-col">
       <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40 flex flex-row items-center justify-between">
         <CardTitle className="text-[14px] font-semibold">Top Themes by Volume</CardTitle>
-        <a href="#" className="text-xs text-primary font-medium hover:underline">View all</a>
+        <Link href="/themes" className="text-xs text-primary font-medium hover:underline">View all</Link>
       </CardHeader>
       <CardContent className="p-5 flex-1 flex flex-col justify-center gap-4">
         {themes.map((theme, i) => (

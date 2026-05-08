@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 
 const painPoints = [
   { rank: 1, text: "Calorie logging is too time consuming", mentions: "12.4k", growth: "+42%", intensity: "High" },
@@ -17,7 +18,7 @@ export function TrendingPainPoints() {
           <div className="w-2 h-2 rounded-full bg-primary" />
           Trending Pain Points
         </CardTitle>
-        <a href="#" className="text-xs text-primary font-medium hover:underline">View all</a>
+        <Link href="/pain-points" className="text-xs text-primary font-medium hover:underline">View all</Link>
       </CardHeader>
       <CardContent className="p-0 flex-1">
         <ul className="divide-y divide-border/40">
