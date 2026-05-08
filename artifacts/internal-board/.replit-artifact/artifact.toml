@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/internal/"
+title = "AudienceIQ Internal — Content Board"
+version = "1.0.0"
+id = "artifacts/internal-board"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/internal/" ]
+localPort = 23152
+
+[services.development]
+run = "pnpm --filter @workspace/internal-board run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/internal-board", "run", "build" ]
+publicDir = "artifacts/internal-board/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23152"
+BASE_PATH = "/internal/"

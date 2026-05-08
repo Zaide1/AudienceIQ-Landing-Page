@@ -1,0 +1,251 @@
+Build a new INTERNAL operational dashboard for AudienceIQ called:
+
+“AudienceIQ Internal — Content Board”
+
+IMPORTANT:
+This is NOT the public-facing SaaS/product dashboard.
+Do NOT redesign the current public landing/product experience.
+This dashboard is an internal intelligence + content operations system used only by our team.
+
+GOAL:
+Create a real-time intelligence dashboard that helps us:
+- monitor internet conversations
+- detect pain points
+- track emerging trends
+- monitor competitors
+- discover viral content opportunities
+- generate Twitter/X post ideas
+- surface audience insights
+- identify distribution opportunities
+
+This dashboard should feel like:
+- an intelligence terminal
+- a newsroom for internet trends
+- an operator cockpit
+- a market observability system
+
+NOT:
+- a chatbot
+- a generic AI SaaS
+- a neon cyberpunk dashboard
+- a “vibe-coded” startup app
+
+STYLE / DESIGN DIRECTION:
+- light mode only
+- clean white/light gray background
+- subtle purple accents
+- modern SaaS/editorial aesthetic
+- calm and analytical
+- information dense but readable
+- rounded cards
+- soft borders
+- minimal shadows
+- excellent spacing and hierarchy
+
+Design inspiration:
+- Linear
+- Stripe Dashboard
+- Bloomberg terminal (light mode)
+- modern newsroom software
+- analytical intelligence tooling
+
+Avoid:
+- dark mode
+- excessive gradients
+- glassmorphism
+- glowing effects
+- AI-generated aesthetic
+- excessive animations
+
+TECH STACK:
+- React / Next.js
+- Tailwind
+- shadcn/ui
+- Recharts for charts
+- responsive layout
+
+LAYOUT:
+
+LEFT SIDEBAR (fixed)
+
+Top:
+- AudienceIQ logo
+- small “Internal Ops” badge
+
+Sections:
+
+INTELLIGENCE
+- Content Board (active)
+- Trending Signals
+- Pain Points
+- Viral Opportunities
+- Quotes Feed
+- Niche Explorer
+- Competitor Watch
+
+CONTENT STUDIO
+- Tweet Ideas
+- Thread Builder
+- Hooks Library
+- Visual Ideas
+
+MONITORING
+- Alerts
+- Sources
+- Reports
+
+Bottom:
+- user profile
+- plan badge
+
+MAIN DASHBOARD CONTENT
+
+TOP BAR:
+- title: “Content Board”
+- subtitle:
+“Your real-time pipeline of insights and content opportunities.”
+- date picker
+- filters button
+- refresh button
+
+TOP KPI ROW (5 cards)
+
+1. Total Mentions
+2. Unique Pain Points
+3. High Intensity Mentions
+4. Emerging Topics
+5. Engagement Potential
+
+Each card should include:
+- large metric
+- percentage growth
+- small line graph
+- clean minimalist styling
+
+MAIN GRID
+
+ROW 1 (3 columns)
+
+LEFT:
+Trending Pain Points
+- ranked list
+- mention count
+- growth %
+- intensity badge (High / Medium)
+
+MIDDLE:
+Mentions Over Time
+- multi-line graph
+Topics:
+- Meal logging
+- AI calorie accuracy
+- Macro tracking
+
+RIGHT:
+Viral Post Opportunities
+Show generated post angles:
+Example:
+“People don’t want accurate calorie tracking — they want frictionless logging.”
+
+Each item includes:
+- engagement potential label
+- small share/action icons
+
+ROW 2
+
+LEFT:
+Real Quotes Feed
+Display real-looking Reddit/review quotes:
+Example:
+“I gave up tracking because entering meals is annoying.”
+
+Include:
+- source icon
+- subreddit/platform
+- engagement count
+- category tags
+
+MIDDLE:
+Top Themes by Volume
+Horizontal comparison bars
+
+Themes:
+- Meal Logging
+- AI Workouts
+- Macro Tracking
+- Nutrition Plans
+- Consistency
+
+RIGHT:
+Platform Breakdown
+Donut chart:
+- Reddit
+- TikTok
+- X/Twitter
+- YouTube
+- Others
+
+ROW 3
+
+LEFT:
+Content Ideas (Auto-Generated)
+Tabs:
+- Tweets
+- Threads
+- Charts
+- Carousels
+
+Display generated content drafts.
+
+MIDDLE:
+Top Subreddits by Activity
+Ranked list with:
+- mentions
+- growth %
+- trend indicators
+
+BOTTOM OF MIDDLE:
+Sentiment Trend (All Competitors)
+Line chart:
+- Positive
+- Neutral
+- Negative
+
+RIGHT:
+Competitor Watch
+
+Track:
+- MyFitnessPal
+- Cronometer
+- Lose It!
+- Yazio
+- FatSecret
+
+Show:
+- mention counts
+- sentiment label
+- top complaint
+
+BOTTOM RIGHT:
+Saved Insights
+List of bookmarked insights.
+
+DATA:
+Use realistic dummy data related to:
+- health & fitness apps
+- AI productivity tools
+- creator economy
+- indie hackers
+
+UX PRIORITIES:
+- operational feel
+- fast scanning
+- clarity
+- information hierarchy
+- believable analytics
+- actionable insights
+
+This should feel like:
+“A live operational map of internet demand and audience behavior.”
+
+This dashboard is internal tooling for our team — not a polished customer-facing product.
