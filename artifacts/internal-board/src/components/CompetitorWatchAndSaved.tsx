@@ -3,47 +3,49 @@ import { Badge } from "@/components/ui/badge";
 import { ShieldAlert, Bookmark } from "lucide-react";
 
 const competitors = [
-  { name: "MyFitnessPal", mentions: "18.2k", sentiment: "Negative", complaint: "Paywalled scanner" },
-  { name: "Cronometer", mentions: "6.4k", sentiment: "Neutral", complaint: "Clunky UI" },
-  { name: "Lose It!", mentions: "5.1k", sentiment: "Positive", complaint: "Ads too aggressive" },
-  { name: "Yazio", mentions: "3.2k", sentiment: "Neutral", complaint: "Recipe database weak" },
-  { name: "FatSecret", mentions: "1.8k", sentiment: "Neutral", complaint: "Outdated design" },
+  { name: "MyFitnessPal", mentions: "8.2k mentions", sentiment: "Negative", complaint: "Paywalled scanner" },
+  { name: "Cronometer", mentions: "4.1k mentions", sentiment: "Neutral", complaint: "Clunky UI" },
+  { name: "Lose It!", mentions: "3.8k mentions", sentiment: "Positive", complaint: "Ads too aggressive" },
+  { name: "Yazio", mentions: "2.4k mentions", sentiment: "Neutral", complaint: "Recipe database weak" },
+  { name: "FatSecret", mentions: "1.2k mentions", sentiment: "Neutral", complaint: "Outdated design" },
 ];
 
 const insights = [
-  "Users will switch apps immediately if barcode scanning is paywalled.",
-  "AI food estimation is viewed as a gimmick, not a core feature yet.",
-  "European users heavily prefer Yazio, indicating a localized marketing gap.",
+  { title: "Users will switch apps immediately if barcode scanning is paywalled.", time: "2 hours ago" },
+  { title: "AI food estimation is viewed as a gimmick, not a core feature yet.", time: "5 hours ago" },
+  { title: "European users heavily prefer Yazio, indicating a localized marketing gap.", time: "1 day ago" }
 ];
 
 export function CompetitorWatchAndSaved() {
   return (
-    <div className="flex flex-col gap-4 h-full col-span-1 md:col-span-2 lg:col-span-1">
+    <div className="flex flex-col gap-6 h-full col-span-1 md:col-span-2 lg:col-span-1">
       {/* Competitor Watch */}
-      <Card className="shadow-sm border-border flex-1">
-        <CardHeader className="pb-2 border-b border-border/50">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-muted-foreground" />
-            Competitor Watch
-          </CardTitle>
+      <Card className="shadow-none border-[#E5E7EB] rounded-[12px] flex-1 flex flex-col">
+        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40">
+          <CardTitle className="text-[14px] font-semibold">Competitor Watch</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <ul className="divide-y divide-border/50">
+        <CardContent className="p-0 flex-1">
+          <ul className="divide-y divide-border/40">
             {competitors.map((comp, i) => (
-              <li key={i} className="p-3 hover:bg-secondary/20 transition-colors">
-                <div className="flex justify-between items-start mb-1.5">
-                  <span className="text-sm font-semibold text-foreground">{comp.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground font-mono">{comp.mentions}</span>
-                    <div className={`w-2 h-2 rounded-full ${
-                      comp.sentiment === 'Positive' ? 'bg-emerald-500' : 
-                      comp.sentiment === 'Negative' ? 'bg-red-500' : 'bg-gray-400'
-                    }`} title={comp.sentiment} />
+              <li key={i} className="px-5 py-3 hover:bg-secondary/20 transition-colors flex flex-col gap-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-[13px] font-bold text-foreground">{comp.name}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-muted-foreground font-medium">{comp.mentions}</span>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-[9px] uppercase px-1.5 py-0 h-4 font-bold border-none ${
+                        comp.sentiment === 'Positive' ? 'text-[#059669] bg-[#D1FAE5]' : 
+                        comp.sentiment === 'Negative' ? 'text-[#B91C1C] bg-[#FEE2E2]' : 
+                        'text-[#B45309] bg-[#FEF3C7]'
+                      }`}
+                    >
+                      {comp.sentiment}
+                    </Badge>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  <span className="font-medium mr-1">Top issue:</span> 
-                  {comp.complaint}
+                <p className="text-xs text-muted-foreground italic truncate">
+                  Top complaint: {comp.complaint}
                 </p>
               </li>
             ))}
@@ -52,19 +54,26 @@ export function CompetitorWatchAndSaved() {
       </Card>
 
       {/* Saved Insights */}
-      <Card className="shadow-sm border-border">
-        <CardHeader className="pb-2 pt-3 border-none">
-          <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 uppercase tracking-wider">
-            <Bookmark className="w-3.5 h-3.5" />
+      <Card className="shadow-none border-[#E5E7EB] rounded-[12px] flex flex-col">
+        <CardHeader className="pb-3 pt-4 px-5 border-b border-border/40">
+          <CardTitle className="text-[14px] font-semibold flex items-center gap-2">
             Saved Insights
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0 space-y-2">
+        <CardContent className="p-0">
+          <div className="divide-y divide-border/40">
            {insights.map((insight, i) => (
-             <div key={i} className="text-xs text-foreground leading-snug pl-2 border-l-2 border-primary/40 py-0.5">
-               {insight}
+             <div key={i} className="p-4 hover:bg-secondary/20 transition-colors flex justify-between items-start gap-4">
+               <div className="flex flex-col gap-1">
+                 <p className="text-[13px] font-medium text-foreground leading-snug">{insight.title}</p>
+                 <span className="text-[10px] text-muted-foreground font-medium">{insight.time}</span>
+               </div>
+               <button className="text-muted-foreground hover:text-primary transition-colors mt-0.5">
+                 <Bookmark className="w-4 h-4" />
+               </button>
              </div>
            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

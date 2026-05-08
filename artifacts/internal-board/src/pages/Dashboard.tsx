@@ -16,29 +16,29 @@ export default function Dashboard() {
     <div className="flex h-screen w-full bg-background overflow-hidden text-foreground selection:bg-primary/20">
       <Sidebar />
       
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
+      <div className="flex-1 overflow-y-auto bg-[#F9FAFB]">
+        <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-6">
           <TopBar />
           
           <KPIRow />
 
-          <div className="flex flex-col gap-4 md:gap-6">
+          <div className="flex flex-col gap-6">
             {/* ROW 1 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <TrendingPainPoints />
               <MentionsOverTime />
               <ViralPostOpportunities />
             </div>
 
             {/* ROW 2 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <RealQuotesFeed />
               <TopThemesByVolume />
               <PlatformBreakdown />
             </div>
 
             {/* ROW 3 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <ContentIdeas />
               <TopSubredditsAndSentiment />
               <CompetitorWatchAndSaved />
