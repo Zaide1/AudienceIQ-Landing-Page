@@ -17,7 +17,7 @@ export default function Dashboard() {
       <Sidebar />
       
       <div className="flex-1 overflow-y-auto bg-[#F9FAFB]">
-        <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-6">
+        <div className="p-4 md:px-6 md:py-6 lg:px-8 space-y-6">
           <TopBar />
           
           <KPIRow />
